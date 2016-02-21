@@ -4,11 +4,12 @@
 #include "stdafx.h"
 #include "cpu.h"
 #include "mem.h"
+#include "ppu.h"
 
 int main()
 {
-
-	MemoryMap mem;
+	Ppu ppu;
+	MemoryMap mem(&ppu);
 	Cpu cpu(&mem);
 
 	cpu.Reset();

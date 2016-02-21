@@ -14,6 +14,7 @@ Cpu::~Cpu()
 {
 }
 
+// IMem
 u8 Cpu::loadb(u16 addr)
 {
 	return _mem->loadb(addr);

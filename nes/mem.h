@@ -1,6 +1,8 @@
 #pragma once
 #include "stdafx.h"
 
+class Ppu;
+
 // Standard Memory Interace
 class IMem 
 {
@@ -40,6 +42,7 @@ public:
 	Ram();
 	~Ram();
 
+	// IMem
 	u8 loadb(u16 addr);
 	void storeb(u16 addr, u8 val);
 private:
@@ -50,11 +53,12 @@ private:
 class MemoryMap : public IMem
 {
 public:
-	MemoryMap();
+	MemoryMap(Ppu* ppu);
 	~MemoryMap();
 
 	u8 loadb(u16 addr);
 	void storeb(u16 addr, u8 val);
 private:
 	Ram _ram;
+	Ppu* _ppu;
 };
