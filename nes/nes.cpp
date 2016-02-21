@@ -9,11 +9,11 @@
 
 int main()
 {
-	Ppu ppu;
-	Input input;
-	MemoryMap mem(&ppu, &input);
-	Cpu cpu(&mem);
+    Ppu ppu;
+    Input input;
+    MemoryMap mem(&ppu, &input);
+    Cpu cpu(&mem);
 
-	cpu.Reset();
+    cpu.Reset();
     return 0;
 }
