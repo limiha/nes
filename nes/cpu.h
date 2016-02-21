@@ -110,6 +110,7 @@ private:
     {
         u16 val = loadw(_regs.PC);
         _regs.PC += 2;
+        return val;
     }
 
     // Flag Helpers
