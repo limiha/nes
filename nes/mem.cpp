@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "mem.h"
 #include "ppu.h"
+#include "input.h"
 
 /*
 	Ram
@@ -31,8 +32,9 @@ void Ram::storeb(u16 addr, u8 val)
 /*
 	MemoryMap
 */
-MemoryMap::MemoryMap(Ppu* ppu)
+MemoryMap::MemoryMap(Ppu* ppu, Input* input)
 	: _ppu(ppu)
+	, _input(input)
 {
 
 }
@@ -53,10 +55,17 @@ u8 MemoryMap::loadb(u16 addr)
 	{
 		return _ppu->loadb(addr);
 	}
+	else if (addr < 0x4016)
+	{
+		// TODO: apu;
+		return 0;
+	}
+	else if (addr < 0x4020)
+	{
+		return _input->loadb(addr);
+	}
 	else if (addr < 0x8000)
 	{
-		// TODO: input
-		// TOOD: apu
 		// TODO: Expansion ROM
 		// TODO: SRAM
 		return 0;
@@ -78,6 +87,14 @@ void MemoryMap::storeb(u16 addr, u8 val)
 	else if (addr < 0x4000)
 	{
 		_ppu->storeb(addr, val);
+	}
+	else if (addr < 0x4016)
+	{
+		// TODO: apu
+	}
+	else if (addr < 0x4020)
+	{
+		_input->storeb(addr, val);
 	}
 	else if (addr < 0x8000)
 	{

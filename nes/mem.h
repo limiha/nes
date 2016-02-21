@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 class Ppu;
+class Input;
 
 // Standard Memory Interace
 class IMem 
@@ -53,7 +54,7 @@ private:
 class MemoryMap : public IMem
 {
 public:
-	MemoryMap(Ppu* ppu);
+	MemoryMap(Ppu* ppu, Input* input);
 	~MemoryMap();
 
 	u8 loadb(u16 addr);
@@ -61,4 +62,5 @@ public:
 private:
 	Ram _ram;
 	Ppu* _ppu;
+	Input* _input;
 };

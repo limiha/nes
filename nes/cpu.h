@@ -31,7 +31,7 @@ struct CpuRegs
 		, X(0)
 		, Y(0)
 		, P(DECIMAL_FLAG | (1 << 5)) // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
-		, SP(0xfd)
+		, SP(0xfd) // Startup value according to http://wiki.nesdev.com/w/index.php/CPU_power_up_state
 		, PC(0x8000)
 	{
 	}
@@ -51,5 +51,5 @@ public:
 
 private:
 	CpuRegs _regs;
-	IMem* _mem;;
+	IMem* _mem;
 };

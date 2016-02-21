@@ -5,17 +5,15 @@
 #include "cpu.h"
 #include "mem.h"
 #include "ppu.h"
+#include "input.h"
 
 int main()
 {
 	Ppu ppu;
-	MemoryMap mem(&ppu);
+	Input input;
+	MemoryMap mem(&ppu, &input);
 	Cpu cpu(&mem);
 
 	cpu.Reset();
-
-
-
     return 0;
 }
-
