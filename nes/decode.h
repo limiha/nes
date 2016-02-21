@@ -1,3 +1,5 @@
+#pragma once
+
 // This macro exisst so that the cpu and dissassembler can make use of the same
 // op switch statment
 

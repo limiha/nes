@@ -50,4 +50,9 @@ void Cpu::Decode(u8 op)
     IAddressingMode* am = nullptr;
 
     DECODE(op)
+
+    if (am != nullptr)
+    {
+        delete am;
+    }
 }

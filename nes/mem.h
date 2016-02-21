@@ -3,6 +3,7 @@
 
 class Ppu;
 class Input;
+class Rom;
 
 // Standard Memory Interace
 class IMem 
@@ -55,7 +56,7 @@ private:
 class MemoryMap : public IMem
 {
 public:
-    MemoryMap(Ppu* ppu, Input* input);
+    MemoryMap(Ppu* ppu, Input* input, Rom* rom);
     ~MemoryMap();
 
     u8 loadb(u16 addr);
@@ -64,4 +65,5 @@ private:
     Ram _ram;
     Ppu* _ppu;
     Input* _input;
+    Rom* _rom;
 };

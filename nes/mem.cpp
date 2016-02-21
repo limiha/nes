@@ -4,6 +4,7 @@
 #include "mem.h"
 #include "ppu.h"
 #include "input.h"
+#include "rom.h"
 
 /*
     Ram
@@ -32,9 +33,10 @@ void Ram::storeb(u16 addr, u8 val)
 /*
     MemoryMap
 */
-MemoryMap::MemoryMap(Ppu* ppu, Input* input)
+MemoryMap::MemoryMap(Ppu* ppu, Input* input, Rom* rom)
     : _ppu(ppu)
     , _input(input)
+    , _rom(rom)
 {
 
 }
@@ -72,9 +74,7 @@ u8 MemoryMap::loadb(u16 addr)
     }
     else
     {
-        // TODO: PRG-ROM
-        // TODO: Mapper
-        return 0;
+        return _rom->prg_loadb(addr);
     }
 }
 
