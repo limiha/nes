@@ -25,7 +25,7 @@ struct CpuRegs
     u8 X;    // Index Register
     u8 Y;    // Index Register
     u8 P;    // Process Status
-    u8 SP;    // Stack Pointer
+    u8 S;    // Stack Pointer
 
     u16 PC; // Program Counter
 
@@ -34,7 +34,7 @@ struct CpuRegs
         , X(0)
         , Y(0)
         , P((u8)Flag::Decimal | (1 << 5)) // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
-        , SP(0xfd) // Startup value according to http://wiki.nesdev.com/w/index.php/CPU_power_up_state
+        , S(0xfd) // Startup value according to http://wiki.nesdev.com/w/index.php/CPU_power_up_state
         , PC(0x8000)
     {
     }
@@ -151,6 +151,14 @@ private:
     void sta(IAddressingMode* am) { am->Store(_regs.A); }
     void stx(IAddressingMode* am) { am->Store(_regs.X); }
     void sty(IAddressingMode* am) { am->Store(_regs.Y); }
+
+    // Register Moves
+    void tax(IAddressingMode*) { _regs.X = _regs.SetZN(_regs.A); }
+    void tay(IAddressingMode*) { _regs.Y = _regs.SetZN(_regs.A); }
+    void txa(IAddressingMode*) { _regs.A = _regs.SetZN(_regs.X); }
+    void tya(IAddressingMode*) { _regs.A = _regs.SetZN(_regs.Y); }
+    void txs(IAddressingMode*) { _regs.X = _regs.S; }
+    void tsx(IAddressingMode*) { _regs.S = _regs.SetZN(_regs.X); }
 
     // Flag Operations
     // FIXME: The way the decode macro is written and shared between this and the disassembler

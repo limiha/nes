@@ -46,6 +46,14 @@
     case 0x94: ZeroPageX(am);           sty(am);    break; \
     case 0x8c: Absolute(am);            sty(am);    break; \
     \
+    /*register moves*/ \
+    case 0xaa: tax(am); break; \
+    case 0xa8: tay(am); break; \
+    case 0x8a: txa(am); break; \
+    case 0x98: tya(am); break; \
+    case 0x9a: txs(am); break; \
+    case 0xba: tsx(am); break; \
+    \
     /*flag operations*/ \
     case 0x18: clc(am); break; \
     case 0x38: sec(am); break; \

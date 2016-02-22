@@ -61,7 +61,10 @@ ss.str(instr); \
 ss << ' ' << address; 
 
 #define INSTRUCTION(codeName, displayName) \
-void codeName(std::stringstream& ss) { PREPEND(displayName); }
+void codeName(std::stringstream& ss) { PREPEND(displayName); } 
+
+#define IMPLIED(codeName, displayName) \
+void codeName(std::stringstream& ss) { ss << displayName; }
 
     // Loads
     INSTRUCTION(lda, "LDA")
@@ -73,12 +76,20 @@ void codeName(std::stringstream& ss) { PREPEND(displayName); }
     INSTRUCTION(stx, "STX")
     INSTRUCTION(sty, "STY")
 
+    // Register Moves
+    IMPLIED(tax, "TAX")
+    IMPLIED(tay, "TAY")
+    IMPLIED(txa, "TXA")
+    IMPLIED(tya, "TYA")
+    IMPLIED(txs, "TXS")
+    IMPLIED(tsx, "TSX")
+
     // Flag Operations
-    void clc(std::stringstream& ss) { ss << "CLC";  }
-    void sec(std::stringstream& ss) { ss << "SEC"; }
-    void cli(std::stringstream& ss) { ss << "CLI"; }
-    void sei(std::stringstream& ss) { ss << "SEI"; }
-    void clv(std::stringstream& ss) { ss << "CLV"; }
-    void cld(std::stringstream& ss) { ss << "CLD"; }
-    void sed(std::stringstream& ss) { ss << "SED"; }
+    IMPLIED(clc, "CLC")
+    IMPLIED(sec, "SEC")
+    IMPLIED(cli, "CLI")
+    IMPLIED(sei, "SEI")
+    IMPLIED(clv, "CLV")
+    IMPLIED(cld, "CLD")
+    IMPLIED(sed, "SED")
 };
