@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "cpu.h"
 #include "decode.h"
+#include "diassembler.h"
 
 using namespace std;
 
@@ -42,6 +43,7 @@ void Cpu::Reset()
 
 void Cpu::Step()
 {
+    Trace();
     Decode(LoadBBumpPC());
 }
 
@@ -55,4 +57,10 @@ void Cpu::Decode(u8 op)
     {
         delete am;
     }
+}
+
+void Cpu::Trace()
+{
+    Disassembler disassembler(_regs.PC, _mem);
+    printf("%s\n", disassembler.Disassemble().c_str());
 }

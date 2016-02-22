@@ -58,10 +58,13 @@ private:
     CpuRegs _regs;
     IMem* _mem;
 
+private:
     void Decode(u8 op);
+    void Trace();
 
     // Adressing Modes
-    class IAddressingMode {
+    class IAddressingMode 
+    {
     public:
         IAddressingMode(Cpu& cpu) : _cpu(cpu) { }
         virtual u8 Load() = 0;
@@ -70,21 +73,24 @@ private:
         Cpu& _cpu;
     };
 
-    class AccumulatorAddressingMode : public IAddressingMode {
+    class AccumulatorAddressingMode : public IAddressingMode 
+    {
     public:
         AccumulatorAddressingMode(Cpu& cpu) : IAddressingMode(cpu) { }
         u8 Load() { return _cpu._regs.A; }
         void Store(u8 val) { _cpu._regs.A = val; }
     };
 
-    class ImmediateAddressingMode : public IAddressingMode {
+    class ImmediateAddressingMode : public IAddressingMode 
+    {
     public:
         ImmediateAddressingMode(Cpu& cpu) : IAddressingMode(cpu) { }
         u8 Load() { return _cpu.LoadBBumpPC(); }
         void Store(u8 val) { /* Can't store to immediate */ }
     };
 
-    class MemoryAddressingMode : public IAddressingMode {
+    class MemoryAddressingMode : public IAddressingMode 
+    {
     public:
         MemoryAddressingMode(Cpu& cpu, u16 addr) : IAddressingMode(cpu), _addr(addr) { }
         u8 Load() { return _cpu.loadb(_addr); }
@@ -136,7 +142,12 @@ private:
     }
 
     // Instructions
+
+    // Loads
     void lda(IAddressingMode* am) { _regs.A = SetZN(am->Load()); }
     void ldx(IAddressingMode* am) { _regs.X = SetZN(am->Load()); }
     void ldy(IAddressingMode* am) { _regs.Y = SetZN(am->Load()); }
+
+    // Flag Operations
+    void sei(IAddressingMode* am) { SetFlag(Flag::IRQ, true); }
 };

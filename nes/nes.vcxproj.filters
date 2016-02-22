@@ -42,6 +42,9 @@
     <ClInclude Include="rom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="diassembler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="rom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="disassembler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

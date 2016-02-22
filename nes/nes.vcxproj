@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClInclude Include="cpu.h" />
     <ClInclude Include="decode.h" />
+    <ClInclude Include="diassembler.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="rom.h" />
@@ -153,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpu.cpp" />
+    <ClCompile Include="disassembler.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="nes.cpp" />
