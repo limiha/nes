@@ -62,9 +62,14 @@ void Cpu::Decode(u8 op)
 void Cpu::Trace()
 {
     Disassembler disassembler(_regs.PC, _mem);
-    printf("%04X %20s A:%02x X:%02X Y:%02X P:%02X S:%02X\n",
+
+    DisassembledInstruction* instruction;
+    disassembler.Disassemble(&instruction);
+
+    printf("%04X %-10s %-12s A:%02x X:%02X Y:%02X P:%02X S:%02X\n",
         _regs.PC,
-        disassembler.Disassemble().c_str(),
+        instruction->GetFormattedBytes().c_str(),
+        instruction->GetDisassemblyString().c_str(),
         _regs.A,
         _regs.X,
         _regs.Y,

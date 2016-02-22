@@ -12,13 +12,14 @@ Disassembler::~Disassembler()
 {
 }
 
-std::string Disassembler::Disassemble()
+void Disassembler::Disassemble(DisassembledInstruction** ppDisassembledInstruction)
 {
-    std::stringstream am(std::stringstream::out | std::stringstream::ate);
+    DisassembledInstruction* am = new DisassembledInstruction();
 
     u8 op = LoadBBumpPC();
+    am->_bytes.push_back(op);
 
     DECODE(op)
 
-    return am.str();
+    *ppDisassembledInstruction = am;
 }

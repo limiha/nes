@@ -4,8 +4,8 @@
 
 // CPU Interrupt Vectors
 const u16 NMI_VECTOR    = 0xfffa;
-const u16 RESET_VECTOR    = 0xfffc;
-const u16 IRQ_VECTGOR    = 0xfffe;
+const u16 RESET_VECTOR  = 0xfffc;
+const u16 IRQ_VECTGOR   = 0xfffe;
 
 // CPU Status Register Flags
 enum class Flag : u8

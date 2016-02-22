@@ -2,13 +2,50 @@
 
 #include "mem.h"
 
+#include <vector>
+
+class DisassembledInstruction 
+{
+public:
+    DisassembledInstruction() : _ss(std::ios_base::out | std::ios_base::ate)
+    { 
+    }
+    ~DisassembledInstruction() { }
+
+    std::string GetFormattedBytes()
+    {
+        std::stringstream ss;
+        ss << std::uppercase << std::hex;
+
+        std::vector<u8>::iterator it = _bytes.begin();
+        do
+        {
+            ss << std::setfill('0') << std::setw(2) << (i32)*it << ' ';
+            it++;
+        } while (it != _bytes.end());
+
+        return ss.str();
+    }
+
+    std::string GetDisassemblyString()
+    {
+        return _ss.str();
+    }
+
+private:
+    friend class Disassembler;
+    std::stringstream _ss;
+    std::vector<u8> _bytes;
+};
+
+
 class Disassembler
 {
 public:
     Disassembler(u16 PC, IMem* mem);
     ~Disassembler();
 
-    std::string Disassemble();
+    void Disassemble(DisassembledInstruction** disassembledInstruction);
 
 private:
     u16 _PC;
@@ -54,33 +91,86 @@ private:
         return ss.str();
     }
 
+    u8 PeekPC(int offset = 0)
+    {
+        return _mem->loadb(_PC + offset);
+    }
+
     // Addressing Modes
-    void Immediate(std::stringstream& ss) { ss << '#' << DisBBumpPC(); }
-    void Accumulator(std::stringstream& ss) { }
-    void ZeroPage(std::stringstream& ss) { ss << DisBBumpPC(); }
-    void ZeroPageX(std::stringstream& ss) { ss << DisBBumpPC() << ",X"; }
-    void ZeroPageY(std::stringstream& ss) { ss << DisBBumpPC() << ",Y"; }
-    void Absolute(std::stringstream& ss) { ss << DisWBumpPC(); }
-    void AbsoluteX(std::stringstream& ss) { ss << DisWBumpPC() << ",X"; }
-    void AbsoluteY(std::stringstream& ss) { ss << DisWBumpPC() << ",Y"; }
-    void IndexedIndirectX(std::stringstream& ss) { ss << '(' << DisBBumpPC() << ',X)'; }
-    void IndirectIndexedY(std::stringstream& ss) { ss << '(' << DisBBumpPC() << '),Y'; }
+    void Immediate(DisassembledInstruction* instr) 
+    { 
+        instr->_bytes.push_back(PeekPC());
+        instr->_ss << '#' << DisBBumpPC(); 
+    }
+
+    void Accumulator(DisassembledInstruction* instr) { }
+
+    void ZeroPage(DisassembledInstruction* instr) 
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_ss << DisBBumpPC(); 
+    }
+
+    void ZeroPageX(DisassembledInstruction* instr) 
+    {
+        instr->_bytes.push_back(PeekPC()); 
+        instr->_ss << DisBBumpPC() << ",X"; 
+    }
+
+    void ZeroPageY(DisassembledInstruction* instr) 
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_ss << DisBBumpPC() << ",Y"; 
+    }
+
+    void Absolute(DisassembledInstruction* instr) 
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_bytes.push_back(PeekPC(1));
+        instr->_ss << DisWBumpPC(); 
+    }
+
+    void AbsoluteX(DisassembledInstruction* instr) 
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_bytes.push_back(PeekPC(1));
+        instr->_ss << DisWBumpPC() << ",X"; 
+    }
+
+    void AbsoluteY(DisassembledInstruction* instr)
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_bytes.push_back(PeekPC(1));
+        instr->_ss << DisWBumpPC() << ",Y"; 
+    }
+
+    void IndexedIndirectX(DisassembledInstruction* instr) 
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_ss << '(' << DisBBumpPC() << ',X)'; 
+    }
+
+    void IndirectIndexedY(DisassembledInstruction* instr) 
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_ss << '(' << DisBBumpPC() << '),Y'; 
+    }
 
     // Instructions
 
-#define PREPEND(instr) \
-std::string address = ss.str(); \
-ss.str(instr); \
-ss << ' ' << address; 
+#define PREPEND(name) \
+std::string address = instr->_ss.str(); \
+instr->_ss.str(name); \
+instr->_ss << ' ' << address; 
 
 #define INSTRUCTION(codeName, displayName) \
-void codeName(std::stringstream& ss) { PREPEND(displayName); } 
+void codeName(DisassembledInstruction* instr) { PREPEND(displayName); } 
 
 #define IMPLIED(codeName, displayName) \
-void codeName(std::stringstream& ss) { ss << displayName; }
+void codeName(DisassembledInstruction* instr) { instr->_ss << displayName; }
 
 #define BRANCH(codeName, displayName) \
-void codeName(std::stringstream& ss) { ss << displayName << ' ' << DisBranchTarget(); }
+void codeName(DisassembledInstruction* instr) { instr->_ss << displayName << ' ' << DisBranchTarget(); }
 
     // Loads
     INSTRUCTION(lda, "LDA")
