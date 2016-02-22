@@ -27,7 +27,11 @@ private:
         return val;
     }
 
-
+    u16 GetBranchTarget()
+    {
+        i8 disp = (i8)LoadBBumpPC();
+        return (u16)((i32)_PC + (i32)disp);
+    }
 
     std::string DisBBumpPC()
     {
@@ -40,6 +44,13 @@ private:
     {
         std::stringstream ss;
         ss << '$' << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << (int)LoadWBumpPC();
+        return ss.str();
+    }
+
+    std::string DisBranchTarget()
+    {
+        std::stringstream ss;
+        ss << '$' << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << (int)GetBranchTarget();
         return ss.str();
     }
 
@@ -69,7 +80,7 @@ void codeName(std::stringstream& ss) { PREPEND(displayName); }
 void codeName(std::stringstream& ss) { ss << displayName; }
 
 #define BRANCH(codeName, displayName) \
-void codeName(std::stringstream& ss) { ss << displayName << ' ' << DisBBumpPC(); }
+void codeName(std::stringstream& ss) { ss << displayName << ' ' << DisBranchTarget(); }
 
     // Loads
     INSTRUCTION(lda, "LDA")
