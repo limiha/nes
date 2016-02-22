@@ -9,8 +9,9 @@ using namespace std;
 
 Cpu::Cpu(
     IMem* mem
-    ) 
+    )
     : _mem(mem)
+    , Cycles(0)
 {
 }
 
@@ -44,14 +45,12 @@ void Cpu::Reset()
 void Cpu::Step()
 {
     Trace();
-    Decode(LoadBBumpPC());
-}
+    u8 op = LoadBBumpPC();
 
-void Cpu::Decode(u8 op)
-{
     IAddressingMode* am = nullptr;
-
     DECODE(op)
+
+    Cycles += CYCLE_TABLE[op];
 
     if (am != nullptr)
     {
@@ -63,10 +62,10 @@ void Cpu::Trace()
 {
     Disassembler disassembler(_regs.PC, _mem);
 
-    DisassembledInstruction* instruction;
+    DisassembledInstruction* instruction = nullptr;
     disassembler.Disassemble(&instruction);
 
-    printf("%04X %-10s %-12s A:%02x X:%02X Y:%02X P:%02X S:%02X\n",
+    printf("%04X %-10s %-12s A:%02x X:%02X Y:%02X P:%02X S:%02X CY:%lld\n",
         _regs.PC,
         instruction->GetFormattedBytes().c_str(),
         instruction->GetDisassemblyString().c_str(),
@@ -74,6 +73,12 @@ void Cpu::Trace()
         _regs.X,
         _regs.Y,
         _regs.P,
-        _regs.S
+        _regs.S,
+        Cycles
         );
+
+    if (instruction != nullptr)
+    {
+        delete instruction;
+    }
 }
