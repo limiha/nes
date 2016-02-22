@@ -62,5 +62,13 @@ void Cpu::Decode(u8 op)
 void Cpu::Trace()
 {
     Disassembler disassembler(_regs.PC, _mem);
-    printf("%s\n", disassembler.Disassemble().c_str());
+    printf("%04X %20s A:%02x X:%02X Y:%02X P:%02X S:%02X\n",
+        _regs.PC,
+        disassembler.Disassemble().c_str(),
+        _regs.A,
+        _regs.X,
+        _regs.Y,
+        _regs.P,
+        _regs.S
+        );
 }

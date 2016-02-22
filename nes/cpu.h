@@ -157,8 +157,8 @@ private:
     void tay(IAddressingMode*) { _regs.Y = _regs.SetZN(_regs.A); }
     void txa(IAddressingMode*) { _regs.A = _regs.SetZN(_regs.X); }
     void tya(IAddressingMode*) { _regs.A = _regs.SetZN(_regs.Y); }
-    void txs(IAddressingMode*) { _regs.X = _regs.S; }
-    void tsx(IAddressingMode*) { _regs.S = _regs.SetZN(_regs.X); }
+    void txs(IAddressingMode*) { _regs.S = _regs.X; }
+    void tsx(IAddressingMode*) { _regs.X = _regs.SetZN(_regs.S); }
 
     // Flag Operations
     // FIXME: The way the decode macro is written and shared between this and the disassembler
@@ -170,4 +170,22 @@ private:
     void clv(IAddressingMode* am) { _regs.SetFlag(Flag::Overflow, false); }
     void cld(IAddressingMode* am) { _regs.SetFlag(Flag::Decimal, false); }
     void sed(IAddressingMode* am) { _regs.SetFlag(Flag::Decimal, true); }
+
+    // Branches
+    void branch_base(bool cond)
+    {
+        i8 disp = (i8)LoadBBumpPC();
+        if (cond)
+        {
+            _regs.PC = (u16)((i32)_regs.PC + (i32)disp);
+        }
+    }
+    void bpl(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Negative)); }
+    void bmi(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Negative)); }
+    void bvc(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Overflow)); }
+    void bvs(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Overflow)); }
+    void bcc(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Carry)); }
+    void bcs(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Carry)); }
+    void bne(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Zero)); }
+    void beq(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Zero)); }
 };

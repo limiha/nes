@@ -14,7 +14,7 @@
     case 0xad: Absolute(am);            lda(am);    break; \
     case 0xb1: IndirectIndexedY(am);    lda(am);    break; \
     case 0xb5: ZeroPageX(am);           lda(am);    break; \
-    case 0xb0: AbsoluteY(am);           lda(am);    break; \
+    case 0xb9: AbsoluteY(am);           lda(am);    break; \
     case 0xbd: AbsoluteX(am);           lda(am);    break; \
     \
     case 0xa2: Immediate(am);           ldx(am);    break; \
@@ -63,6 +63,15 @@
     case 0xd8: cld(am); break; \
     case 0xf8: sed(am); break; \
     \
+    /*branches*/ \
+    case 0x10: bpl(am); break; \
+    case 0x30: bmi(am); break; \
+    case 0x50: bvc(am); break; \
+    case 0x70: bvs(am); break; \
+    case 0x90: bcc(am); break; \
+    case 0xb0: bcs(am); break; \
+    case 0xd0: bne(am); break; \
+    case 0xf0: beq(am); break; \
     default: \
         printf("Unimplemented instruction: 0x%02x\n", op); \
         __debugbreak; \
