@@ -54,10 +54,21 @@ private:
     void IndirectIndexedY(std::stringstream& ss) { ss << '(' << DisBBumpPC() << '),Y'; }
 
     // Instructions
+
+    // Loads
     void lda(std::stringstream& ss)
     {
         std::string address = ss.str();
-        ss.str("LDA "); 
+        ss.str("LDA ");
         ss << address;
     }
+
+    // Flag Operations
+    void clc(std::stringstream& ss) { ss << "CLC";  }
+    void sec(std::stringstream& ss) { ss << "SEC"; }
+    void cli(std::stringstream& ss) { ss << "CLI"; }
+    void sei(std::stringstream& ss) { ss << "SEI"; }
+    void clv(std::stringstream& ss) { ss << "CLV"; }
+    void cld(std::stringstream& ss) { ss << "CLD"; }
+    void sed(std::stringstream& ss) { ss << "SED"; }
 };

@@ -14,7 +14,7 @@ Disassembler::~Disassembler()
 
 std::string Disassembler::Disassemble()
 {
-    std::stringstream am;
+    std::stringstream am(std::stringstream::out | std::stringstream::ate);
 
     u8 op = LoadBBumpPC();
 

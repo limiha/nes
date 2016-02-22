@@ -38,6 +38,27 @@ struct CpuRegs
         , PC(0x8000)
     {
     }
+
+    bool GetFlag(Flag flag)
+    {
+        return (P & (u8)flag) != 0;
+    }
+    void SetFlag(Flag flag, bool on)
+    {
+        if (on)
+        {
+            P |= (u8)flag;
+        }
+        else
+        {
+            P &= ~((u8)flag);
+        }
+    }
+    u8 SetZN(u8 val) {
+        SetFlag(Flag::Zero, val == 0);
+        SetFlag(Flag::Negative, (val & 0x80) != 0);
+        return val;
+    }
 };
 
 class Cpu : public IMem
@@ -99,16 +120,16 @@ private:
         u16 _addr;
     };
 
-    void Immediate(IAddressingMode* am) { am = new ImmediateAddressingMode(*this); }
-    void Accumulator(IAddressingMode* am) { am = new AccumulatorAddressingMode(*this); }
-    void ZeroPage(IAddressingMode* am) { am = new MemoryAddressingMode(*this, (u16)LoadBBumpPC()); }
-    void ZeroPageX(IAddressingMode* am) { am = new MemoryAddressingMode(*this, LoadBBumpPC() + _regs.X); }
-    void ZeroPageY(IAddressingMode* am) { am = new MemoryAddressingMode(*this, LoadBBumpPC() + _regs.Y); }
-    void Absolute(IAddressingMode* am) { am = new MemoryAddressingMode(*this, LoadWBumpPC()); }
-    void AbsoluteX(IAddressingMode* am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.X); }
-    void AbsoluteY(IAddressingMode* am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.Y); }
-    void IndirectIndexedX(IAddressingMode* am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC() + _regs.X)); }
-    void IndirectIndexedY(IAddressingMode* am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC()) + _regs.Y); }
+    void Immediate(IAddressingMode* &am) { am = new ImmediateAddressingMode(*this); }
+    void Accumulator(IAddressingMode* &am) { am = new AccumulatorAddressingMode(*this); }
+    void ZeroPage(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)LoadBBumpPC()); }
+    void ZeroPageX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadBBumpPC() + _regs.X); }
+    void ZeroPageY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadBBumpPC() + _regs.Y); }
+    void Absolute(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC()); }
+    void AbsoluteX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.X); }
+    void AbsoluteY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.Y); }
+    void IndirectIndexedX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC() + _regs.X)); }
+    void IndirectIndexedY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC()) + _regs.Y); }
 
     // Memory Acess Helpers
     u8 LoadBBumpPC() { return loadb(_regs.PC++); }
@@ -119,35 +140,26 @@ private:
         return val;
     }
 
-    // Flag Helpers
-    bool GetFlag(Flag flag) 
-    {
-        return (_regs.P & (u8)flag) != 0;
-    }
-    void SetFlag(Flag flag, bool on)
-    {
-        if (on)
-        {
-            _regs.P |= (u8)flag;
-        }
-        else
-        {
-            _regs.P &= ~((u8)flag);
-        }
-    }
-    u8 SetZN(u8 val) { 
-        SetFlag(Flag::Zero, val == 0);
-        SetFlag(Flag::Negative, (val & 0x80) != 0);
-        return val;
-    }
-
     // Instructions
 
     // Loads
-    void lda(IAddressingMode* am) { _regs.A = SetZN(am->Load()); }
-    void ldx(IAddressingMode* am) { _regs.X = SetZN(am->Load()); }
-    void ldy(IAddressingMode* am) { _regs.Y = SetZN(am->Load()); }
+    void lda(IAddressingMode* am) { _regs.A = _regs.SetZN(am->Load()); }
+    void ldx(IAddressingMode* am) { _regs.X = _regs.SetZN(am->Load()); }
+    void ldy(IAddressingMode* am) { _regs.Y = _regs.SetZN(am->Load()); }
+
+    // Stores
+    void sta(IAddressingMode* am) { am->Store(_regs.A); }
+    void stx(IAddressingMode* am) { am->Store(_regs.X); }
+    void sty(IAddressingMode* am) { am->Store(_regs.Y); }
 
     // Flag Operations
-    void sei(IAddressingMode* am) { SetFlag(Flag::IRQ, true); }
+    // FIXME: The way the decode macro is written and shared between this and the disassembler
+    // FIXME: means that all these functions must take an IAdressingMode even though they don't use it.
+    void clc(IAddressingMode* am) { _regs.SetFlag(Flag::Carry, false); }
+    void sec(IAddressingMode* am) { _regs.SetFlag(Flag::Carry, true); }
+    void cli(IAddressingMode* am) { _regs.SetFlag(Flag::IRQ, false); }
+    void sei(IAddressingMode* am) { _regs.SetFlag(Flag::IRQ, true); }
+    void clv(IAddressingMode* am) { _regs.SetFlag(Flag::Overflow, false); }
+    void cld(IAddressingMode* am) { _regs.SetFlag(Flag::Decimal, false); }
+    void sed(IAddressingMode* am) { _regs.SetFlag(Flag::Decimal, true); }
 };

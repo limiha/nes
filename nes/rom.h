@@ -5,7 +5,7 @@
 const u32 PRG_ROM_BANK_SIZE = 0x4000;
 const u32 CHR_ROM_BANK_SIZE = 0x2000;
 
-#pragma pack
+#pragma pack()
 struct INesHeader 
 {
     // 'N' 'E' 'S' '\x1a'
