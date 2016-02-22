@@ -128,7 +128,7 @@ private:
     void Absolute(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC()); }
     void AbsoluteX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.X); }
     void AbsoluteY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.Y); }
-    void IndirectIndexedX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC() + _regs.X)); }
+    void IndexedIndirectX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC() + _regs.X)); }
     void IndirectIndexedY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC()) + _regs.Y); }
 
     // Memory Acess Helpers

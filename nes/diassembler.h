@@ -50,18 +50,28 @@ private:
     void Absolute(std::stringstream& ss) { ss << DisWBumpPC(); }
     void AbsoluteX(std::stringstream& ss) { ss << DisWBumpPC() << ",X"; }
     void AbsoluteY(std::stringstream& ss) { ss << DisWBumpPC() << ",Y"; }
-    void IndirectIndexedX(std::stringstream& ss) { ss << '(' << DisBBumpPC() << ',X)'; }
+    void IndexedIndirectX(std::stringstream& ss) { ss << '(' << DisBBumpPC() << ',X)'; }
     void IndirectIndexedY(std::stringstream& ss) { ss << '(' << DisBBumpPC() << '),Y'; }
 
     // Instructions
 
+#define PREPEND(instr) \
+std::string address = ss.str(); \
+ss.str(instr); \
+ss << ' ' << address; 
+
+#define INSTRUCTION(codeName, displayName) \
+void codeName(std::stringstream& ss) { PREPEND(displayName); }
+
     // Loads
-    void lda(std::stringstream& ss)
-    {
-        std::string address = ss.str();
-        ss.str("LDA ");
-        ss << address;
-    }
+    INSTRUCTION(lda, "LDA")
+    INSTRUCTION(ldx, "LDX")
+    INSTRUCTION(ldy, "LDY")
+
+    // Stores
+    INSTRUCTION(sta, "STA")
+    INSTRUCTION(stx, "STX")
+    INSTRUCTION(sty, "STY")
 
     // Flag Operations
     void clc(std::stringstream& ss) { ss << "CLC";  }
