@@ -168,7 +168,20 @@ void Ppu::WritePpuScroll(u8 val)
 
 void Ppu::WritePpuAddr(u8 val)
 {
-    // TODO
+    if (_regs.addr.next == PpuAddr::WhichByte::Hi)
+    {
+        _regs.addr.val &= 0x00ff;
+        _regs.addr.val |= (((u16)val) << 8);
+        _regs.addr.next = PpuAddr::WhichByte::Lo;
+    }
+    else
+    {
+        _regs.addr.val &= 0xff00;
+        _regs.addr.val |= (u16)val;
+        _regs.addr.next = PpuAddr::WhichByte::Hi;
+
+        // TODO: Something about resetting scrolling here?
+    }
 }
 
 void Ppu::WritePpuData(u8 val)

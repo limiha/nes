@@ -55,9 +55,16 @@ struct PpuScroll
 
 struct PpuAddr
 {
-    u8  val;
+    enum class WhichByte
+    {
+        Lo,
+        Hi
+    };
 
-    PpuAddr() : val(0) { }
+    u16  val;
+    WhichByte next;
+
+    PpuAddr() : val(0), next(WhichByte::Hi) { }
 };
 
 struct PpuRegs
