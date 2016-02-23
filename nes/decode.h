@@ -74,6 +74,6 @@
     case 0xf0: beq(am); break; \
     default: \
         printf("Unimplemented instruction: 0x%02x\n", op); \
-        __debugbreak; \
+        __debugbreak(); \
     }\
 }
