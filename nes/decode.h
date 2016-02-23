@@ -138,6 +138,9 @@
     case 0xd0: bne(am); break; \
     case 0xf0: beq(am); break; \
     \
+    case 0x4c: jmp(am); break; \
+    case 0x6c: jmpi(am); break; \
+    \
     /*procedure calls*/ \
     case 0x20: jsr(am); break; \
     case 0x60: rts(am); break; \

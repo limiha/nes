@@ -234,6 +234,25 @@ void codeName(DisassembledInstruction* instr) \
     BRANCH(bne, "BNE")
     BRANCH(beq, "BEQ")
 
+    // Jumps
+    void jmp(DisassembledInstruction* instr)
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_bytes.push_back(PeekPC(1));
+
+        instr->_ss << "JMP " << DisWBumpPC();
+    }
+
+    void jmpi(DisassembledInstruction* instr)
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_bytes.push_back(PeekPC(1));
+
+        u16 val = _mem->loadw(LoadWBumpPC());
+
+        instr->_ss << "JMP ($" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << val << ')';
+    }
+
     // Procedure Calls
     void jsr(DisassembledInstruction* instr)
     {

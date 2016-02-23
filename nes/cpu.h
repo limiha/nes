@@ -271,6 +271,22 @@ private:
     void bne(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Zero)); }
     void beq(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Zero)); }
 
+    // Jumps
+    void jmp(IAddressingMode* am)
+    {
+        _regs.PC = LoadWBumpPC();
+    }
+    void jmpi(IAddressingMode* am)
+    {
+        u16 addr = LoadWBumpPC();
+
+        // recreate processor bug
+        u16 lo = (u16)loadb(addr);
+        u16 hi = (u16)loadb((addr & 0xff00) | ((addr + 1) & 0x00ff));
+        
+        _regs.PC = (hi << 8) | lo;
+    }
+
     // Procedure Calls
     void jsr(IAddressingMode* am) 
     {

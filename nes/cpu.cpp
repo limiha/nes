@@ -74,6 +74,7 @@ void Cpu::Irq()
 
     PushW(_regs.PC);
     PushB(_regs.S);
+    _regs.SetFlag(Flag::IRQ, true);
     _regs.PC = loadw(IRQ_VECTOR);
 }
 
