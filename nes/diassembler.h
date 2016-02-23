@@ -188,10 +188,16 @@ void codeName(DisassembledInstruction* instr) \
     INSTRUCTION(stx, "STX")
     INSTRUCTION(sty, "STY")
 
-    // Comparison
+    // Comparisons
     INSTRUCTION(cmp, "CMP")
     INSTRUCTION(cpx, "CPX")
     INSTRUCTION(cpy, "CPY")
+
+    // Bitwise Operations
+    INSTRUCTION(and, "AND")
+    INSTRUCTION(ora, "ORA")
+    INSTRUCTION(eor, "EOR")
+    INSTRUCTION(bit, "BIT")
 
     // Increments and Decrements
     INSTRUCTION(inc, "INC")

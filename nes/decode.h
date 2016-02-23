@@ -64,6 +64,37 @@
     case 0xc4: ZeroPage(am);            cpy(am);    break; \
     case 0xcc: Absolute(am);            cpy(am);    break; \
     \
+    /*bitwise operations*/ \
+    case 0x29: Immediate(am);           and(am);    break; \
+    case 0x25: ZeroPage(am);            and(am);    break; \
+    case 0x35: ZeroPageX(am);           and(am);    break; \
+    case 0x2d: Absolute(am);            and(am);    break; \
+    case 0x3d: AbsoluteX(am);           and(am);    break; \
+    case 0x39: AbsoluteY(am);           and(am);    break; \
+    case 0x21: IndexedIndirectX(am);    and(am);    break; \
+    case 0x31: IndirectIndexedY(am);    and(am);    break; \
+    \
+    case 0x09: Immediate(am);           ora(am);    break; \
+    case 0x05: ZeroPage(am);            ora(am);    break; \
+    case 0x15: ZeroPageX(am);           ora(am);    break; \
+    case 0x0d: Absolute(am);            ora(am);    break; \
+    case 0x1d: AbsoluteX(am);           ora(am);    break; \
+    case 0x19: AbsoluteY(am);           ora(am);    break; \
+    case 0x01: IndexedIndirectX(am);    ora(am);    break; \
+    case 0x11: IndirectIndexedY(am);    ora(am);    break; \
+    \
+    case 0x49: Immediate(am);           eor(am);    break; \
+    case 0x45: ZeroPage(am);            eor(am);    break; \
+    case 0x55: ZeroPageX(am);           eor(am);    break; \
+    case 0x4d: Absolute(am);            eor(am);    break; \
+    case 0x5d: AbsoluteX(am);           eor(am);    break; \
+    case 0x59: AbsoluteY(am);           eor(am);    break; \
+    case 0x41: IndexedIndirectX(am);    eor(am);    break; \
+    case 0x51: IndirectIndexedY(am);    eor(am);    break; \
+    \
+    case 0x24: ZeroPage(am);            bit(am);    break; \
+    case 0x2c: Absolute(am);            bit(am);    break; \
+    \
     /*increments and decrements*/ \
     case 0xe6: ZeroPage(am);            inc(am);    break; \
     case 0xf6: ZeroPageX(am);           inc(am);    break; \

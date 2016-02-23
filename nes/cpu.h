@@ -214,6 +214,18 @@ private:
     void cpx(IAddressingMode* am) { cmp_base(am, _regs.X); }
     void cpy(IAddressingMode* am) { cmp_base(am, _regs.Y); }
 
+    // Bitwise Operations
+    void and(IAddressingMode* am) { _regs.A = _regs.SetZN(_regs.A & am->Load()); }
+    void ora(IAddressingMode* am) { _regs.A = _regs.SetZN(_regs.A | am->Load()); }
+    void eor(IAddressingMode* am) { _regs.A = _regs.SetZN(_regs.A ^ am->Load()); }
+    void bit(IAddressingMode* am) 
+    {
+        u8 val = am->Load();
+        _regs.SetFlag(Flag::Zero, (val &_regs.A) == 0);
+        _regs.SetFlag(Flag::Negative, (val & (1 << 7)) != 0);
+        _regs.SetFlag(Flag::Overflow, (val & (1 << 6)) != 0);
+    }
+
     // Increments and Decrements
     void inc(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() + 1)); }
     void dec(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() - 1)); }
