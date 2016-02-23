@@ -25,7 +25,7 @@ static u8 CYCLE_TABLE[0x100] = {
 // CPU Interrupt Vectors
 const u16 NMI_VECTOR    = 0xfffa;
 const u16 RESET_VECTOR  = 0xfffc;
-const u16 IRQ_VECTGOR   = 0xfffe;
+const u16 IRQ_VECTOR    = 0xfffe;
 
 // CPU Status Register Flags
 enum class Flag : u8
@@ -92,8 +92,9 @@ public:
     void storeb(u16 addr, u8 val);
 
     void Reset();
-
     void Step();
+    void Nmi();
+    void Irq();
 public:
     u32 Cycles;
 
@@ -159,6 +160,33 @@ private:
         u16 val = loadw(_regs.PC);
         _regs.PC += 2;
         return val;
+    }
+
+    // Stack Helpers
+    void PushB(u8 val)
+    {
+        storeb(0x100 | (u16)_regs.S, val);
+        _regs.S--;
+    }
+
+    void PushW(u16 val)
+    {
+        PushB((val >> 8) & 0xff);
+        PushB(val & 0xff);
+    }
+
+    u8 PopB()
+    {
+        loadb(0x100 | (u16)_regs.S);
+        _regs.S++;
+    }
+
+    u16 PopW()
+    {
+        u16 lo = (u16)PopB();
+        u16 hi = (u16)PopB();
+
+        return (hi << 8) | lo;
     }
 
     // Instructions

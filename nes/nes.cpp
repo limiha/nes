@@ -25,10 +25,19 @@ int main(int argc, char* argv[])
 
     cpu.Reset();
 
+    PpuStepResult ppuResult;
     for (;;)
     {
+        ppuResult.Reset();
+
         cpu.Step();
-        ppu.Step(cpu.Cycles);
+
+        ppu.Step(cpu.Cycles, ppuResult);
+        if (ppuResult.VBlankNmi)
+        {
+            cpu.Nmi();
+        } 
+        // else if IRQ
     }
 
     return 0;

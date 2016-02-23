@@ -58,6 +58,25 @@ void Cpu::Step()
     }
 }
 
+void Cpu::Nmi()
+{
+    PushW(_regs.PC);
+    PushB(_regs.S);
+    _regs.PC = loadw(NMI_VECTOR);
+}
+
+void Cpu::Irq()
+{
+    if (_regs.GetFlag(Flag::IRQ))
+    {
+        return;
+    }
+
+    PushW(_regs.PC);
+    PushB(_regs.S);
+    _regs.PC = loadw(IRQ_VECTOR);
+}
+
 void Cpu::Trace()
 {
     Disassembler disassembler(_regs.PC, _mem);
