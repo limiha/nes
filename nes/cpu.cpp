@@ -44,7 +44,10 @@ void Cpu::Reset()
 
 void Cpu::Step()
 {
+#if defined(TRACE)
     Trace();
+#endif
+
     u8 op = LoadBBumpPC();
 
     IAddressingMode* am = nullptr;
