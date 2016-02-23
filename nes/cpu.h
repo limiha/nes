@@ -95,7 +95,7 @@ public:
 
     void Step();
 public:
-    u64 Cycles;
+    u32 Cycles;
 
 private:
     CpuRegs _regs;

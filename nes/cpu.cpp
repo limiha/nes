@@ -65,7 +65,7 @@ void Cpu::Trace()
     DisassembledInstruction* instruction = nullptr;
     disassembler.Disassemble(&instruction);
 
-    printf("%04X %-10s %-12s A:%02x X:%02X Y:%02X P:%02X S:%02X CY:%lld\n",
+    printf("%04X %-10s %-12s A:%02x X:%02X Y:%02X P:%02X S:%02X CY:%d\n",
         _regs.PC,
         instruction->GetFormattedBytes().c_str(),
         instruction->GetDisassemblyString().c_str(),

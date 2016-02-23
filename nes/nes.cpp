@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
     for (;;)
     {
         cpu.Step();
+        ppu.Step(cpu.Cycles);
     }
 
     return 0;
