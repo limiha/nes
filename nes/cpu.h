@@ -35,6 +35,7 @@ enum class Flag : u8
     IRQ         = 1 << 2,
     Decimal     = 1 << 3,
     Break       = 1 << 4,
+    Unused      = 1 << 5,
     Overflow    = 1 << 6,
     Negative    = 1 << 7
 };
@@ -53,7 +54,7 @@ struct CpuRegs
         : A(0)
         , X(0)
         , Y(0)
-        , P((u8)Flag::Decimal | (1 << 5)) // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
+        , P((u8)Flag::Decimal | (u8)Flag::Unused) // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
         , S(0xfd) // Startup value according to http://wiki.nesdev.com/w/index.php/CPU_power_up_state
         , PC(0x8000)
     {
@@ -177,8 +178,9 @@ private:
 
     u8 PopB()
     {
-        loadb(0x100 | (u16)_regs.S);
-        _regs.S++;
+        u8 val = loadb(0x100 | (u16)(++_regs.S));
+
+        return val;
     }
 
     u16 PopW()
@@ -200,6 +202,25 @@ private:
     void sta(IAddressingMode* am) { am->Store(_regs.A); }
     void stx(IAddressingMode* am) { am->Store(_regs.X); }
     void sty(IAddressingMode* am) { am->Store(_regs.Y); }
+
+    // Comparisons
+    void cmp_base(IAddressingMode* am, u8 val)
+    {
+        u32 result = (u32)val - (u32)am->Load();
+        _regs.SetFlag(Flag::Carry, (result & 0x100) == 0);
+        _regs.SetZN((u8)result);
+    }
+    void cmp(IAddressingMode* am) { cmp_base(am, _regs.A); }
+    void cpx(IAddressingMode* am) { cmp_base(am, _regs.X); }
+    void cpy(IAddressingMode* am) { cmp_base(am, _regs.Y); }
+
+    // Increments and Decrements
+    void inc(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() + 1)); }
+    void dec(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() - 1)); }
+    void inx(IAddressingMode* am) { _regs.SetZN(++_regs.X); }
+    void dex(IAddressingMode* am) { _regs.SetZN(--_regs.X); }
+    void iny(IAddressingMode* am) { _regs.SetZN(++_regs.Y); }
+    void dey(IAddressingMode* am) { _regs.SetZN(--_regs.Y); }
 
     // Register Moves
     void tax(IAddressingMode*) { _regs.X = _regs.SetZN(_regs.A); }
@@ -237,4 +258,30 @@ private:
     void bcs(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Carry)); }
     void bne(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Zero)); }
     void beq(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Zero)); }
+
+    // Procedure Calls
+    void jsr(IAddressingMode* am) 
+    {
+        // jsr pushes the address of the NEXT instruction MINUS ONE
+        // weird, I know.
+        u16 target = LoadWBumpPC();
+        PushW(_regs.PC - 1);
+        _regs.PC = target;
+    }
+    void rts(IAddressingMode* am)
+    {
+        _regs.PC = PopW() + 1;
+    }
+    void brk(IAddressingMode* am)
+    {
+        PushW(_regs.PC + 1);
+        PushB(_regs.S | (u8)Flag::Break);
+        _regs.SetFlag(Flag::IRQ, true);
+        _regs.PC = loadw(IRQ_VECTOR);
+    }
+    void rti(IAddressingMode* am)
+    {
+        _regs.S = PopB() & ~((u8)Flag::Break);
+        _regs.PC = PopW();
+    }
 };

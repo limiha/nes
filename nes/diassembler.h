@@ -148,30 +148,35 @@ private:
     void IndexedIndirectX(DisassembledInstruction* instr) 
     {
         instr->_bytes.push_back(PeekPC());
-        instr->_ss << '(' << DisBBumpPC() << ',X)'; 
+        instr->_ss << '(' << DisBBumpPC() << ",X)"; 
     }
 
     void IndirectIndexedY(DisassembledInstruction* instr) 
     {
         instr->_bytes.push_back(PeekPC());
-        instr->_ss << '(' << DisBBumpPC() << '),Y'; 
+        instr->_ss << '(' << DisBBumpPC() << "),Y"; 
     }
 
     // Instructions
-
-#define PREPEND(name) \
-std::string address = instr->_ss.str(); \
-instr->_ss.str(name); \
-instr->_ss << ' ' << address; 
-
 #define INSTRUCTION(codeName, displayName) \
-void codeName(DisassembledInstruction* instr) { PREPEND(displayName); } 
+void codeName(DisassembledInstruction* instr) \
+{ \
+    std::string address = instr->_ss.str(); \
+    instr->_ss.str(displayName); \
+    instr->_ss << ' ' << address; \
+} 
 
 #define IMPLIED(codeName, displayName) \
-void codeName(DisassembledInstruction* instr) { instr->_ss << displayName; }
+void codeName(DisassembledInstruction* instr) { \
+    instr->_ss << displayName; \
+}
 
 #define BRANCH(codeName, displayName) \
-void codeName(DisassembledInstruction* instr) { instr->_ss << displayName << ' ' << DisBranchTarget(); }
+void codeName(DisassembledInstruction* instr) \
+{ \
+    instr->_bytes.push_back(PeekPC()); \
+    instr->_ss << displayName << ' ' << DisBranchTarget(); \
+}
 
     // Loads
     INSTRUCTION(lda, "LDA")
@@ -182,6 +187,19 @@ void codeName(DisassembledInstruction* instr) { instr->_ss << displayName << ' '
     INSTRUCTION(sta, "STA")
     INSTRUCTION(stx, "STX")
     INSTRUCTION(sty, "STY")
+
+    // Comparison
+    INSTRUCTION(cmp, "CMP")
+    INSTRUCTION(cpx, "CPX")
+    INSTRUCTION(cpy, "CPY")
+
+    // Increments and Decrements
+    INSTRUCTION(inc, "INC")
+    INSTRUCTION(dec, "DEC")
+    IMPLIED(inx, "INX")
+    IMPLIED(dex, "DEX")
+    IMPLIED(iny, "INY")
+    IMPLIED(dey, "DEY")
 
     // Register Moves
     IMPLIED(tax, "TAX")
@@ -209,4 +227,16 @@ void codeName(DisassembledInstruction* instr) { instr->_ss << displayName << ' '
     BRANCH(bcs, "BCS")
     BRANCH(bne, "BNE")
     BRANCH(beq, "BEQ")
+
+    // Procedure Calls
+    void jsr(DisassembledInstruction* instr)
+    {
+        instr->_bytes.push_back(PeekPC());
+        instr->_bytes.push_back(PeekPC(1));
+
+        instr->_ss << "JSR " << DisWBumpPC();
+    }
+    IMPLIED(rts, "RTS")
+    IMPLIED(brk, "BRK")
+    IMPLIED(rti, "RTI")
 };

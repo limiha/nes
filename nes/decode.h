@@ -4,7 +4,7 @@
 // op switch statment
 
 #define DECODE(op) \
-{\
+{ \
     switch (op) \
     { \
     /*loads*/ \
@@ -46,6 +46,40 @@
     case 0x94: ZeroPageX(am);           sty(am);    break; \
     case 0x8c: Absolute(am);            sty(am);    break; \
     \
+    /*comparisons*/ \
+    case 0xc9: Immediate(am);           cmp(am);    break; \
+    case 0xc5: ZeroPage(am);            cmp(am);    break; \
+    case 0xd5: ZeroPageX(am);           cmp(am);    break; \
+    case 0xcd: Absolute(am);            cmp(am);    break; \
+    case 0xdd: AbsoluteX(am);           cmp(am);    break; \
+    case 0xd9: AbsoluteY(am);           cmp(am);    break; \
+    case 0xc1: IndexedIndirectX(am);    cmp(am);    break; \
+    case 0xd1: IndirectIndexedY(am);    cmp(am);    break; \
+    \
+    case 0xe0: Immediate(am);           cpx(am);    break; \
+    case 0xe4: ZeroPage(am);            cpx(am);    break; \
+    case 0xec: Absolute(am);            cpx(am);    break; \
+    \
+    case 0xc0: Immediate(am);           cpy(am);    break; \
+    case 0xc4: ZeroPage(am);            cpy(am);    break; \
+    case 0xcc: Absolute(am);            cpy(am);    break; \
+    \
+    /*increments and decrements*/ \
+    case 0xe6: ZeroPage(am);            inc(am);    break; \
+    case 0xf6: ZeroPageX(am);           inc(am);    break; \
+    case 0xee: Absolute(am);            inc(am);    break; \
+    case 0xfe: AbsoluteX(am);           inc(am);    break; \
+    \
+    case 0xc6: ZeroPage(am);            dec(am);    break; \
+    case 0xd6: ZeroPageX(am);           dec(am);    break; \
+    case 0xce: Absolute(am);            dec(am);    break; \
+    case 0xde: AbsoluteX(am);           dec(am);    break; \
+    \
+    case 0xe8: inx(am); break; \
+    case 0xca: dex(am); break; \
+    case 0xc8: iny(am); break; \
+    case 0x88: dey(am); break; \
+    \
     /*register moves*/ \
     case 0xaa: tax(am); break; \
     case 0xa8: tay(am); break; \
@@ -72,8 +106,15 @@
     case 0xb0: bcs(am); break; \
     case 0xd0: bne(am); break; \
     case 0xf0: beq(am); break; \
+    \
+    /*procedure calls*/ \
+    case 0x20: jsr(am); break; \
+    case 0x60: rts(am); break; \
+    case 0x08: brk(am); break; \
+    case 0x28: rti(am); break; \
+    \
     default: \
         printf("Unimplemented instruction: 0x%02x\n", op); \
         __debugbreak(); \
-    }\
+    } \
 }

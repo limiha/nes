@@ -114,9 +114,14 @@ void Ppu::StartVBlank(PpuStepResult& result)
 }
 
 u8 Ppu::ReadPpuStatus() {
-    // TODO
+    u8 regVal = _regs.status.val;
 
-    return _regs.status.val;
+    // Docs say that reading this resets VBlank status;
+    _regs.status.SetInVBlank(false);
+    
+    // TODO: scrolling reset
+
+    return regVal;
 }
 
 u8 Ppu::ReadOamData()
