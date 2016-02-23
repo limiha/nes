@@ -199,6 +199,7 @@
     <Text Include="ReadMe.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="apu.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="decode.h" />
     <ClInclude Include="diassembler.h" />
@@ -211,6 +212,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="apu.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="disassembler.cpp" />
     <ClCompile Include="input.cpp" />

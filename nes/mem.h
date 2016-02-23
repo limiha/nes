@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 class Ppu;
+class Apu;
 class Input;
 class Rom;
 
@@ -56,14 +57,15 @@ private:
 class MemoryMap : public IMem
 {
 public:
-    MemoryMap(Ppu* ppu, Input* input, Rom* rom);
+    MemoryMap(Ppu& ppu, Apu& apu, Input& input, Rom& rom);
     ~MemoryMap();
 
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 private:
     Ram _ram;
-    Ppu* _ppu;
-    Input* _input;
-    Rom* _rom;
+    Ppu& _ppu;
+    Apu& _apu;
+    Input& _input;
+    Rom& _rom;
 };

@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "mem.h"
 #include "ppu.h"
+#include "apu.h"
 #include "input.h"
 #include "rom.h"
 
@@ -33,8 +34,9 @@ void Ram::storeb(u16 addr, u8 val)
 /*
     MemoryMap
 */
-MemoryMap::MemoryMap(Ppu* ppu, Input* input, Rom* rom)
+MemoryMap::MemoryMap(Ppu& ppu, Apu& apu, Input& input, Rom& rom)
     : _ppu(ppu)
+    , _apu(apu)
     , _input(input)
     , _rom(rom)
 {
@@ -55,16 +57,15 @@ u8 MemoryMap::loadb(u16 addr)
     }
     else if (addr < 0x4000)
     {
-        return _ppu->loadb(addr);
+        return _ppu.loadb(addr);
     }
     else if (addr < 0x4016)
     {
-        // TODO: apu;
-        return 0;
+        return _apu.loadb(addr);
     }
     else if (addr < 0x4020)
     {
-        return _input->loadb(addr);
+        return _input.loadb(addr);
     }
     else if (addr < 0x8000)
     {
@@ -74,7 +75,7 @@ u8 MemoryMap::loadb(u16 addr)
     }
     else
     {
-        return _rom->prg_loadb(addr);
+        return _rom.prg_loadb(addr);
     }
 }
 
@@ -86,15 +87,15 @@ void MemoryMap::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x4000)
     {
-        _ppu->storeb(addr, val);
+        _ppu.storeb(addr, val);
     }
     else if (addr < 0x4016)
     {
-        // TODO: apu
+        _apu.storeb(addr, val);
     }
     else if (addr < 0x4020)
     {
-        _input->storeb(addr, val);
+        _input.storeb(addr, val);
     }
     else if (addr < 0x8000)
     {

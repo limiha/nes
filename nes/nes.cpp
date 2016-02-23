@@ -7,6 +7,7 @@
 #include "ppu.h"
 #include "input.h"
 #include "rom.h"
+#include "apu.h"
 
 int main(int argc, char* argv[])
 {
@@ -21,8 +22,9 @@ int main(int argc, char* argv[])
     VRam vram(rom);
 
     Ppu ppu(vram);
+    Apu apu;
     Input input;
-    MemoryMap mem(&ppu, &input, &rom);
+    MemoryMap mem(ppu, apu, input, rom);
     Cpu cpu(&mem);
 
     cpu.Reset();
