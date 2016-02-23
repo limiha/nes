@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mem.h"
+#include "rom.h"
 
 const u32 SCREEN_HEIGHT = 240;
 const u32 SCREEN_WIDTH = 256;
@@ -8,16 +9,36 @@ const u32 CYCLES_PER_SCANLINE = 114;
 const u32 VBLANK_SCANLINE = 241;
 const u32 LAST_SCANLINE = 261;
 
+// VRam
+
+class VRam : public IMem
+{
+public:
+    VRam(Rom& rom);
+    ~VRam();
+
+    // IMem
+    u8 loadb(u16 addr);
+    void storeb(u16 addr, u8 val);
+private:
+    Rom& _rom;
+
+    // FIXME: This is enough VRAM for two name tables
+    // FIXME: Which is not correct for all mapper scenarios
+    u8 _nametables[0x800];
+
+    u8 _pallete[0x20];
+};
+
 // PPU Regs
 struct PpuCtrl
 {
     u8 val;
 
     PpuCtrl() : val(0) { }
-    bool VBlankNmi()
-    {
-        return (val & 0x80) != 0;
-    }
+
+    u16 VRamAddrIncrement() { return (val & (1 << 3)) == 0 ? 1 : 32; }
+    bool VBlankNmi() { return (val & (1 << 7)) != 0; }
 };
 
 struct PpuMask
@@ -97,7 +118,7 @@ struct PpuStepResult
 class Ppu : public IMem
 {
 public:
-    Ppu();
+    Ppu(VRam& vram);
     ~Ppu();
 
     // IMem
@@ -107,6 +128,7 @@ public:
     void Step(u32& cycles, PpuStepResult& result);
 private:
     PpuRegs _regs;
+    VRam& _vram;
 
     u64 _cycles;
     u16 _scanline;

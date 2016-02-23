@@ -18,7 +18,9 @@ int main(int argc, char* argv[])
     Rom rom;
     rom.Load(std::string(argv[1]));
 
-    Ppu ppu;
+    VRam vram(rom);
+
+    Ppu ppu(vram);
     Input input;
     MemoryMap mem(&ppu, &input, &rom);
     Cpu cpu(&mem);

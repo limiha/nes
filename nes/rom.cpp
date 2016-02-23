@@ -5,6 +5,8 @@
 
 Rom::Rom()
 {
+    ZeroMemory(_PrgRom, sizeof(_PrgRom));
+    ZeroMemory(_ChrRom, sizeof(_ChrRom));
 }
 
 Rom::~Rom()

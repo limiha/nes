@@ -3,8 +3,57 @@
 #include "stdafx.h"
 #include "ppu.h"
 
-Ppu::Ppu()
-    : _cycles(0)
+VRam::VRam(Rom& rom)
+    : _rom(rom)
+{
+    ZeroMemory(_nametables, sizeof(_nametables));
+    ZeroMemory(_pallete, sizeof(_pallete));
+}
+
+VRam::~VRam()
+{
+}
+
+u8 VRam::loadb(u16 addr)
+{
+    if (addr < 0x2000)
+    {
+        return _rom.chr_loadb(addr);
+    }
+    else if (addr < 0x3f00)
+    {
+        return _nametables[addr & 0x7ff];
+    }
+    else if (addr < 0x4000)
+    {
+        return _pallete[addr & 0x1f];
+    }
+    return 0;
+}
+
+void VRam::storeb(u16 addr, u8 val)
+{
+    if (addr < 0x2000)
+    {
+        // uniplemented 
+        __debugbreak();
+    }
+    else if (addr < 0x3f00)
+    {
+        _nametables[addr & 0x7ff];
+    }
+    else if (addr < 0x4000)
+    {
+        // TODO: if the pallete entry written is the background pallete it needs to be mirrored
+        // to several locations
+        _pallete[addr & 0x1f] = val;
+    }
+}
+
+
+Ppu::Ppu(VRam& vram)
+    : _vram(_vram)
+    , _cycles(0)
     , _scanline(VBLANK_SCANLINE)
 {
 }
@@ -186,5 +235,7 @@ void Ppu::WritePpuAddr(u8 val)
 
 void Ppu::WritePpuData(u8 val)
 {
-    // TODO
+    _vram.loadb(_regs.addr.val);
+
+    _regs.addr.val += _regs.ctrl.VRamAddrIncrement();
 }
