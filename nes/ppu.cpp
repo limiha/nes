@@ -75,6 +75,7 @@ u8 Ppu::loadb(u16 addr)
         break;
     case 2:
         return ReadPpuStatus();
+        break;
     case 3:
         // cannot read $2003
         break;
