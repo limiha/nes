@@ -26,7 +26,9 @@ u8 VRam::loadb(u16 addr)
     }
     else if (addr < 0x4000)
     {
-        return _pallete[addr & 0x1f];
+        // if addr is a multiple of 4, return palette entry 0
+        u16 palette_addr = (addr | 0xFC) ? addr : 0;
+        return _pallete[palette_addr & 0x1f];
     }
     return 0;
 }
@@ -44,9 +46,12 @@ void VRam::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x4000)
     {
-        // TODO: if the pallete entry written is the background pallete it needs to be mirrored
-        // to several locations
-        _pallete[addr & 0x1f] = val;
+        u16 palette_addr = addr & 0x1f;
+        if (palette_addr == 0x10)
+        {
+            palette_addr = 0x00;
+        }
+        _pallete[palette_addr] = val;
     }
 }
 
