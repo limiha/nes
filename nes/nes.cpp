@@ -8,6 +8,24 @@
 #include "input.h"
 #include "rom.h"
 #include "apu.h"
+#include "gfx.h"
+
+#include <time.h>
+
+void calc_fps(time_t& last_time, u32& frames)
+{
+    time_t now = time(0);
+    if (now >= last_time + 1)
+    {
+        printf("%d\n", frames);
+        frames = 0;
+        last_time = now;
+    }
+    else 
+    {
+        frames++;
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -15,6 +33,8 @@ int main(int argc, char* argv[])
     {
         return -1;
     }
+
+    Gfx gfx;
 
     Rom rom;
     rom.Load(std::string(argv[1]));
@@ -29,6 +49,9 @@ int main(int argc, char* argv[])
 
     cpu.Reset();
 
+    time_t last_time = time(0);
+    u32 frames = 0;
+
     PpuStepResult ppuResult;
     for (;;)
     {
@@ -42,6 +65,12 @@ int main(int argc, char* argv[])
             cpu.Nmi();
         } 
         // else if IRQ
+
+        if (ppuResult.NewFrame)
+        {
+            gfx.Blit(ppu.Screen);
+            calc_fps(last_time, frames);
+        }
     }
 
     return 0;

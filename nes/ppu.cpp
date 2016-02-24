@@ -78,7 +78,9 @@ Ppu::Ppu(VRam& vram)
     : _vram(vram)
     , _cycles(0)
     , _scanline(VBLANK_SCANLINE)
+    , _ppuDatatBuffer(0)
 {
+    ZeroMemory(Screen, sizeof(Screen));
 }
 
 Ppu::~Ppu()
@@ -155,36 +157,7 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
-void Ppu::Step(u32& cycles, PpuStepResult& result)
-{
-    while (cycles >= CYCLES_PER_SCANLINE)
-    {
-        cycles -= CYCLES_PER_SCANLINE;
-        _scanline++;
-
-        if (_scanline == VBLANK_SCANLINE)
-        {
-            StartVBlank(result);
-        }
-
-        if (_scanline == LAST_SCANLINE)
-        {
-            result.NewFrame = true;
-            _scanline = 0;
-            _regs.status.SetInVBlank(false);
-        }
-    }
-}
-
-void Ppu::StartVBlank(PpuStepResult& result)
-{
-    _regs.status.SetInVBlank(true);
-
-    if (_regs.ctrl.VBlankNmi())
-    {
-        result.VBlankNmi = true;
-    }
-}
+// Register Control
 
 u8 Ppu::ReadPpuStatus() {
     u8 regVal = _regs.status.val;
@@ -280,4 +253,58 @@ void Ppu::WritePpuData(u8 val)
     _vram.loadb(_regs.addr.val);
 
     _regs.addr.val += _regs.ctrl.VRamAddrIncrement();
+}
+
+// Rendering
+
+u8 getRand()
+{
+    return (u8)(rand() % 256);
+}
+
+void Ppu::RenderScanline()
+{
+
+    for (u32 x = 0; x < SCREEN_WIDTH; x++)
+    {
+        Screen[(_scanline * SCREEN_WIDTH + x) * 3 + 0] = getRand();
+        Screen[(_scanline * SCREEN_WIDTH + x) * 3 + 1] = getRand();
+        Screen[(_scanline * SCREEN_WIDTH + x) * 3 + 2] = getRand();
+    }
+}
+
+void Ppu::StartVBlank(PpuStepResult& result)
+{
+    _regs.status.SetInVBlank(true);
+
+    if (_regs.ctrl.VBlankNmi())
+    {
+        result.VBlankNmi = true;
+    }
+}
+
+void Ppu::Step(u32& cycles, PpuStepResult& result)
+{
+    while (cycles >= CYCLES_PER_SCANLINE)
+    {
+        cycles -= CYCLES_PER_SCANLINE;
+
+        if (_scanline < SCREEN_HEIGHT)
+        {
+            RenderScanline();
+        }
+        _scanline++;
+
+        if (_scanline == VBLANK_SCANLINE)
+        {
+            StartVBlank(result);
+        }
+
+        if (_scanline == LAST_SCANLINE)
+        {
+            result.NewFrame = true;
+            _scanline = 0;
+            _regs.status.SetInVBlank(false);
+        }
+    }
 }

@@ -138,8 +138,12 @@ public:
     void storeb(u16 addr, u8 val);
 
     void Step(u32& cycles, PpuStepResult& result);
+
+public:
+    u8 Screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
 private:
     PpuRegs _regs;
+
     VRam& _vram;
     Oam _oam;
 
@@ -147,6 +151,7 @@ private:
 
     u64 _cycles;
     u16 _scanline;
+
 private:
     void StartVBlank(PpuStepResult& result);
 
@@ -162,4 +167,8 @@ private:
     void WritePpuScroll(u8 val);
     void WritePpuAddr(u8 val);
     void WritePpuData(u8 val);
+
+    // Rendering Operations
+
+    void RenderScanline();
 };

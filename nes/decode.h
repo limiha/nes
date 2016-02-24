@@ -147,8 +147,8 @@
     case 0x08: brk(am); break; \
     case 0x28: rti(am); break; \
     \
-    default: \
-        printf("Unimplemented instruction: 0x%02x\n", op); \
-        __debugbreak(); \
+    /*default:*/ \
+        /*printf("Unimplemented instruction: 0x%02x\n", op);*/ \
+        /*__debugbreak();*/ \
     } \
 }
