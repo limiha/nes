@@ -206,7 +206,25 @@ u8 Ppu::ReadOamData()
 
 u8 Ppu::ReadPpuData()
 {
-    // TODO
+    u16 addr = _regs.addr.val;
+    u8 val = _vram.loadb(addr);
+    _regs.addr.val += _regs.ctrl.VRamAddrIncrement();
+
+    u8 bufferedData = _ppuDatatBuffer;
+
+    if (addr < 0x3f00)
+    {
+        _ppuDatatBuffer = val;
+        return bufferedData;
+    }
+    else
+    {
+        // FIXME: Reading from the palettes still updates the buffer in someway
+        // FIXME: But not with the palette data
+
+        return val;
+    }
+
     return 0;
 }
 

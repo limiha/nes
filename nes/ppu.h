@@ -143,6 +143,8 @@ private:
     VRam& _vram;
     Oam _oam;
 
+    u8 _ppuDatatBuffer;
+
     u64 _cycles;
     u16 _scanline;
 private:
