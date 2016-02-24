@@ -50,6 +50,24 @@ void VRam::storeb(u16 addr, u8 val)
     }
 }
 
+Oam::Oam()
+{
+    ZeroMemory(_ram, sizeof(_ram));
+}
+
+Oam::~Oam()
+{
+}
+
+u8 Oam::loadb(u16 addr)
+{
+    return _ram[(u8)addr];
+}
+
+void Oam::storeb(u16 addr, u8 val)
+{
+    _ram[(u8)addr] = val;
+}
 
 Ppu::Ppu(VRam& vram)
     : _vram(_vram)
@@ -189,26 +207,26 @@ u8 Ppu::ReadPpuData()
 
 void Ppu::WritePpuCtrl(u8 val)
 {
-    // TODO
+    // TODO: side effects of writing
 
     _regs.ctrl.val = val;
 }
 
 void Ppu::WritePpuMask(u8 val)
 {
-    // TODO
+    // TODO: side effects of writing
 
     _regs.mask.val = val;
 }
 
 void Ppu::WriteOamAddr(u8 val)
 {
-    // TODO
+    _regs.oamAddr = val;
 }
 
 void Ppu::WriteOamData(u8 val)
 {
-    // TODO
+    _oam.storeb(_regs.oamAddr++, val);
 }
 
 void Ppu::WritePpuScroll(u8 val)

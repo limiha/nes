@@ -29,11 +29,22 @@ void Cpu::storeb(u16 addr, u8 val)
 {
     if (addr == 0x4014)
     {
-        // TODO: DMA
+        Dma(val);
     }
     else
     {
         _mem->storeb(addr, val);
+    }
+}
+
+void Cpu::Dma(u8 val)
+{
+    u16 addr = ((u16)val) << 8;
+
+    for (u8 i = 0; i < 0xff; i++)
+    {
+        storeb(0x2004, loadb(addr++));
+        Cycles += 2;
     }
 }
 
@@ -66,6 +77,7 @@ void Cpu::Nmi()
     PushW(_regs.PC);
     PushB(_regs.S);
     _regs.PC = loadw(NMI_VECTOR);
+    Cycles += 7;
 }
 
 void Cpu::Irq()
@@ -79,6 +91,7 @@ void Cpu::Irq()
     PushB(_regs.S);
     _regs.SetFlag(Flag::IRQ, true);
     _regs.PC = loadw(IRQ_VECTOR);
+    Cycles += 7;
 }
 
 void Cpu::Trace()

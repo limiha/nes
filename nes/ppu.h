@@ -9,8 +9,6 @@ const u32 CYCLES_PER_SCANLINE = 114;
 const u32 VBLANK_SCANLINE = 241;
 const u32 LAST_SCANLINE = 261;
 
-// VRam
-
 class VRam : public IMem
 {
 public:
@@ -28,6 +26,20 @@ private:
     u8 _nametables[0x800];
 
     u8 _pallete[0x20];
+};
+
+// Object Access Memory
+// This is Sprite Ram, which confused me forever
+class Oam : public IMem
+{
+public:
+    Oam();
+    ~Oam();
+
+    u8 loadb(u16 addr);
+    void storeb(u16 addr, u8 val);
+private:
+    u8 _ram[0x100];
 };
 
 // PPU Regs
@@ -129,6 +141,7 @@ public:
 private:
     PpuRegs _regs;
     VRam& _vram;
+    Oam _oam;
 
     u64 _cycles;
     u16 _scanline;

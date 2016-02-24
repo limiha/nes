@@ -104,6 +104,7 @@ private:
     IMem* _mem;
 
 private:
+    void Dma(u8 val);
     void Trace();
 
     // Adressing Modes
