@@ -70,7 +70,7 @@ void Oam::storeb(u16 addr, u8 val)
 }
 
 Ppu::Ppu(VRam& vram)
-    : _vram(_vram)
+    : _vram(vram)
     , _cycles(0)
     , _scanline(VBLANK_SCANLINE)
 {
