@@ -199,6 +199,12 @@ void codeName(DisassembledInstruction* instr) \
     INSTRUCTION(eor, "EOR")
     INSTRUCTION(bit, "BIT")
 
+    // Shifts and Rotates
+    INSTRUCTION(rol, "ROL")
+    INSTRUCTION(ror, "ROR")
+    INSTRUCTION(asl, "ASL")
+    INSTRUCTION(lsr, "LSR")
+
     // Increments and Decrements
     INSTRUCTION(inc, "INC")
     INSTRUCTION(dec, "DEC")
@@ -264,4 +270,13 @@ void codeName(DisassembledInstruction* instr) \
     IMPLIED(rts, "RTS")
     IMPLIED(brk, "BRK")
     IMPLIED(rti, "RTI")
+
+    // Stack Operations
+    IMPLIED(pha, "PHA")
+    IMPLIED(pla, "PLA")
+    IMPLIED(php, "PHP")
+    IMPLIED(plp, "PLP")
+
+    // No Operation
+    IMPLIED(nop, "NOP")
 };

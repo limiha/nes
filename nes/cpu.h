@@ -227,6 +227,36 @@ private:
         _regs.SetFlag(Flag::Overflow, (val & (1 << 6)) != 0);
     }
 
+    // Shifts and Rotates
+    void shl_base(bool lsb, IAddressingMode* am)
+    {
+        u8 val = am->Load();
+        bool newCarry = (val & 0x80) != 0;
+        u8 result = (val << 1) | (lsb ? 1 : 0);
+        _regs.SetFlag(Flag::Carry, newCarry);
+        am->Store(_regs.SetZN(result));
+    }
+    void shr_base(bool msb, IAddressingMode* am)
+    {
+        u8 val = am->Load();
+        bool newCarry = (val & 0x01) != 0;
+        u8 result = (val >> 1) | (msb ? 0x80 : 0);
+        _regs.SetFlag(Flag::Carry, newCarry);
+        am->Store(_regs.SetZN(result));
+    }
+    void rol(IAddressingMode* am)
+    {
+        bool oldCarry = _regs.GetFlag(Flag::Carry);
+        shl_base(oldCarry, am);
+    }
+    void ror(IAddressingMode* am)
+    {
+        bool oldCarry = _regs.GetFlag(Flag::Carry);
+        shr_base(oldCarry, am);
+    }
+    void asl(IAddressingMode* am) { shl_base(false, am); }
+    void lsr(IAddressingMode* am) { shr_base(false, am); }
+
     // Increments and Decrements
     void inc(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() + 1)); }
     void dec(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() - 1)); }
@@ -313,4 +343,13 @@ private:
         _regs.S = PopB() & ~((u8)Flag::Break);
         _regs.PC = PopW();
     }
+
+    // Stack Operations
+    void pha(IAddressingMode* am) { PushB(_regs.A); }
+    void pla(IAddressingMode* am) { _regs.A = _regs.SetZN(PopB()); }
+    void php(IAddressingMode* am) { PushB(_regs.S | ((u8)Flag::Break)); } // FIXME: is b_flag right here?
+    void plp(IAddressingMode* am) { _regs.S = PopB(); }
+
+    // No Operation
+    void nop(IAddressingMode* am) { }
 };

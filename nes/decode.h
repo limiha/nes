@@ -95,6 +95,31 @@
     case 0x24: ZeroPage(am);            bit(am);    break; \
     case 0x2c: Absolute(am);            bit(am);    break; \
     \
+    /*shifts and rotates*/ \
+    case 0x2a: Accumulator(am);         rol(am);    break; \
+    case 0x26: ZeroPage(am);            rol(am);    break; \
+    case 0x36: ZeroPageX(am);           rol(am);    break; \
+    case 0x2e: Absolute(am);            rol(am);    break; \
+    case 0x3e: AbsoluteX(am);           rol(am);    break; \
+    \
+    case 0x6a: Accumulator(am);         ror(am);    break; \
+    case 0x66: ZeroPage(am);            ror(am);    break; \
+    case 0x76: ZeroPageX(am);           ror(am);    break; \
+    case 0x6e: Absolute(am);            ror(am);    break; \
+    case 0x7e: AbsoluteX(am);           ror(am);    break; \
+    \
+    case 0x0a: Accumulator(am);         asl(am);    break; \
+    case 0x06: ZeroPage(am);            asl(am);    break; \
+    case 0x16: ZeroPageX(am);           asl(am);    break; \
+    case 0x0e: Absolute(am);            asl(am);    break; \
+    case 0x1e: AbsoluteX(am);           asl(am);    break; \
+    \
+    case 0x4a: Accumulator(am);         lsr(am);    break; \
+    case 0x46: ZeroPage(am);            lsr(am);    break; \
+    case 0x56: ZeroPageX(am);           lsr(am);    break; \
+    case 0x4e: Absolute(am);            lsr(am);    break; \
+    case 0x5e: AbsoluteX(am);           lsr(am);    break; \
+    \
     /*increments and decrements*/ \
     case 0xe6: ZeroPage(am);            inc(am);    break; \
     case 0xf6: ZeroPageX(am);           inc(am);    break; \
@@ -144,10 +169,19 @@
     /*procedure calls*/ \
     case 0x20: jsr(am); break; \
     case 0x60: rts(am); break; \
-    case 0x08: brk(am); break; \
-    case 0x28: rti(am); break; \
+    case 0x00: brk(am); break; \
+    case 0x40: rti(am); break; \
     \
-    /*default:*/ \
+    /*stack operations*/ \
+    case 0x48: pha(am); break; \
+    case 0x68: pla(am); break; \
+    case 0x08: php(am); break; \
+    case 0x28: plp(am); break; \
+    \
+    /*no operation*/ \
+    case 0xea: nop(am); break; \
+    \
+    default: \
         printf("Unimplemented instruction: 0x%02x\n", op); \
         __debugbreak(); \
     } \
