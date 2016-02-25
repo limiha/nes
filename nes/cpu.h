@@ -366,7 +366,7 @@ private:
     }
     void rti(IAddressingMode* am)
     {
-        _regs.S = PopB() & ~((u8)Flag::Break);
+        _regs.P = PopB() & ~((u8)Flag::Break);
         _regs.PC = PopW();
     }
 

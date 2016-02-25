@@ -51,13 +51,22 @@ void Cpu::Dma(u8 val)
 void Cpu::Reset()
 {
     _regs.PC = loadw(RESET_VECTOR);
+
 }
+
+#include <vector>
+std::vector<u16> breakAddress;
 
 void Cpu::Step()
 {
 #if defined(TRACE)
     Trace();
 #endif
+
+    //if (_regs.PC == 0x8181)
+    //{
+    //    __debugbreak();
+    //}
 
     u8 op = LoadBBumpPC();
 
@@ -75,7 +84,7 @@ void Cpu::Step()
 void Cpu::Nmi()
 {
     PushW(_regs.PC);
-    PushB(_regs.S);
+    PushB(_regs.P);
     _regs.PC = loadw(NMI_VECTOR);
     Cycles += 7;
 }
@@ -88,7 +97,7 @@ void Cpu::Irq()
     }
 
     PushW(_regs.PC);
-    PushB(_regs.S);
+    PushB(_regs.P);
     _regs.SetFlag(Flag::IRQ, true);
     _regs.PC = loadw(IRQ_VECTOR);
     Cycles += 7;
