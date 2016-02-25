@@ -1,8 +1,12 @@
 #include "stdafx.h"
 #include "gfx.h"
-#include "ppu.h" // for screen size
 
 #include <SDL.h>
+
+const u32 SCREEN_WIDTH = 256 +32;
+const u32 SCREEN_HEIGHT = 240 +30;
+
+u8 render_screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
 
 Gfx::Gfx(u32 scale)
 {
@@ -41,9 +45,42 @@ Gfx::~Gfx()
     SDL_Quit();
 }
 
+void render_grid(u8 screen[])
+{
+    ZeroMemory(render_screen, SCREEN_HEIGHT * SCREEN_WIDTH * 3);
+
+    int screen_index = 0;
+
+    for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT * 3;)
+    {
+        if (i % 7776 == 0)
+        {
+            for (int j = 0; j < 864; j++)
+            {
+                render_screen[i++] = 0x00;
+            }
+        }
+        else 
+            if (i % (9 * 3) == 0)
+        {
+            render_screen[i++] = 0x00;
+            render_screen[i++] = 0x00;
+            render_screen[i++] = 0x00;
+        }
+        else
+        {
+            render_screen[i++] = screen[screen_index++];
+            render_screen[i++] = screen[screen_index++];
+            render_screen[i++] = screen[screen_index++];
+        }
+    }
+}
+
 void Gfx::Blit(u8 screen[])
 {
-    SDL_UpdateTexture(_texture, NULL, (void*)screen, SCREEN_WIDTH * 3);
+    render_grid(screen);
+
+    SDL_UpdateTexture(_texture, NULL, (void*)render_screen, SCREEN_WIDTH * 3);
     SDL_RenderClear(_renderer);
     SDL_RenderCopy(_renderer, _texture, NULL, NULL);
     SDL_RenderPresent(_renderer);
