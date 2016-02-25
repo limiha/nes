@@ -99,6 +99,7 @@ struct PpuCtrl
 
     u16 VRamAddrIncrement() { return (val & (1 << 3)) == 0 ? 1 : 32; }
     bool VBlankNmi() { return (val & (1 << 7)) != 0; }
+    u16 BackgroundBaseAddress() { return (val & (1 << 4)) == 0 ? 0 : 0x1000; }
 };
 
 struct PpuMask
@@ -219,5 +220,9 @@ private:
     // Rendering Operations
 
     void PutPixel(u32 x, u32 y, rgb& pixel);
+    
+    // Returns the Palette Index of the Background pixel at (x,y)
+    u32 GetBackgroundColor(u32 x, u32 y);
+
     void RenderScanline();
 };

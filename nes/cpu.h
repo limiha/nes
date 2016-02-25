@@ -360,7 +360,7 @@ private:
     void brk(IAddressingMode* am)
     {
         PushW(_regs.PC + 1);
-        PushB(_regs.S | (u8)Flag::Break);
+        PushB(_regs.P | (u8)Flag::Break);
         _regs.SetFlag(Flag::IRQ, true);
         _regs.PC = loadw(IRQ_VECTOR);
     }
@@ -373,8 +373,8 @@ private:
     // Stack Operations
     void pha(IAddressingMode* am) { PushB(_regs.A); }
     void pla(IAddressingMode* am) { _regs.A = _regs.SetZN(PopB()); }
-    void php(IAddressingMode* am) { PushB(_regs.S | ((u8)Flag::Break)); } // FIXME: is b_flag right here?
-    void plp(IAddressingMode* am) { _regs.S = PopB(); }
+    void php(IAddressingMode* am) { PushB(_regs.P | ((u8)Flag::Break)); } // FIXME: is b_flag right here?
+    void plp(IAddressingMode* am) { _regs.P = PopB(); }
 
     // No Operation
     void nop(IAddressingMode* am) { }

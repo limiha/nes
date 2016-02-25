@@ -42,7 +42,7 @@ void VRam::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x3f00)
     {
-        _nametables[addr & 0x7ff];
+        _nametables[addr & 0x7ff] = val;
     }
     else if (addr < 0x4000)
     {
@@ -250,7 +250,7 @@ void Ppu::WritePpuAddr(u8 val)
 
 void Ppu::WritePpuData(u8 val)
 {
-    _vram.loadb(_regs.addr.val);
+    _vram.storeb(_regs.addr.val, val);
 
     _regs.addr.val += _regs.ctrl.VRamAddrIncrement();
 }
@@ -264,13 +264,73 @@ void Ppu::PutPixel(u32 x, u32 y, rgb& pixel)
     Screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
+u32 Ppu::GetBackgroundColor(u32 x, u32 y)
+{
+    // FOR THE TIME BEING I AM ONLY DRAWING THE CONTENTS OF THE FIRST NAME TABLE
+    // THIS IS NOT AT ALL CORRECT
+
+    // The Name Tables store tile numbers
+    // These Tile Numbers are indices into the pattern tables
+    // The first step is to figure out the correct address to read from the name tables
+
+    // Today just use the first name table
+    u16 nameTableBaseAddress = 0x2000;
+
+    // A Name Table represents a 32 * 30 grid of tiles
+    // A tile is 8x8, so to the tile index divide by 8
+    u8 nameTableIndexX = x / 8;
+    u8 nameTableIndexY = y / 8;
+
+    u16 nameTableOffset = (nameTableIndexY * 32) + nameTableIndexX;
+    u16 nameTableAddress = nameTableBaseAddress + nameTableOffset;
+
+    // Get 
+    u8 patternTableIndex = _vram.loadb(nameTableAddress);
+
+    // Now we have the index of the tile we are drawing.
+    // A tile is a 16 byte (128 bit) structure stored in the pattern tables
+    // It consists of two 8 byte 'planes'
+    // We need the correct bit from both planes
+    // The bit in the second plane will be 8 bytes after the first
+
+    // First we need to know if the background tiles are held in 
+    // the left Pattern Table or the right Pattern Table
+    u16 patternTableBaseAddress = _regs.ctrl.BackgroundBaseAddress();
+
+    // Next we add to this the index * 16 since each tile is 16 bytes
+    u16 patternTableBaseOffset = patternTableIndex * 16;
+
+    // Now we need the row offset into the pattern itself
+    u16 patternRowOffset = y % 8;
+
+    // Now we have the address of the row we need from the first plane
+    u16 patternRowAddress = patternTableBaseAddress + patternTableBaseOffset + patternRowOffset;
+
+    // Load the byte representing this row from both planes
+    u8 loPlaneRow = _vram.loadb(patternRowAddress);
+    u8 hiPlaneRow = _vram.loadb(patternRowAddress + 8);
+
+    u32 patternBitIndex = x % 8;
+
+    // We need to index into these bytes to get the specific bit for this pixel
+    u8 loPlaneBit = (loPlaneRow >> (7 - patternBitIndex)) & 0x1;
+    u8 hiPlaneBit = (hiPlaneRow >> (7 - patternBitIndex)) & 0x1;
+
+    u8 loPaletteIndexBits = (hiPlaneBit << 1) | loPlaneBit;
+
+    u8 paletteIndex = loPaletteIndexBits;
+
+    return paletteIndex;
+}
+
 void Ppu::RenderScanline()
 {
     rgb pixel;
     for (u32 x = 0; x < SCREEN_WIDTH; x++)
     {
         pixel.Reset();
-        pixel.SetColor(rand() % 0x40);
+        u32 paletteIndex = GetBackgroundColor(x, _scanline);
+        pixel.SetColor(paletteIndex);
         PutPixel(x, _scanline, pixel);
     }
 }
