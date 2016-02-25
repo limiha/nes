@@ -7,7 +7,7 @@ struct SDL_Texture;
 class Gfx
 {
 public:
-    Gfx();
+    Gfx(u32 scale);
     ~Gfx();
 
     void Blit(u8 screen[]);

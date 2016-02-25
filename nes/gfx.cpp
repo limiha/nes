@@ -4,7 +4,7 @@
 
 #include <SDL.h>
 
-Gfx::Gfx()
+Gfx::Gfx(u32 scale)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
 
@@ -12,8 +12,8 @@ Gfx::Gfx()
         "NES",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
+        SCREEN_WIDTH * scale ,
+        SCREEN_HEIGHT * scale,
         SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI
         );
 
@@ -34,18 +34,9 @@ Gfx::Gfx()
 
 Gfx::~Gfx()
 {
-    if (_texture)
-    {
-        SDL_DestroyTexture(_texture);
-    }
-    if (_renderer)
-    {
-        SDL_DestroyRenderer(_renderer);
-    }
-    if (_window)
-    {
-        SDL_DestroyWindow(_window);
-    }
+    SDL_DestroyTexture(_texture);
+    SDL_DestroyRenderer(_renderer);
+    SDL_DestroyWindow(_window);
 
     SDL_Quit();
 }

@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    Gfx gfx;
+    Gfx gfx(3);
 
     Rom rom;
     rom.Load(std::string(argv[1]));

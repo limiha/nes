@@ -257,19 +257,21 @@ void Ppu::WritePpuData(u8 val)
 
 // Rendering
 
-u8 getRand()
+void Ppu::PutPixel(u32 x, u32 y, rgb& pixel)
 {
-    return (u8)(rand() % 256);
+    Screen[(y * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
+    Screen[(y * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
+    Screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
 void Ppu::RenderScanline()
 {
-
+    rgb pixel;
     for (u32 x = 0; x < SCREEN_WIDTH; x++)
     {
-        Screen[(_scanline * SCREEN_WIDTH + x) * 3 + 0] = getRand();
-        Screen[(_scanline * SCREEN_WIDTH + x) * 3 + 1] = getRand();
-        Screen[(_scanline * SCREEN_WIDTH + x) * 3 + 2] = getRand();
+        pixel.Reset();
+        pixel.SetColor(rand() % 0x40);
+        PutPixel(x, _scanline, pixel);
     }
 }
 
