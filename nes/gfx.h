@@ -10,7 +10,7 @@ public:
     Gfx();
     ~Gfx();
 
-    void Blit(u8* screen);
+    void Blit(u8 screen[]);
 private:
     SDL_Window* _window;
     SDL_Renderer* _renderer;
