@@ -204,6 +204,32 @@ private:
     void stx(IAddressingMode* am) { am->Store(_regs.X); }
     void sty(IAddressingMode* am) { am->Store(_regs.Y); }
 
+    // Arithemtic
+    void adc(IAddressingMode* am) 
+    {
+        u8 val = am->Load();
+        u32 result = (u32)_regs.A + (u32)val;
+        if (_regs.GetFlag(Flag::Carry)) result += 1;
+        _regs.SetFlag(Flag::Carry, (result & 0x100) != 0);
+
+        u8 resultByte = result & 0xff;
+        u8 a = _regs.A;
+        _regs.SetFlag(Flag::Overflow, (((a ^ val) & 0x80) == 0) && (((a ^ resultByte) & 0x80) == 0));
+        _regs.A = _regs.SetZN(resultByte);
+    }
+    void sbc(IAddressingMode* am)
+    {
+        u8 val = am->Load();
+        u32 result = (u32)_regs.A - (u32)val;
+        if (!_regs.GetFlag(Flag::Carry)) result -= 1;
+        _regs.SetFlag(Flag::Carry, (result & 0x100) == 0);
+
+        u8 resultByte = result & 0xff;
+        u8 a = _regs.A;
+        _regs.SetFlag(Flag::Overflow, (((a ^ resultByte) & 0x80) != 0) && ((a ^ val) & 0x80) == 0x80);
+        _regs.A = _regs.SetZN(resultByte);
+    }
+
     // Comparisons
     void cmp_base(IAddressingMode* am, u8 val)
     {

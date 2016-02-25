@@ -188,6 +188,10 @@ void codeName(DisassembledInstruction* instr) \
     INSTRUCTION(stx, "STX")
     INSTRUCTION(sty, "STY")
 
+    // Arithmetic
+    INSTRUCTION(adc, "ADC")
+    INSTRUCTION(sbc, "SBD")
+
     // Comparisons
     INSTRUCTION(cmp, "CMP")
     INSTRUCTION(cpx, "CPX")

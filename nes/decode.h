@@ -46,6 +46,25 @@
     case 0x94: ZeroPageX(am);           sty(am);    break; \
     case 0x8c: Absolute(am);            sty(am);    break; \
     \
+    /*arithmetic*/ \
+    case 0x69: Immediate(am);           adc(am);    break; \
+    case 0x65: ZeroPage(am);            adc(am);    break; \
+    case 0x75: ZeroPageX(am);           adc(am);    break; \
+    case 0x6d: Absolute(am);            adc(am);    break; \
+    case 0x7d: AbsoluteX(am);           adc(am);    break; \
+    case 0x79: AbsoluteY(am);           adc(am);    break; \
+    case 0x61: IndexedIndirectX(am);    adc(am);    break; \
+    case 0x71: IndirectIndexedY(am);    adc(am);    break; \
+    \
+    case 0xe9: Immediate(am);           sbc(am);    break; \
+    case 0xe5: ZeroPage(am);            sbc(am);    break; \
+    case 0xf5: ZeroPageX(am);           sbc(am);    break; \
+    case 0xed: Absolute(am);            sbc(am);    break; \
+    case 0xfd: AbsoluteX(am);           sbc(am);    break; \
+    case 0xf9: AbsoluteY(am);           sbc(am);    break; \
+    case 0xe1: IndexedIndirectX(am);    sbc(am);    break; \
+    case 0xf1: IndirectIndexedY(am);    sbc(am);    break; \
+    \
     /*comparisons*/ \
     case 0xc9: Immediate(am);           cmp(am);    break; \
     case 0xc5: ZeroPage(am);            cmp(am);    break; \
