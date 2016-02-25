@@ -148,7 +148,7 @@
     case 0x28: rti(am); break; \
     \
     /*default:*/ \
-        /*printf("Unimplemented instruction: 0x%02x\n", op);*/ \
-        /*__debugbreak();*/ \
+        printf("Unimplemented instruction: 0x%02x\n", op); \
+        __debugbreak(); \
     } \
 }

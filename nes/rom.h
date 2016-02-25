@@ -2,6 +2,8 @@
 
 #include "mem.h"
 
+#include <vector>
+
 const u32 PRG_ROM_BANK_SIZE = 0x4000;
 const u32 CHR_ROM_BANK_SIZE = 0x2000;
 
@@ -28,6 +30,14 @@ struct INesHeader
     {
         return (flags6 & (1 << 1)) != 0;
     }
+
+    u32 MapperNumber()
+    {
+        u8 lo = (flags6 >> 4) & 0x0f;
+        u8 hi = (flags7 >> 4) & 0x0f;
+
+        return (hi << 4) | lo;
+    }
 };
 
 class Rom
@@ -44,6 +54,6 @@ public:
 public:
     INesHeader Header;
 private:
-    u8 _PrgRom[PRG_ROM_BANK_SIZE * 2];
-    u8 _ChrRom[CHR_ROM_BANK_SIZE * 1];
+    std::vector<u8> _PrgRom;
+    std::vector<u8> _ChrRom;
 };

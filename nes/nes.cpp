@@ -31,13 +31,18 @@ int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
+        printf("No ROM specified\n");
         return -1;
     }
 
     Gfx gfx(3);
 
     Rom rom;
-    rom.Load(std::string(argv[1]));
+    if (!rom.Load(std::string(argv[1])))
+    {
+        printf("Incompatible ROM\n");
+        return -1;
+    }
 
     VRam vram(rom);
 

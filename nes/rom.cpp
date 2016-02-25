@@ -5,8 +5,6 @@
 
 Rom::Rom()
 {
-    ZeroMemory(_PrgRom, sizeof(_PrgRom));
-    ZeroMemory(_ChrRom, sizeof(_ChrRom));
 }
 
 Rom::~Rom()
@@ -26,22 +24,22 @@ bool Rom::Load(std::string romPath)
             return false;
         }
 
-        //TODO: This needs to be handled by mapper support
-        if (Header.PrgRomSize > 2)
+        if (Header.MapperNumber() != 0)
         {
             return false;
         }
-        if (Header.ChrRomSize > 1)
-        {
-            return false;
-        }
+
+        //TODO: Figure out how to handle a trainer
         if (Header.HasTrainer())
         {
             return false;
         }
 
-        stream.read((char*)_PrgRom, PRG_ROM_BANK_SIZE * Header.PrgRomSize);
-        stream.read((char*)_ChrRom, CHR_ROM_BANK_SIZE * Header.ChrRomSize);
+        _PrgRom.resize(Header.PrgRomSize * PRG_ROM_BANK_SIZE);
+        stream.read((char*)&_PrgRom[0], PRG_ROM_BANK_SIZE * Header.PrgRomSize);
+
+        _ChrRom.resize(Header.ChrRomSize * CHR_ROM_BANK_SIZE);
+        stream.read((char*)&_ChrRom[0], CHR_ROM_BANK_SIZE * Header.ChrRomSize);
 
         stream.close();
 
