@@ -108,6 +108,9 @@ struct PpuMask
     u8 val;
 
     PpuMask() : val(0) { }
+
+    bool ShowBackground()   { return (val & (1 << 3)) != 0; }
+    bool ShowSprites()      { return (val & (1 << 4)) != 0; }
 };
 
 struct PpuStatus

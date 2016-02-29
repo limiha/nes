@@ -266,6 +266,11 @@ void Ppu::PutPixel(u32 x, u32 y, rgb& pixel)
 
 u32 Ppu::GetBackgroundColor(u32 x, u32 y)
 {
+    if (!_regs.mask.ShowBackground())
+    {
+        return 0;
+    }
+
     // FOR THE TIME BEING I AM ONLY DRAWING THE CONTENTS OF THE FIRST NAME TABLE
     // THIS IS NOT AT ALL CORRECT
 
