@@ -63,10 +63,12 @@ void Cpu::Step()
     Trace();
 #endif
 
-    //if (_regs.PC == 0x8181)
-    //{
-    //    __debugbreak();
-    //}
+#if defined(DEBUG)
+    if (_regs.PC == 0xdefe)
+    {
+        __debugbreak();
+    }
+#endif
 
     u8 op = LoadBBumpPC();
 

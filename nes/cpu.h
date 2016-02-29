@@ -147,11 +147,11 @@ private:
     void Immediate(IAddressingMode* &am) { am = new ImmediateAddressingMode(*this); }
     void Accumulator(IAddressingMode* &am) { am = new AccumulatorAddressingMode(*this); }
     void ZeroPage(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)LoadBBumpPC()); }
-    void ZeroPageX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadBBumpPC() + _regs.X); }
-    void ZeroPageY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadBBumpPC() + _regs.Y); }
+    void ZeroPageX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)(u8)(LoadBBumpPC() + _regs.X)); }
+    void ZeroPageY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)(u8)(LoadBBumpPC() + _regs.Y)); }
     void Absolute(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC()); }
-    void AbsoluteX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.X); }
-    void AbsoluteY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + _regs.Y); }
+    void AbsoluteX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + (u16)_regs.X); }
+    void AbsoluteY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + (u16)_regs.Y); }
     void IndexedIndirectX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC() + _regs.X)); }
     void IndirectIndexedY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC()) + _regs.Y); }
 

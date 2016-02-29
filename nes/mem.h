@@ -32,10 +32,10 @@ public:
 
     // this has wrapround behavior for the zero page
     // reading a word at 0xff reads two bytes from 0xff and 0x00
-    u16 loadw_zp(u16 addr)
+    u16 loadw_zp(u8 addr)
     {
-        u16 lo = (u16)loadb(addr);
-        u16 hi = (u16)loadb((addr + 1) & 0xff);
+        u16 lo = (u16)loadb((u16)addr);
+        u16 hi = (u16)loadb((u16)((u8)(addr + 1)));
         return (hi << 8) | lo;
     }
 };
