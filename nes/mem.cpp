@@ -5,7 +5,6 @@
 #include "ppu.h"
 #include "apu.h"
 #include "input.h"
-#include "rom.h"
 
 /*
     Ram
@@ -34,11 +33,11 @@ void Ram::storeb(u16 addr, u8 val)
 /*
     MemoryMap
 */
-MemoryMap::MemoryMap(Ppu& ppu, Apu& apu, Input& input, Rom& rom)
+MemoryMap::MemoryMap(Ppu& ppu, Apu& apu, Input& input, std::shared_ptr<IMapper> mapper)
     : _ppu(ppu)
     , _apu(apu)
     , _input(input)
-    , _rom(rom)
+    , _mapper(mapper)
 {
 
 }
@@ -75,7 +74,7 @@ u8 MemoryMap::loadb(u16 addr)
     }
     else
     {
-        return _rom.prg_loadb(addr);
+        return _mapper->prg_loadb(addr);
     }
 }
 
@@ -99,14 +98,11 @@ void MemoryMap::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x8000)
     {
-        // TODO: input
-        // TOOD: apu
         // TODO: Expansion ROM
         // TODO: SRAM
     }
     else
     {
-        // TODO PRG-ROM
-        // TODO Mapper
+        _mapper->prg_storeb(addr, val);
     }
 }

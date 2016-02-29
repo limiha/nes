@@ -48,12 +48,8 @@ public:
 
     bool Load(std::string romPath);
 
-    u8 prg_loadb(u16 addr);
-    u8 chr_loadb(u16 addr);
-
 public:
     INesHeader Header;
-private:
-    std::vector<u8> _PrgRom;
-    std::vector<u8> _ChrRom;
+    std::vector<u8> PrgRom;
+    std::vector<u8> ChrRom;
 };

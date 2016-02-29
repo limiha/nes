@@ -3,8 +3,8 @@
 #include "stdafx.h"
 #include "ppu.h"
 
-VRam::VRam(Rom& rom)
-    : _rom(rom)
+VRam::VRam(std::shared_ptr<IMapper> mapper)
+    : _mapper(mapper)
 {
     ZeroMemory(_nametables, sizeof(_nametables));
     ZeroMemory(_pallete, sizeof(_pallete));
@@ -18,7 +18,7 @@ u8 VRam::loadb(u16 addr)
 {
     if (addr < 0x2000)
     {
-        return _rom.chr_loadb(addr);
+        return _mapper->chr_loadb(addr);
     }
     else if (addr < 0x3f00)
     {
@@ -37,8 +37,7 @@ void VRam::storeb(u16 addr, u8 val)
 {
     if (addr < 0x2000)
     {
-        // uniplemented 
-        __debugbreak();
+        _mapper->chr_storeb(addr, val);
     }
     else if (addr < 0x3f00)
     {

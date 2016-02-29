@@ -23,4 +23,6 @@
 #include <sstream>
 #include <iomanip>
 
+#include <memory>
+
 #include "types.h"

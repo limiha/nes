@@ -205,6 +205,7 @@
     <ClInclude Include="diassembler.h" />
     <ClInclude Include="gfx.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="mapper.h" />
     <ClInclude Include="ppu.h" />
     <ClInclude Include="rom.h" />
     <ClInclude Include="types.h" />
@@ -218,6 +219,7 @@
     <ClCompile Include="disassembler.cpp" />
     <ClCompile Include="gfx.cpp" />
     <ClCompile Include="input.cpp" />
+    <ClCompile Include="mapper.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="nes.cpp" />
     <ClCompile Include="ppu.cpp" />

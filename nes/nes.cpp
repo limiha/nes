@@ -9,6 +9,7 @@
 #include "rom.h"
 #include "apu.h"
 #include "gfx.h"
+#include "mapper.h"
 
 #include <time.h>
 
@@ -44,12 +45,18 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    VRam vram(rom);
+    std::shared_ptr<IMapper> mapper = IMapper::CreateMapper(rom);
+    if (mapper == nullptr)
+    {
+        return -1;
+    }
+
+    VRam vram(mapper);
 
     Ppu ppu(vram);
     Apu apu;
     Input input;
-    MemoryMap mem(ppu, apu, input, rom);
+    MemoryMap mem(ppu, apu, input, mapper);
     Cpu cpu(&mem);
 
     cpu.Reset();

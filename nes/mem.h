@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include "mapper.h"
 
 class Ppu;
 class Apu;
@@ -57,7 +58,7 @@ private:
 class MemoryMap : public IMem
 {
 public:
-    MemoryMap(Ppu& ppu, Apu& apu, Input& input, Rom& rom);
+    MemoryMap(Ppu& ppu, Apu& apu, Input& input, std::shared_ptr<IMapper>);
     ~MemoryMap();
 
     u8 loadb(u16 addr);
@@ -67,5 +68,5 @@ private:
     Ppu& _ppu;
     Apu& _apu;
     Input& _input;
-    Rom& _rom;
+    std::shared_ptr<IMapper> _mapper;
 };

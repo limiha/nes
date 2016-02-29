@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mem.h"
-#include "rom.h"
+#include "mapper.h"
 
 const u32 SCREEN_HEIGHT = 240;
 const u32 SCREEN_WIDTH = 256;
@@ -60,14 +60,14 @@ struct rgb
 class VRam : public IMem
 {
 public:
-    VRam(Rom& rom);
+    VRam(std::shared_ptr<IMapper>);
     ~VRam();
 
     // IMem
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 private:
-    Rom& _rom;
+    std::shared_ptr<IMapper> _mapper;
 
     // FIXME: This is enough VRAM for two name tables
     // FIXME: Which is not correct for all mapper scenarios
