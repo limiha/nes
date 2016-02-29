@@ -332,26 +332,11 @@ u32 Ppu::GetBackgroundColor(u32 x, u32 y)
 
     u8 attributeByte = _vram.loadb(attributeTableAddress);
 
-    u8 attributeByteIndexX = nameTableIndexX % 4;
-    u8 attributeByteIndexY = nameTableIndexY % 4;
+    u8 attributeByteIndexX = (nameTableIndexX % 4) / 2;
+    u8 attributeByteIndexY = (nameTableIndexY % 4) / 2;
+    u8 attributeByteIndex = (attributeByteIndexY * 2) + attributeByteIndexX;
 
-    u8 hiPaletteIndexBits;
-    if (attributeByteIndexX < 2 && attributeByteIndexY < 2)
-    {
-        hiPaletteIndexBits = attributeByte & 0x3;
-    } 
-    else if (attributeByteIndexY < 2)
-    {
-        hiPaletteIndexBits = (attributeByte >> 2) & 0x3;
-    }
-    else if (attributeByteIndexX < 2)
-    {
-        hiPaletteIndexBits = (attributeByte >> 4) & 0x3;
-    }
-    else
-    {
-        hiPaletteIndexBits = (attributeByte >> 6) & 0x3;
-    }
+    u8 hiPaletteIndexBits = (attributeByte >> (attributeByteIndex * 2)) & 0x3;
 
     u8 tileColor = (hiPaletteIndexBits << 2) | loPaletteIndexBits;
 
