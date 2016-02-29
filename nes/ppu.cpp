@@ -27,7 +27,7 @@ u8 VRam::loadb(u16 addr)
     else if (addr < 0x4000)
     {
         // if addr is a multiple of 4, return palette entry 0
-        u16 palette_addr = (addr | 0xFC) ? addr : 0;
+        u16 palette_addr = (addr % 4 == 0) ? 0 : addr;
         return _pallete[palette_addr & 0x1f];
     }
     return 0;
@@ -318,11 +318,11 @@ u32 Ppu::GetBackgroundColor(u32 x, u32 y)
 
     u8 loPaletteIndexBits = (hiPlaneBit << 1) | loPlaneBit;
 
-    u8 attributeTableBaseAddress = nameTableBaseAddress + 0x3c0;
+    u16 attributeTableBaseAddress = nameTableBaseAddress + 0x3c0;
 
     u16 attributeTableIndexX = nameTableIndexX / 4;
     u16 attributeTableIndexY = nameTableIndexY / 4;
-    u16 attributeTableOffset = (attributeTableIndexY * 8) + attributeTableIndexY;
+    u16 attributeTableOffset = (attributeTableIndexY * 8) + attributeTableIndexX;
     u16 attributeTableAddress = attributeTableBaseAddress + attributeTableOffset;
 
     u8 attributeByte = _vram.loadb(attributeTableAddress);
@@ -348,8 +348,7 @@ u32 Ppu::GetBackgroundColor(u32 x, u32 y)
         hiPaletteIndexBits = (attributeByte >> 6) & 0x3;
     }
 
-    //u8 paletteIndex = (hiPaletteIndexBits << 2) | loPaletteIndexBits;
-    u8 tileColor = loPaletteIndexBits;
+    u8 tileColor = (hiPaletteIndexBits << 2) | loPaletteIndexBits;
 
     u8 paletteIndex = _vram.loadb(0x3f00 + (tileColor & 0x3f));
 

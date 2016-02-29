@@ -3,8 +3,8 @@
 
 #include <SDL.h>
 
-const u32 SCREEN_WIDTH = 256 +32;
-const u32 SCREEN_HEIGHT = 240 +30;
+const u32 SCREEN_WIDTH = 256; // +32;
+const u32 SCREEN_HEIGHT = 240; // +30;
 
 u8 render_screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
 
@@ -78,9 +78,9 @@ void render_grid(u8 screen[])
 
 void Gfx::Blit(u8 screen[])
 {
-    render_grid(screen);
+    //render_grid(screen);
 
-    SDL_UpdateTexture(_texture, NULL, (void*)render_screen, SCREEN_WIDTH * 3);
+    SDL_UpdateTexture(_texture, NULL, (void*)screen, SCREEN_WIDTH * 3);
     SDL_RenderClear(_renderer);
     SDL_RenderCopy(_renderer, _texture, NULL, NULL);
     SDL_RenderPresent(_renderer);

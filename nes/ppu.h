@@ -97,9 +97,10 @@ struct PpuCtrl
 
     PpuCtrl() : val(0) { }
 
-    u16 VRamAddrIncrement() { return (val & (1 << 3)) == 0 ? 1 : 32; }
-    bool VBlankNmi() { return (val & (1 << 7)) != 0; }
-    u16 BackgroundBaseAddress() { return (val & (1 << 4)) == 0 ? 0 : 0x1000; }
+    u16 VRamAddrIncrement()         { return (val & (1 << 2)) == 0 ? 1 : 32; }
+    u16 SpriteBaseAddress()         { return (val & (1 << 3)) == 0 ? 0 : 0x1000; }
+    u16 BackgroundBaseAddress()     { return (val & (1 << 4)) == 0 ? 0 : 0x1000; }
+    bool VBlankNmi()                { return (val & (1 << 7)) != 0; }
 };
 
 struct PpuMask
