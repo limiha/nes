@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
         if (ppuResult.NewFrame)
         {
             gfx.Blit(ppu.Screen);
+            input.CheckInput();
             calc_fps(last_time, frames);
         }
     }

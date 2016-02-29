@@ -84,13 +84,4 @@ void Gfx::Blit(u8 screen[])
     SDL_RenderClear(_renderer);
     SDL_RenderCopy(_renderer, _texture, NULL, NULL);
     SDL_RenderPresent(_renderer);
-
-    // Pump event loop
-    // TODO: This needs to be moved to the input
-    // TODO: It is here for the time being to keep the SDL Window responsive;
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-
-    }
 }
