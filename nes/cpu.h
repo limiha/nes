@@ -214,7 +214,7 @@ private:
 
         u8 resultByte = result & 0xff;
         u8 a = _regs.A;
-        _regs.SetFlag(Flag::Overflow, (((a ^ val) & 0x80) == 0) && (((a ^ resultByte) & 0x80) == 0));
+        _regs.SetFlag(Flag::Overflow, (((a ^ val) & 0x80) == 0) && (((a ^ resultByte) & 0x80) == 0x80));
         _regs.A = _regs.SetZN(resultByte);
     }
     void sbc(IAddressingMode* am)
