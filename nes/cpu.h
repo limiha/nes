@@ -54,7 +54,7 @@ struct CpuRegs
         : A(0)
         , X(0)
         , Y(0)
-        , P((u8)Flag::Decimal | (u8)Flag::Unused) // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
+        , P((u8)Flag::Unused | (u8)Flag::IRQ) // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
         , S(0xfd) // Startup value according to http://wiki.nesdev.com/w/index.php/CPU_power_up_state
         , PC(0x8000)
     {
@@ -360,8 +360,9 @@ private:
     void brk(IAddressingMode* am)
     {
         PushW(_regs.PC + 1);
-        PushB(_regs.P | (u8)Flag::Break);
+        PushB(_regs.P | (u8)Flag::Break | (u8)Flag::Unused);
         _regs.SetFlag(Flag::IRQ, true);
+        _regs.SetFlag(Flag::Unused, true);
         _regs.PC = loadw(IRQ_VECTOR);
     }
     void rti(IAddressingMode* am)
@@ -373,7 +374,7 @@ private:
     // Stack Operations
     void pha(IAddressingMode* am) { PushB(_regs.A); }
     void pla(IAddressingMode* am) { _regs.A = _regs.SetZN(PopB()); }
-    void php(IAddressingMode* am) { PushB(_regs.P | ((u8)Flag::Break)); } // FIXME: is b_flag right here?
+    void php(IAddressingMode* am) { PushB(_regs.P | (u8)Flag::Break | (u8)Flag::Unused); } // FIXME: is b_flag right here?
     void plp(IAddressingMode* am) { _regs.P = PopB(); }
 
     // No Operation

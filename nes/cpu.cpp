@@ -64,7 +64,7 @@ void Cpu::Step()
 #endif
 
 #if defined(DEBUG)
-    if (_regs.PC == 0xdefe)
+    if (_regs.PC == 0x9048)
     {
         __debugbreak();
     }

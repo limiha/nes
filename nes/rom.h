@@ -28,7 +28,7 @@ struct INesHeader
 
     bool HasTrainer()
     {
-        return (flags6 & (1 << 1)) != 0;
+        return (flags6 & (1 << 2)) != 0;
     }
 
     u32 MapperNumber()

@@ -66,7 +66,7 @@ u8 MemoryMap::loadb(u16 addr)
     {
         return _input.loadb(addr);
     }
-    else if (addr < 0x8000)
+    else if (addr < 0x6000)
     {
         // TODO: Expansion ROM
         // TODO: SRAM
@@ -96,7 +96,7 @@ void MemoryMap::storeb(u16 addr, u8 val)
     {
         _input.storeb(addr, val);
     }
-    else if (addr < 0x8000)
+    else if (addr < 0x6000)
     {
         // TODO: Expansion ROM
         // TODO: SRAM
