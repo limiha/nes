@@ -456,13 +456,13 @@ void Ppu::RenderScanline()
         pixel.Reset();
 
         u32 backgroundPaletteIndex = 0;
-        if (_regs.mask.ShowBackground())
+        if (_regs.mask.ShowBackground() && !((x < 8) && _regs.mask.clipBackground()))
         {
             backgroundPaletteIndex = GetBackgroundColor(x, (u8)_scanline);
         }
 
         u32 spritePaletteIndex = 0;
-        if (_spritesOnLine.size() > 0)
+        if (_spritesOnLine.size() > 0 && !((x < 8) && _regs.mask.clipSprites()))
         {
             spritePaletteIndex = GetSpriteColor(x, (u8)_scanline, backgroundPaletteIndex != 0, spritePriority);
         }

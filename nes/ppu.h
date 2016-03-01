@@ -132,6 +132,8 @@ struct PpuMask
 
     PpuMask() : val(0) { }
 
+    bool clipBackground()   { return (val & (1 << 1)) == 0; }
+    bool clipSprites()      { return (val & (1 << 2)) == 0; }
     bool ShowBackground()   { return (val & (1 << 3)) != 0; }
     bool ShowSprites()      { return (val & (1 << 4)) != 0; }
 };
