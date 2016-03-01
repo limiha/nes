@@ -41,7 +41,7 @@ void Cpu::Dma(u8 val)
 {
     u16 addr = ((u16)val) << 8;
 
-    for (u8 i = 0; i < 0xff; i++)
+    for (u16 i = 0; i < 0x100; i++)
     {
         storeb(0x2004, loadb(addr++));
         Cycles += 2;
