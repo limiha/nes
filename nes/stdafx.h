@@ -25,4 +25,6 @@
 
 #include <memory>
 
+#include <vector>
+
 #include "types.h"

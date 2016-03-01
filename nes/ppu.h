@@ -76,6 +76,26 @@ private:
     u8 _pallete[0x20];
 };
 
+enum class SpritePriority
+{
+    Above,
+    Below
+};
+
+#pragma pack()
+struct Sprite
+{
+    u8 Y; // Y coordinate (minus 1) of this sprite
+    u8 TileIndex; // The tile index of this sprite in the pattern tables
+    u8 Attributes; // Sprite Attributes, 
+    u8 X; // X coordinate of this sprite;
+
+    u8 Palette() { return Attributes & 0x03; }
+    SpritePriority Prioirty() { return (Attributes & (1 << 5)) == 0 ? SpritePriority::Above : SpritePriority::Below; }
+    bool FlipHorizontal() { return (Attributes & (1 << 6)) != 0; }
+    bool FlipVertical() { return (Attributes & (1 << 7)) != 0; }
+};
+
 // Object Access Memory
 // This is Sprite Ram, which confused me forever
 class Oam : public IMem
@@ -86,6 +106,9 @@ public:
 
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
+
+    const Sprite* operator[](const int index);
+
 private:
     u8 _ram[0x100];
 };
@@ -123,11 +146,35 @@ struct PpuStatus
     {
         if (on)
         {
-            val |= 0x80;
+            val |= (1 << 7);
         }
         else
         {
-            val &= ~0x80;
+            val &= ~(1 << 7);
+        }
+    }
+
+    void SetSpriteOverflow(bool on)
+    {
+        if (on)
+        {
+            val |= (1 << 5);
+        }
+        else
+        {
+            val &= ~(1 << 5);
+        }
+    }
+
+    void SetSpriteZeroHit(bool on)
+    {
+        if (on)
+        {
+            val |= (1 << 6);
+        }
+        else
+        {
+            val &= ~(1 << 6);
         }
     }
 };
@@ -205,6 +252,9 @@ private:
     u64 _cycles;
     u16 _scanline;
 
+    bool _spriteZeroOnLine;
+    std::vector<std::unique_ptr<Sprite>> _spritesOnLine;
+
 private:
     void StartVBlank(PpuStepResult& result);
 
@@ -223,10 +273,14 @@ private:
 
     // Rendering Operations
 
-    void PutPixel(u32 x, u32 y, rgb& pixel);
+    void PutPixel(u8 x, u8 y, rgb& pixel);
+    void CalculateSpritesOnLine(u8 y);
     
     // Returns the Palette Index of the Background pixel at (x,y)
-    u32 GetBackgroundColor(u32 x, u32 y);
+    u8 GetBackgroundColor(u8 x, u8 y);
+
+    // Returns the palette index of the sprite pixel at (x,y)
+    u8 GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priority);
 
     void RenderScanline();
 };

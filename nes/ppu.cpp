@@ -73,11 +73,18 @@ void Oam::storeb(u16 addr, u8 val)
     _ram[(u8)addr] = val;
 }
 
+const Sprite* Oam::operator[](const int index)
+{
+    return (Sprite*)&_ram[index * 4];
+}
+
+
 Ppu::Ppu(VRam& vram)
     : _vram(vram)
     , _cycles(0)
     , _scanline(VBLANK_SCANLINE)
     , _ppuDatatBuffer(0)
+    , _spritesOnLine(8)
 {
     ZeroMemory(Screen, sizeof(Screen));
 }
@@ -256,20 +263,15 @@ void Ppu::WritePpuData(u8 val)
 
 // Rendering
 
-void Ppu::PutPixel(u32 x, u32 y, rgb& pixel)
+void Ppu::PutPixel(u8 x, u8 y, rgb& pixel)
 {
     Screen[(y * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
     Screen[(y * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
     Screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
-u32 Ppu::GetBackgroundColor(u32 x, u32 y)
+u8 Ppu::GetBackgroundColor(u8 x, u8 y)
 {
-    if (!_regs.mask.ShowBackground())
-    {
-        return 0;
-    }
-
     // FOR THE TIME BEING I AM ONLY DRAWING THE CONTENTS OF THE FIRST NAME TABLE
     // THIS IS NOT AT ALL CORRECT
 
@@ -320,7 +322,7 @@ u32 Ppu::GetBackgroundColor(u32 x, u32 y)
     u8 loPlaneBit = (loPlaneRow >> (7 - patternBitIndex)) & 0x1;
     u8 hiPlaneBit = (hiPlaneRow >> (7 - patternBitIndex)) & 0x1;
 
-    u8 loPaletteIndexBits = (hiPlaneBit << 1) | loPlaneBit;
+    u8 patternColor = (hiPlaneBit << 1) | loPlaneBit;
 
     u16 attributeTableBaseAddress = nameTableBaseAddress + 0x3c0;
 
@@ -335,24 +337,158 @@ u32 Ppu::GetBackgroundColor(u32 x, u32 y)
     u8 attributeByteIndexY = (nameTableIndexY % 4) / 2;
     u8 attributeByteIndex = (attributeByteIndexY * 2) + attributeByteIndexX;
 
-    u8 hiPaletteIndexBits = (attributeByte >> (attributeByteIndex * 2)) & 0x3;
+    u8 attributeColor = (attributeByte >> (attributeByteIndex * 2)) & 0x3;
 
-    u8 tileColor = (hiPaletteIndexBits << 2) | loPaletteIndexBits;
+    u8 tileColor = (attributeColor << 2) | patternColor;
 
-    u8 paletteIndex = _vram.loadb(0x3f00 + (tileColor & 0x3f));
+    u8 paletteIndex = _vram.loadb(0x3f00 + (u16)tileColor) & 0x3f;
 
     return paletteIndex;
 }
 
+void Ppu::CalculateSpritesOnLine(u8 y)
+{
+    u8 numSpritesOnLine = 0;
+    for (int i = 0; i < 64; i++)
+    {
+        const Sprite* pSprite = _oam[i];
+
+        if ((pSprite->Y + 1) <= y && (pSprite->Y + 1 + 8) > y)
+        {
+            if (numSpritesOnLine < 8)
+            {
+                if (i == 0)
+                {
+                    _spriteZeroOnLine = true;
+                }
+                _spritesOnLine.push_back(std::make_unique<Sprite>(*pSprite));
+                numSpritesOnLine++;
+            }
+            else if (numSpritesOnLine == 8)
+            {
+                _regs.status.SetSpriteOverflow(true);
+            }
+        }
+    }
+}
+
+u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priority)
+{
+    std::vector<std::unique_ptr<Sprite>>::iterator it = _spritesOnLine.begin();
+
+    for (; it != _spritesOnLine.end(); it++)
+    {
+        Sprite* spr = it->get();
+
+        if (spr->X <= x && spr->X + 8 > x)
+        {
+            // our pixel is within this sprite
+
+            // which table are sprites in?
+            u16 patternTableBaseAddress = _regs.ctrl.SpriteBaseAddress();
+
+            u16 patternTableBaseOffset = spr->TileIndex * 16;
+
+            u16 patternRowOffset = y - (spr->Y + 1);
+            if (spr->FlipVertical())
+            {
+                patternRowOffset = 7 - patternRowOffset;
+            }
+
+            u16 patternRowAddress = patternTableBaseAddress + patternTableBaseOffset + patternRowOffset;
+
+            u8 loPlaneRow = _vram.loadb(patternRowAddress);
+            u8 hiPlaneRow = _vram.loadb(patternRowAddress + 8);
+
+            u32 patternBitIndex = x - spr->X;
+            if (spr->FlipHorizontal())
+            {
+                patternBitIndex = 7 - patternBitIndex;
+            }
+
+            u8 loPlaneBit = (loPlaneRow >> (7 - patternBitIndex)) & 0x01;
+            u8 hiPlaneBit = (hiPlaneRow >> (7 - patternBitIndex)) & 0x01;
+
+            u8 patternColor = (hiPlaneBit << 1) | loPlaneBit;
+
+            if (patternColor == 0)
+            {
+                // This sprite pixel is transparent, continue searching for lower pri sprites
+                continue;
+            }
+
+            // Now we know we have an opaque sprite pixel
+            if (backgroundOpaque && _spriteZeroOnLine && it == _spritesOnLine.begin())
+            {
+                _regs.status.SetSpriteZeroHit(true);
+            }
+
+            priority = spr->Prioirty();
+
+            u8 tileColor = (spr->Palette() << 2) | patternColor;
+
+            u8 paletteIndex = _vram.loadb(0x3f10 + (u16)tileColor) & 0x3f;
+
+            return paletteIndex;
+        }
+    }
+
+    return 0;
+}
+
 void Ppu::RenderScanline()
 {
+    SpritePriority spritePriority;
     rgb pixel;
+
+    u8 backdropColorIndex = _vram.loadw(0x3f00) & 0x3f; // get the universal background color
+
+    _spriteZeroOnLine = false;
+    _spritesOnLine.clear();
+
+    if (_regs.mask.ShowSprites())
+    {
+        CalculateSpritesOnLine((u8)_scanline); // This cast works for now because we don't get called when _scanline > 240
+    }
+
     for (u32 x = 0; x < SCREEN_WIDTH; x++)
     {
         pixel.Reset();
-        u32 paletteIndex = GetBackgroundColor(x, _scanline);
-        pixel.SetColor(paletteIndex);
-        PutPixel(x, _scanline, pixel);
+
+        u32 backgroundPaletteIndex = 0;
+        if (_regs.mask.ShowBackground())
+        {
+            backgroundPaletteIndex = GetBackgroundColor(x, (u8)_scanline);
+        }
+
+        u32 spritePaletteIndex = 0;
+        if (_spritesOnLine.size() > 0)
+        {
+            spritePaletteIndex = GetSpriteColor(x, (u8)_scanline, backgroundPaletteIndex != 0, spritePriority);
+        }
+
+        if (backgroundPaletteIndex == 0 && spritePaletteIndex == 0)
+        {
+            pixel.SetColor(backdropColorIndex);
+        }
+        else if (spritePaletteIndex == 0)
+        {
+            pixel.SetColor(backgroundPaletteIndex);
+        }
+        else if (backgroundPaletteIndex == 0)
+        {
+            pixel.SetColor(spritePaletteIndex);
+        }
+        else if (spritePriority == SpritePriority::Above)
+        {
+            pixel.SetColor(spritePaletteIndex);
+        }
+        else if (spritePriority == SpritePriority::Below)
+        {
+            pixel.SetColor(backgroundPaletteIndex);
+        }
+
+        PutPixel(x, (u8)_scanline, pixel);
     }
 }
 
@@ -388,6 +524,8 @@ void Ppu::Step(u32& cycles, PpuStepResult& result)
             result.NewFrame = true;
             _scanline = 0;
             _regs.status.SetInVBlank(false);
+            _regs.status.SetSpriteOverflow(false);
+            _regs.status.SetSpriteZeroHit(false);
         }
     }
 }
