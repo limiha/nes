@@ -3,10 +3,18 @@
 
 #include <SDL.h>
 
-const u32 SCREEN_WIDTH = 256; // +32;
-const u32 SCREEN_HEIGHT = 240; // +30;
+//#define RENDER_GRID
 
-u8 render_screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
+#if !defined(RENDER_GRID)
+const u32 SCREEN_WIDTH = 256;
+const u32 SCREEN_HEIGHT = 240;
+#else
+const u32 SCREEN_WIDTH = 256 +32;
+const u32 SCREEN_HEIGHT = 240 +30;
+
+u8 grid_screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
+#endif
+
 
 Gfx::Gfx(u32 scale)
 {
@@ -45,9 +53,10 @@ Gfx::~Gfx()
     SDL_Quit();
 }
 
+#if defined(RENDER_GRID)
 void render_grid(u8 screen[])
 {
-    ZeroMemory(render_screen, SCREEN_HEIGHT * SCREEN_WIDTH * 3);
+    ZeroMemory(grid_screen, SCREEN_HEIGHT * SCREEN_WIDTH * 3);
 
     int screen_index = 0;
 
@@ -57,30 +66,35 @@ void render_grid(u8 screen[])
         {
             for (int j = 0; j < 864; j++)
             {
-                render_screen[i++] = 0x00;
+                grid_screen[i++] = 0x00;
             }
         }
         else 
             if (i % (9 * 3) == 0)
         {
-            render_screen[i++] = 0x00;
-            render_screen[i++] = 0x00;
-            render_screen[i++] = 0x00;
+            grid_screen[i++] = 0x00;
+            grid_screen[i++] = 0x00;
+            grid_screen[i++] = 0x00;
         }
         else
         {
-            render_screen[i++] = screen[screen_index++];
-            render_screen[i++] = screen[screen_index++];
-            render_screen[i++] = screen[screen_index++];
+            grid_screen[i++] = screen[screen_index++];
+            grid_screen[i++] = screen[screen_index++];
+            grid_screen[i++] = screen[screen_index++];
         }
     }
 }
+#endif
 
 void Gfx::Blit(u8 screen[])
 {
-    //render_grid(screen);
+    void* screen_to_render = (void*)screen;
+#if defined(RENDER_GRID)
+    render_grid(screen);
+    screen_to_render = (void*)grid_screen;
+#endif
 
-    SDL_UpdateTexture(_texture, NULL, (void*)screen, SCREEN_WIDTH * 3);
+    SDL_UpdateTexture(_texture, NULL, (void*)screen_to_render, SCREEN_WIDTH * 3);
     SDL_RenderClear(_renderer);
     SDL_RenderCopy(_renderer, _texture, NULL, NULL);
     SDL_RenderPresent(_renderer);
