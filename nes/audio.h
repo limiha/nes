@@ -7,21 +7,25 @@
 
 struct NesAudioPulseCtrl
 {
-    volatile bool enabled;
+    volatile int lengthCounter;
     volatile int dutyCycle;
     volatile int frequency;
-    volatile int volume;
+    volatile u8 volume;
+    volatile bool phaseReset;
 };
 
 struct NesAudioTriangeCtrl
 {
-    volatile bool enabled;
+    volatile int lengthCounter;
+    volatile int linearCounter;
     volatile int frequency;
 };
 
 struct NesAudioNoiseCtrl
 {
-    volatile bool enabled;
+    volatile int lengthCounter;
+    volatile u8 volume;
+    volatile bool on;
 };
 
 struct NesAudioDmcCtrl
@@ -59,9 +63,10 @@ private:
     void AudioError(const char* error);
 
     void ExecuteCallback(u8 *stream, int len);
-    u8 SamplePulse1(int phaseDivider);
-    u8 SamplePulse2(int phaseDivider);
-    u8 SampleTriangle(int phaseDivider);
+    u32 SampleWaveform(int freq, int freqStep, int volume, int& phase, int phaseDivider, u8* wavetable);
+    u32 SamplePulse(NesAudioPulseCtrl* pulseChannel, int& phase, int phaseDivider);
+    u32 SampleTriangle(int phaseDivider);
+    u32 SampleNoise();
 
 private:
     SDL_AudioDeviceID _deviceId;
@@ -71,6 +76,7 @@ private:
     int _nyquistFreq;
     int _pulseMinFreq;
     int _pulseMaxFreq;
+    int _pulseFreqStep;
     int _triangleMinFreq;
     int _triangleMaxFreq;
     int _triangleFreqStep;

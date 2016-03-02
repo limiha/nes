@@ -251,7 +251,7 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    void Step(u32& cycles, PpuStepResult& result);
+    void Step(u32 cycles, PpuStepResult& result);
 
 public:
     u8 Screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
@@ -265,6 +265,7 @@ private:
 
     u64 _cycles;
     i32 _scanline;
+
 
     bool _spriteZeroOnLine;
     std::vector<std::unique_ptr<Sprite>> _spritesOnLine;

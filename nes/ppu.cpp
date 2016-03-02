@@ -738,11 +738,12 @@ void Ppu::StartVBlank(PpuStepResult& result)
     }
 }
 
-void Ppu::Step(u32& cycles, PpuStepResult& result)
+void Ppu::Step(u32 cycles, PpuStepResult& result)
 {
-    while (cycles >= CYCLES_PER_SCANLINE)
+    _cycles += cycles;
+    while (_cycles >= CYCLES_PER_SCANLINE)
     {
-        cycles -= CYCLES_PER_SCANLINE;
+        _cycles -= CYCLES_PER_SCANLINE;
 
         if (_scanline < SCREEN_HEIGHT)
         {

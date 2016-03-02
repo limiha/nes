@@ -4,6 +4,8 @@
 
 class AudioEngine;
 struct ApuPulseState;
+struct ApuTriangleState;
+struct ApuNoiseState;
 struct NesAudioPulseCtrl;
 struct NesAudioTriangeCtrl;
 struct NesAudioNoiseCtrl;
@@ -42,10 +44,10 @@ private:
     u8 ReadApuStatus();
     void WriteApuStatus(u8 newStatus);
 
-    void WriteApuPulse0(u8 val, NesAudioPulseCtrl* pAudioInfo, ApuPulseState* pState);
+    void WriteApuPulse0(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* pState);
     void WriteApuPulse1(u8 val, ApuPulseState* pState);
-    void WriteApuPulse2(u8 val, NesAudioPulseCtrl* pAudioInfo, ApuPulseState* pState);
-    void WriteApuPulse3(u8 val, NesAudioPulseCtrl* pAudioInfo, ApuPulseState* pState);
+    void WriteApuPulse2(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* pState);
+    void WriteApuPulse3(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* pState);
 
     void WriteApuTriangle0(u8 val);
     void WriteApuTriangle2(u8 val);
@@ -62,19 +64,33 @@ private:
 
     void WriteApuFrameCounter(u8 val);
 
+    // Step control
+    void DoQuarterFrameStep();
+    void DoHalfFrameStep();
+    
+    void StepNoise();
+    static void StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuPulseState* pulseState);
+    static void StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuNoiseState* noiseState);
+    static void StepEnvelop(NesAudioPulseCtrl* audioCtrl, ApuPulseState* pulseState);
+    static void StepEnvelop(NesAudioNoiseCtrl* audioCtrl, ApuNoiseState* noiseState);
+
     // Utility
     int WavelengthToFrequency(bool isTriangle, int wavelength);
 
     // APU state information:
     AudioEngine* _audioEngine;
-    u32 _cycleCount;
     bool _counterEnabledFlag;
+    bool _frameCounterMode1;
     bool _frameInterrupt;
     bool _dmcInterrupt;
+    int _frameCycleCount;
+    int _noiseCycleCount;
+    int _frameNum;
     int _lengthCounterCode; // The value read/written via the APU registers.  Actual length is read from a lookup table.
-    int _triangeWavelength;
     ApuPulseState* _pulseState1;
     ApuPulseState* _pulseState2;
+    ApuTriangleState* _triangleState;
+    ApuNoiseState* _noiseState;
 
     // Emulator information:
     bool _isPal;

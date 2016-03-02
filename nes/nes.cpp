@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     cpu.Reset();
     
     // To avoid annoyance, APU is disabled until counters are enabled
-    //apu.StartAudio(44100);
+    apu.StartAudio(44100);
 
     auto last_time = std::chrono::high_resolution_clock::now();
     u32 frames = 0;
@@ -93,6 +93,8 @@ int main(int argc, char* argv[])
             gfx.Blit(ppu.Screen);
             calc_fps(last_time, frames);
         }
+
+        cpu.Cycles = 0;
     }
 
     apu.StopAudio();
