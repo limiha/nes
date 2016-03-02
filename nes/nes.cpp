@@ -11,12 +11,14 @@
 #include "gfx.h"
 #include "mapper.h"
 
-#include <time.h>
+#include <chrono>
 
-void calc_fps(time_t& last_time, u32& frames)
+void calc_fps(std::chrono::time_point<std::chrono::high_resolution_clock>& last_time, u32& frames)
 {
-    time_t now = time(0);
-    if (now >= last_time + 1)
+    auto now = std::chrono::high_resolution_clock::now();
+
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now - last_time).count();
+    if (seconds >= 1)
     {
         printf("%d\n", frames);
         frames = 0;
@@ -64,7 +66,7 @@ int main(int argc, char* argv[])
     // To avoid annoyance, APU is disabled until counters are enabled
     //apu.StartAudio(44100);
 
-    time_t last_time = time(0);
+    auto last_time = std::chrono::high_resolution_clock::now();
     u32 frames = 0;
 
     ApuStepResult apuResult;

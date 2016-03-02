@@ -74,6 +74,7 @@ void Input::HandleKeyPress(SDL_Keycode code, bool isDown)
         _joypad.HandleKeyPress(JoypadButton::B, isDown);
         break;
     case SDLK_RSHIFT:
+    case SDLK_LSHIFT:
         _joypad.HandleKeyPress(JoypadButton::Select, isDown);
         break;
     case SDLK_RETURN:
