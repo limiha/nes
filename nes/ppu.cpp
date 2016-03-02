@@ -356,6 +356,11 @@ u8 Ppu::GetBackgroundColor(u8 x_in, u8 y_in)
 
     u8 patternColor = (hiPlaneBit << 1) | loPlaneBit;
 
+    if (patternColor == 0)
+    {
+        return 0;
+    }
+
     u16 attributeTableBaseAddress = nameTableBaseAddress + 0x3c0;
 
     u16 attributeTableIndexX = nameTableIndexX / 4;
