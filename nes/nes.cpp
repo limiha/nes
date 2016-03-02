@@ -54,25 +54,31 @@ int main(int argc, char* argv[])
     VRam vram(mapper);
 
     Ppu ppu(vram);
-    Apu apu;
+    Apu apu(false /* isPal */);
     Input input;
     MemoryMap mem(ppu, apu, input, mapper);
     Cpu cpu(&mem);
 
     cpu.Reset();
+    
+    // To avoid annoyance, APU is disabled until counters are enabled
+    //apu.StartAudio(44100);
 
     time_t last_time = time(0);
     u32 frames = 0;
 
+    ApuStepResult apuResult;
     PpuStepResult ppuResult;
     for (;;)
     {
+        apuResult.Reset();
         ppuResult.Reset();
 
         input.CheckInput();
 
         cpu.Step();
 
+        apu.Step(cpu.Cycles, apuResult);
         ppu.Step(cpu.Cycles, ppuResult);
         if (ppuResult.VBlankNmi)
         {
@@ -86,6 +92,8 @@ int main(int argc, char* argv[])
             calc_fps(last_time, frames);
         }
     }
+
+    apu.StopAudio();
 
     return 0;
 }

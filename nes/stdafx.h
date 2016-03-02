@@ -7,6 +7,7 @@
 
 #include "targetver.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <tchar.h>
 
@@ -22,9 +23,14 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-
 #include <memory>
-
 #include <vector>
 
+#define SDL_MAIN_HANDLED
+#include <SDL.h>
+
 #include "types.h"
+
+// Emulator constants
+#define CPU_FREQ_NTSC 1789773
+#define CPU_FREQ_PAL 1662607
