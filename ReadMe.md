@@ -21,4 +21,5 @@ Right   ->  Right
 # Acknowledgements
  - This is heavily borrowed from https://github.com/pcwalton/sprocketnes which was in turn based on FCEU (http://www.fceux.com/web/home.html). I have tried to write an emulator several times in the past, the most recent of which is https://github.com/chuckries/rustnes/
  - Nintendulator (http://www.qmtpro.com/~nes/nintendulator/) has been incredibly helpful both because of it's source and the debug tools built into it's emulator
- - NesDev (nesdev.com) and the NesDev Wiki (http://wiki.nesdev.com/w/index.php/Nesdev_Wiki)
+ - NesDev (http://nesdev.com) and the NesDev Wiki (http://wiki.nesdev.com/w/index.php/Nesdev_Wiki)
+ - SDL (https://www.libsdl.org/license.php)
