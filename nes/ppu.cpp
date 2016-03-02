@@ -85,6 +85,8 @@ Ppu::Ppu(VRam& vram)
     , _scanline(VBLANK_SCANLINE)
     , _ppuDatatBuffer(0)
     , _spritesOnLine(8)
+    , _scrollX(0)
+    , _scrollY(0)
 {
     ZeroMemory(Screen, sizeof(Screen));
 }
@@ -172,6 +174,8 @@ u8 Ppu::ReadPpuStatus() {
     _regs.status.SetInVBlank(false);
     
     // TODO: scrolling reset
+    _regs.addr.next = PpuAddr::WhichByte::Hi;
+    _regs.scroll.NextDirection = PpuScroll::Direction::X;
 
     return regVal;
 }
@@ -212,12 +216,13 @@ void Ppu::WritePpuCtrl(u8 val)
     // TODO: side effects of writing
 
     _regs.ctrl.val = val;
+
+    _scrollX = (_scrollX & 0xff) | _regs.ctrl.ScrollXOffset();
+    _scrollY = (_scrollY & 0xff) | _regs.ctrl.ScrollYOffset();
 }
 
 void Ppu::WritePpuMask(u8 val)
 {
-    // TODO: side effects of writing
-
     _regs.mask.val = val;
 }
 
@@ -233,7 +238,20 @@ void Ppu::WriteOamData(u8 val)
 
 void Ppu::WritePpuScroll(u8 val)
 {
-    // TODO
+    if (_regs.scroll.NextDirection == PpuScroll::Direction::X)
+    {
+        _scrollX = val;
+
+        _regs.scroll.X = val;
+        _regs.scroll.NextDirection = PpuScroll::Direction::Y;
+    }
+    else if (_regs.scroll.NextDirection == PpuScroll::Direction::Y)
+    {
+        _scrollY = val;
+
+        _regs.scroll.Y = val;
+        _regs.scroll.NextDirection = PpuScroll::Direction::X;
+    }
 }
 
 void Ppu::WritePpuAddr(u8 val)
@@ -270,8 +288,14 @@ void Ppu::PutPixel(u8 x, u8 y, rgb& pixel)
     Screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
-u8 Ppu::GetBackgroundColor(u8 x, u8 y)
+u8 Ppu::GetBackgroundColor(u8 x_in, u8 y_in)
 {
+
+    // attempt a static scroll of 4 pixels
+    u16 x = x_in + _scrollX;
+    //u16 x = x_in + (256 - 5);
+    u16 y = y_in + _scrollY;
+
     // FOR THE TIME BEING I AM ONLY DRAWING THE CONTENTS OF THE FIRST NAME TABLE
     // THIS IS NOT AT ALL CORRECT
 
@@ -280,12 +304,20 @@ u8 Ppu::GetBackgroundColor(u8 x, u8 y)
     // The first step is to figure out the correct address to read from the name tables
 
     // Today just use the first name table
-    u16 nameTableBaseAddress = 0x2000;
+    u16 nameTableBaseAddress;
+    if ((x % 512) < 256)
+    {
+        nameTableBaseAddress = 0x2000;
+    }
+    else
+    {
+        nameTableBaseAddress = 0x2400;
+    }
 
     // A Name Table represents a 32 * 30 grid of tiles
     // A tile is 8x8, so to the tile index divide by 8
-    u8 nameTableIndexX = x / 8;
-    u8 nameTableIndexY = y / 8;
+    u8 nameTableIndexX = (x % 256) / 8;
+    u8 nameTableIndexY = (y % 240) / 8;
 
     u16 nameTableOffset = (nameTableIndexY * 32) + nameTableIndexX;
     u16 nameTableAddress = nameTableBaseAddress + nameTableOffset;

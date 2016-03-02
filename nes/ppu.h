@@ -120,6 +120,10 @@ struct PpuCtrl
 
     PpuCtrl() : val(0) { }
 
+    u16 ScrollXOffset() { return (val & (1 << 0)) == 0 ? 0 : 256; }
+    u16 ScrollYOffset() { return (val & (1 << 1)) == 0 ? 0 : 240; }
+
+
     u16 VRamAddrIncrement()         { return (val & (1 << 2)) == 0 ? 1 : 32; }
     u16 SpriteBaseAddress()         { return (val & (1 << 3)) == 0 ? 0 : 0x1000; }
     u16 BackgroundBaseAddress()     { return (val & (1 << 4)) == 0 ? 0 : 0x1000; }
@@ -183,9 +187,17 @@ struct PpuStatus
 
 struct PpuScroll
 {
-    u8 val;
+    enum class Direction
+    {
+        X, 
+        Y
+    };
 
-    PpuScroll() : val(0) { }
+    u8 X;
+    u8 Y;
+    Direction NextDirection;
+
+    PpuScroll() : X(0), Y(0), NextDirection(Direction::X) { }
 };
 
 struct PpuAddr
@@ -257,6 +269,9 @@ private:
     bool _spriteZeroOnLine;
     std::vector<std::unique_ptr<Sprite>> _spritesOnLine;
 
+    u16 _scrollX;
+    u16 _scrollY;
+
 private:
     void StartVBlank(PpuStepResult& result);
 
@@ -279,7 +294,7 @@ private:
     void CalculateSpritesOnLine(u8 y);
     
     // Returns the Palette Index of the Background pixel at (x,y)
-    u8 GetBackgroundColor(u8 x, u8 y);
+    u8 GetBackgroundColor(u8 x_in, u8 y_in);
 
     // Returns the palette index of the sprite pixel at (x,y)
     u8 GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priority);
