@@ -3,7 +3,7 @@ NES Emulator implementation
 #Build and Run
 1. Open solution in Visual Studio (VS 2014 is the only thing I've used so far).
 2. Build Release configuration. This is very important, Debug only does about 7 frames per second.
-3. run `nes.exe < path to .nes file >
+3. run `nes.exe < path to .nes file >`
 
 # Controls
 ```
