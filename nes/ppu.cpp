@@ -87,6 +87,10 @@ Ppu::Ppu(VRam& vram)
     , _spritesOnLine(8)
     , _scrollX(0)
     , _scrollY(0)
+    , v(0)
+    , t(0)
+    , x(0)
+    , w(false)
 {
     ZeroMemory(Screen, sizeof(Screen));
 }
@@ -174,8 +178,11 @@ u8 Ppu::ReadPpuStatus() {
     _regs.status.SetInVBlank(false);
     
     // TODO: scrolling reset
-    _regs.addr.next = PpuAddr::WhichByte::Hi;
-    _regs.scroll.NextDirection = PpuScroll::Direction::X;
+    //_regs.addr.next = PpuAddr::WhichByte::Hi;
+    //_regs.scroll.NextDirection = PpuScroll::Direction::X;
+
+    // reset write toggle for $2005 and $2006
+    w = false;
 
     return regVal;
 }
@@ -217,8 +224,11 @@ void Ppu::WritePpuCtrl(u8 val)
 
     _regs.ctrl.val = val;
 
-    _scrollX = (_scrollX & 0xff) | _regs.ctrl.ScrollXOffset();
-    _scrollY = (_scrollY & 0xff) | _regs.ctrl.ScrollYOffset();
+    //_scrollX = (_scrollX & 0xff) | _regs.ctrl.ScrollXOffset();
+    //_scrollY = (_scrollY & 0xff) | _regs.ctrl.ScrollYOffset();
+
+    t &= ~(u16(0b11) << 10);
+    t |= ((u16(val) & u16(0b11)) << 10);
 }
 
 void Ppu::WritePpuMask(u8 val)
@@ -238,37 +248,86 @@ void Ppu::WriteOamData(u8 val)
 
 void Ppu::WritePpuScroll(u8 val)
 {
-    if (_regs.scroll.NextDirection == PpuScroll::Direction::X)
-    {
-        _scrollX = val;
+    //if (_regs.scroll.NextDirection == PpuScroll::Direction::X)
+    //{
+    //    _scrollX = val;
 
-        _regs.scroll.X = val;
-        _regs.scroll.NextDirection = PpuScroll::Direction::Y;
+    //    _regs.scroll.X = val;
+    //    _regs.scroll.NextDirection = PpuScroll::Direction::Y;
+    //}
+    //else if (_regs.scroll.NextDirection == PpuScroll::Direction::Y)
+    //{
+    //    _scrollY = val;
+
+    //    _regs.scroll.Y = val;
+    //    _regs.scroll.NextDirection = PpuScroll::Direction::X;
+    //}
+
+    if (!w)
+    {
+        // t: ....... ...HGFED = d: HGFED...
+        // x:              CBA = d: .....CBA
+        // w:                  = 1
+
+        t &= ~(u16(0b11111));
+        t |= ((u16(val) & u16(0b11111000)) >> 3);
+        x = val & 0b111;
+
+        w = true;
     }
-    else if (_regs.scroll.NextDirection == PpuScroll::Direction::Y)
+    else
     {
-        _scrollY = val;
+        // t: CBA..HG FED..... = d: HGFEDCBA
+        // w:                  = 0
+        t &= ~(u16(0b111) << 12);
+        t |= ((u16(val) & u16(0b111)) << 12);
 
-        _regs.scroll.Y = val;
-        _regs.scroll.NextDirection = PpuScroll::Direction::X;
+        t &= ~(u16(0b11111) << 5);
+        t |= ((u16(val) & u16(0b11111000)) << 5);
+
+        w = false;
     }
 }
 
 void Ppu::WritePpuAddr(u8 val)
 {
-    if (_regs.addr.next == PpuAddr::WhichByte::Hi)
+    //if (_regs.addr.next == PpuAddr::WhichByte::Hi)
+    //{
+    //    _regs.addr.val &= 0x00ff;
+    //    _regs.addr.val |= (((u16)val) << 8);
+    //    _regs.addr.next = PpuAddr::WhichByte::Lo;
+    //}
+    //else
+    //{
+    //    _regs.addr.val &= 0xff00;
+    //    _regs.addr.val |= (u16)val;
+    //    _regs.addr.next = PpuAddr::WhichByte::Hi;
+
+    //    // TODO: Something about resetting scrolling here?
+    //}
+
+    if (!w)
     {
-        _regs.addr.val &= 0x00ff;
-        _regs.addr.val |= (((u16)val) << 8);
-        _regs.addr.next = PpuAddr::WhichByte::Lo;
+        // t: .FEDCBA ........ = d: ..FEDCBA
+        // t: X...... ........ = 0
+        // w:                  = 1
+
+        t &= ~(u16(0b111111) << 8);
+        t |= ((u16(val) & 0b111111) << 8);
+        t &= 0x3fff;
+
+        w = true;
     }
     else
     {
-        _regs.addr.val &= 0xff00;
-        _regs.addr.val |= (u16)val;
-        _regs.addr.next = PpuAddr::WhichByte::Hi;
+        //t: ....... HGFEDCBA = d: HGFEDCBA
+        //v                   = t
+        //w:                  = 0
+        t &= 0xff00;
+        t |= u16(val);
+        v = t;
 
-        // TODO: Something about resetting scrolling here?
+        w = false;
     }
 }
 
@@ -473,6 +532,49 @@ u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priori
     return 0;
 }
 
+void Ppu::IncHoriV()
+{
+    if ((v & 0x1f) == 31)
+    {
+        v &= ~(u16(0b11111)); // coarse x = 0
+        v ^= 0x0400; // toggle horizontal name table
+    }
+    else
+    {
+        v++;
+    }
+}
+
+void Ppu::IncVertV()
+{
+    if ((v & 0x7000) != 0x7000)
+    {
+        v += 0x1000;
+    }
+    else
+    {
+        v &= ~0x7000;
+        u16 y = ((v & 0x3e0) >> 5);
+        if (y == 29)
+        {
+            v ^ 0x0800;
+        }
+        else if (y == 31)
+        {
+            y += 1;
+        }
+
+        v = (v & ~0x3e0) | (y << 5);
+    }
+}
+
+void Ppu::HoriVEqualsHoriT()
+{
+    v &= ~(0b10000011111);
+    v |= (t & 0b10000011111);
+
+}
+
 void Ppu::RenderScanline()
 {
     SpritePriority spritePriority;
@@ -482,6 +584,26 @@ void Ppu::RenderScanline()
 
     _spriteZeroOnLine = false;
     _spritesOnLine.clear();
+
+    if (_scanline == 261)
+    {
+        for (u16 i = 0; i <= 340; i++)
+        {
+            if ((i > 0 && i <= 256 && i % 8 == 0) || i == 328 || i == 336)
+            {
+                IncHoriV();
+            }
+            if (i == 256)
+            {
+                IncVertV();
+            }
+            if (i == 257)
+            {
+                HoriVEqualsHoriT();
+            }
+        }
+    }
+
 
     if (_regs.mask.ShowSprites())
     {

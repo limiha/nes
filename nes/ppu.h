@@ -264,13 +264,23 @@ private:
     u8 _ppuDatatBuffer;
 
     u64 _cycles;
-    u16 _scanline;
+    i32 _scanline;
 
     bool _spriteZeroOnLine;
     std::vector<std::unique_ptr<Sprite>> _spritesOnLine;
 
     u16 _scrollX;
     u16 _scrollY;
+
+    // background registers
+    u16 v;
+    u16 t;
+    u8 x;
+    bool w;
+
+    void IncHoriV();
+    void IncVertV();
+    void HoriVEqualsHoriT();
 
 private:
     void StartVBlank(PpuStepResult& result);
