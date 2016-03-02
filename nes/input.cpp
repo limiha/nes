@@ -107,5 +107,13 @@ void Input::CheckInput()
         {
             HandleKeyPress(event.key.keysym.sym, false);
         }
+        else if (event.type == SDL_WINDOWEVENT)
+        {
+            if (event.window.event == SDL_WINDOWEVENT_CLOSE)
+            {
+                // FIXME: This should be cleaner
+                exit(0);
+            }
+        }
     }
 }
