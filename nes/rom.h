@@ -7,6 +7,14 @@
 const u32 PRG_ROM_BANK_SIZE = 0x4000;
 const u32 CHR_ROM_BANK_SIZE = 0x2000;
 
+enum class NameTableMirroring
+{
+    SingleScreenUpper,
+    SingleScreenLower,
+    Vertical,
+    Horizontal
+};
+
 #pragma pack()
 struct INesHeader 
 {
@@ -37,6 +45,11 @@ struct INesHeader
         u8 hi = (flags7 >> 4) & 0x0f;
 
         return (hi << 4) | lo;
+    }
+
+    NameTableMirroring Mirroring()
+    {
+        return (flags6 & 0x1) == 0 ? NameTableMirroring::Horizontal : NameTableMirroring::Vertical;
     }
 };
 

@@ -5,6 +5,7 @@
 IMapper::IMapper(Rom& rom)
     : _rom(rom)
 {
+    Mirroring = _rom.Header.Mirroring();
 }
 
 IMapper::~IMapper()
@@ -151,6 +152,22 @@ void SxRom::prg_storeb(u16 addr, u8 val)
         if (addr <= 0x9fff)
         {
             control.val = _accumulator;
+            if ((control.val & 0x3) == 0)
+            {
+                Mirroring = NameTableMirroring::SingleScreenLower;
+            }
+            else if ((control.val & 0x3) == 1)
+            {
+                Mirroring = NameTableMirroring::SingleScreenUpper;
+            }
+            else if ((control.val & 0x3) == 2)
+            {
+                Mirroring = NameTableMirroring::Vertical;
+            }
+            else
+            {
+                Mirroring = NameTableMirroring::Horizontal;
+            }
         }
         else if (addr <= 0xbfff)
         {

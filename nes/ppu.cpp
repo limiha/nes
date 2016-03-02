@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "ppu.h"
+#include "rom.h" // for nametable mirrorin TODO: move
 
 VRam::VRam(std::shared_ptr<IMapper> mapper)
     : _mapper(mapper)
@@ -16,13 +17,37 @@ VRam::~VRam()
 
 u8 VRam::loadb(u16 addr)
 {
+    addr &= 0x3fff;
+
     if (addr < 0x2000)
     {
         return _mapper->chr_loadb(addr);
     }
     else if (addr < 0x3f00)
     {
-        return _nametables[addr & 0x7ff];
+        if (_mapper->Mirroring == NameTableMirroring::SingleScreenLower)
+        {
+            return _nametables[addr & 0x3ff];
+        }
+        else if (_mapper->Mirroring == NameTableMirroring::SingleScreenUpper)
+        {
+            return _nametables[(addr & 0x3ff) + 0x400];
+        }
+        else if (_mapper->Mirroring == NameTableMirroring::Horizontal)
+        {
+            if (addr < 0x2800)
+            {
+                return _nametables[addr & 0x3ff];
+            }
+            else
+            {
+                return _nametables[(addr & 0x3ff) + 0x400];
+            }
+        }
+        else
+        {
+            return _nametables[addr & 0x7ff];
+        }
     }
     else if (addr < 0x4000)
     {
@@ -35,13 +60,37 @@ u8 VRam::loadb(u16 addr)
 
 void VRam::storeb(u16 addr, u8 val)
 {
+    addr &= 0x3fff;
+
     if (addr < 0x2000)
     {
         _mapper->chr_storeb(addr, val);
     }
     else if (addr < 0x3f00)
     {
-        _nametables[addr & 0x7ff] = val;
+        if (_mapper->Mirroring == NameTableMirroring::SingleScreenLower)
+        {
+            _nametables[addr & 0x3ff] = val;
+        }
+        else if (_mapper->Mirroring == NameTableMirroring::SingleScreenUpper)
+        {
+            _nametables[(addr & 0x3ff) + 0x400] = val;
+        }
+        else if (_mapper->Mirroring == NameTableMirroring::Horizontal)
+        {
+            if (addr < 0x2800)
+            {
+                _nametables[addr & 0x3ff] = val;
+            }
+            else
+            {
+                _nametables[(addr & 0x3ff) + 0x400] = val;
+            }
+        }
+        else
+        {
+            _nametables[addr & 0x7ff] = val;
+        }
     }
     else if (addr < 0x4000)
     {

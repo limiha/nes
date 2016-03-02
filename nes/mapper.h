@@ -2,6 +2,8 @@
 
 class Rom;
 
+enum class NameTableMirroring;
+
 class IMapper
 {
 protected:
@@ -16,6 +18,9 @@ public:
     virtual void prg_storeb(u16 addr, u8 val) = 0;
     virtual u8 chr_loadb(u16 addr) = 0;
     virtual void chr_storeb(u16 addr, u8 val) = 0;
+
+public:
+    NameTableMirroring Mirroring;
     
 protected:
     Rom& _rom;
@@ -47,14 +52,6 @@ public:
     void chr_storeb(u16 addr, u8 val);
 
 private:
-    enum class Mirroring
-    {
-        OneScreenLower,
-        OneScreenUpper,
-        Vertical,
-        Horizontal
-    };
-
     enum class SxPrgBankMode
     {
         Switch32K,
