@@ -607,7 +607,7 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, u8& paletteIndex, bool backgroundOpaque, Sp
             }
             else
             {
-                u16 patternTableBaseOffset = spr->TileIndex * 16;
+                patternTableBaseOffset = spr->TileIndex * 16;
             }
 
             if (spr->FlipVertical())
