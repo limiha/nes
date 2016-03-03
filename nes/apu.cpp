@@ -230,18 +230,18 @@ void Apu::storeb(u16 addr, u8 val)
 
 void Apu::Step(u32 cycles, ApuStepResult& result)
 {
-    _frameCycleCount += cycles;
-    if (_frameCycleCount < FrameSequenceCpuCycles[_frameNum])
-    {
-        // Don't need to move to the next internal step yet
-        return;
-    }
-
     _noiseCycleCount += cycles;
     if (_noiseCycleCount >= _noiseState->period)
     {
         _noiseCycleCount -= _noiseState->period;
         StepNoise();
+    }
+
+    _frameCycleCount += cycles;
+    if (_frameCycleCount < FrameSequenceCpuCycles[_frameNum])
+    {
+        // Don't need to move to the next internal step yet
+        return;
     }
 
     // Advance to the next frame
@@ -489,13 +489,13 @@ void Apu::StepNoise()
     u16 feedback = _noiseState->shiftRegister & 1;
 
     if (_noiseState->mode1)
-        feedback ^= 0x0040;
+        feedback ^= (_noiseState->shiftRegister & 0x0040) >> 6;
     else
-        feedback ^= 0x0002;
+        feedback ^= (_noiseState->shiftRegister & 0x0002) >> 1;
 
     _noiseState->shiftRegister >>= 1;
     _noiseState->shiftRegister |= feedback << 15;
-    _noise->on = feedback != 0;
+    _noise->on = !(_noiseState->shiftRegister & 1);
 }
 
 void Apu::StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuPulseState* pulseState)

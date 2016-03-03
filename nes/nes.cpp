@@ -68,7 +68,6 @@ int main(int argc, char* argv[])
 
     cpu.Reset();
     
-    // To avoid annoyance, APU is disabled until counters are enabled
     apu.StartAudio(44100);
 
     auto last_time = std::chrono::high_resolution_clock::now();

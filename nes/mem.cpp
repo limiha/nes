@@ -94,7 +94,10 @@ void MemoryMap::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x4020)
     {
-        _input.storeb(addr, val);
+        if (addr == 0x4017)
+            _apu.storeb(addr, val);
+        else
+            _input.storeb(addr, val);
     }
     else if (addr < 0x6000)
     {
