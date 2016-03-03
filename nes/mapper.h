@@ -33,10 +33,10 @@ public:
     ~NRom();
 
 public:
-    u8 prg_loadb(u16 addr);
-    void prg_storeb(u16 addr, u8 val);
-    u8 chr_loadb(u16 addr);
-    void chr_storeb(u16 addr, u8 val);
+    virtual u8 prg_loadb(u16 addr);
+    virtual void prg_storeb(u16 addr, u8 val);
+    virtual u8 chr_loadb(u16 addr);
+    virtual void chr_storeb(u16 addr, u8 val);
 };
 
 class SxRom : public IMapper
@@ -100,4 +100,16 @@ private:
     u8 _writeCount;
     u8 _chrRam[0x2000];
     u8 _prgRam[0x2000];
+};
+
+class CNRom : public NRom
+{
+public:
+    CNRom(Rom& rom);
+    ~CNRom();
+
+    void prg_storeb(u16 addr, u8 val);
+    u8 chr_loadb(u16 addr);
+private:
+    u8 _chrBank;
 };

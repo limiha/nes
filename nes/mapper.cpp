@@ -20,6 +20,8 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(Rom& rom)
         return std::make_shared<NRom>(rom);
     case 1:
         return std::make_shared<SxRom>(rom);
+    case 3:
+        return std::make_shared<CNRom>(rom);
     default:
         printf("Unsupported mapper: %d\n", rom.Header.MapperNumber());
         return nullptr;
@@ -69,7 +71,7 @@ void NRom::chr_storeb(u16 addr, u8 val)
     // Does nothing
 }
 
-/// SxRom
+/// SxRom (Mapper #1)
 
 SxRom::SxRom(Rom& rom)
     : IMapper(rom)
@@ -196,4 +198,26 @@ u8 SxRom::chr_loadb(u16 addr)
 void SxRom::chr_storeb(u16 addr, u8 val)
 {
     _chrRam[addr] = val;
+}
+
+/// CNRom (Mapper #3)
+
+CNRom::CNRom(Rom& rom)
+    : NRom(rom)
+    , _chrBank(0)
+{
+}
+
+CNRom::~CNRom()
+{
+}
+
+void CNRom::prg_storeb(u16 addr, u8 val)
+{
+    _chrBank = val;
+}
+
+u8 CNRom::chr_loadb(u16 addr)
+{
+    return _rom.ChrRom[(_chrBank * CHR_ROM_BANK_SIZE) + addr];
 }
