@@ -642,7 +642,7 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, u8& paletteIndex, bool backgroundOpaque, Sp
             }
 
             // Now we know we have an opaque sprite pixel
-            if (backgroundOpaque && _spriteZeroOnLine && (it == _spritesOnLine.begin()) && (x != 255));
+            if (backgroundOpaque && _spriteZeroOnLine && (it == _spritesOnLine.begin()) && (x != 255))
             {
                 _regs.status.SetSpriteZeroHit(true);
             }
@@ -749,28 +749,32 @@ void Ppu::RenderScanline()
             spriteOpqaue = GetSpriteColor(x, (u8)_scanline, spritePaletteIndex, backgroundPaletteIndex != 0, spritePriority);
         }
 
-        if (!backgroundOpaque && !spriteOpqaue)
+        if (_scanline >= 8 && _scanline <= 231)
         {
-            pixel.SetColor(backdropColorIndex);
-        }
-        else if (!spriteOpqaue)
-        {
-            pixel.SetColor(backgroundPaletteIndex);
-        }
-        else if (!backgroundOpaque)
-        {
-            pixel.SetColor(spritePaletteIndex);
-        }
-        else if (spritePriority == SpritePriority::Above)
-        {
-            pixel.SetColor(spritePaletteIndex);
-        }
-        else if (spritePriority == SpritePriority::Below)
-        {
-            pixel.SetColor(backgroundPaletteIndex);
-        }
 
-        PutPixel(x, (u8)_scanline, pixel);
+            if (!backgroundOpaque && !spriteOpqaue)
+            {
+                pixel.SetColor(backdropColorIndex);
+            }
+            else if (!spriteOpqaue)
+            {
+                pixel.SetColor(backgroundPaletteIndex);
+            }
+            else if (!backgroundOpaque)
+            {
+                pixel.SetColor(spritePaletteIndex);
+            }
+            else if (spritePriority == SpritePriority::Above)
+            {
+                pixel.SetColor(spritePaletteIndex);
+            }
+            else if (spritePriority == SpritePriority::Below)
+            {
+                pixel.SetColor(backgroundPaletteIndex);
+            }
+
+            PutPixel(x, (u8)_scanline, pixel);
+        }
     }
     //HoriVEqualsHoriT();
 }
