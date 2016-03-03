@@ -273,14 +273,17 @@ private:
     u16 _scrollY;
 
     // background registers
-    u16 v;
-    u16 t;
-    u8 x;
-    bool w;
+    u16 _v;
+    u16 _t;
+    u8 _x;
+    bool _w;
 
     void IncHoriV();
     void IncVertV();
     void HoriVEqualsHoriT();
+
+    u8 ScrollX();
+    u8 ScrollY();
 
 private:
     void StartVBlank(PpuStepResult& result);

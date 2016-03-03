@@ -87,10 +87,10 @@ Ppu::Ppu(VRam& vram)
     , _spritesOnLine(8)
     , _scrollX(0)
     , _scrollY(0)
-    , v(0)
-    , t(0)
-    , x(0)
-    , w(false)
+    , _v(0)
+    , _t(0)
+    , _x(0)
+    , _w(false)
 {
     ZeroMemory(Screen, sizeof(Screen));
 }
@@ -182,7 +182,7 @@ u8 Ppu::ReadPpuStatus() {
     //_regs.scroll.NextDirection = PpuScroll::Direction::X;
 
     // reset write toggle for $2005 and $2006
-    w = false;
+    _w = false;
 
     return regVal;
 }
@@ -196,9 +196,13 @@ u8 Ppu::ReadOamData()
 
 u8 Ppu::ReadPpuData()
 {
-    u16 addr = _regs.addr.val;
+    //u16 addr = _regs.addr.val;
+    //u8 val = _vram.loadb(addr);
+    //_regs.addr.val += _regs.ctrl.VRamAddrIncrement();
+
+    u16 addr = _v;
     u8 val = _vram.loadb(addr);
-    _regs.addr.val += _regs.ctrl.VRamAddrIncrement();
+    _v += _regs.ctrl.VRamAddrIncrement();
 
     u8 bufferedData = _ppuDatatBuffer;
 
@@ -227,8 +231,8 @@ void Ppu::WritePpuCtrl(u8 val)
     //_scrollX = (_scrollX & 0xff) | _regs.ctrl.ScrollXOffset();
     //_scrollY = (_scrollY & 0xff) | _regs.ctrl.ScrollYOffset();
 
-    t &= ~(u16(0b11) << 10);
-    t |= ((u16(val) & u16(0b11)) << 10);
+    _t &= ~(u16(0b11) << 10);
+    _t |= ((u16(val) & u16(0b11)) << 10);
 }
 
 void Ppu::WritePpuMask(u8 val)
@@ -263,29 +267,29 @@ void Ppu::WritePpuScroll(u8 val)
     //    _regs.scroll.NextDirection = PpuScroll::Direction::X;
     //}
 
-    if (!w)
+    if (!_w)
     {
         // t: ....... ...HGFED = d: HGFED...
         // x:              CBA = d: .....CBA
         // w:                  = 1
 
-        t &= ~(u16(0b11111));
-        t |= ((u16(val) & u16(0b11111000)) >> 3);
-        x = val & 0b111;
+        _t &= ~(u16(0b11111));
+        _t |= ((u16(val) & u16(0b11111000)) >> 3);
+        _x = val & 0b111;
 
-        w = true;
+        _w = true;
     }
     else
     {
         // t: CBA..HG FED..... = d: HGFEDCBA
         // w:                  = 0
-        t &= ~(u16(0b111) << 12);
-        t |= ((u16(val) & u16(0b111)) << 12);
+        _t &= ~(u16(0b111) << 12);
+        _t |= ((u16(val) & u16(0b111)) << 12);
 
-        t &= ~(u16(0b11111) << 5);
-        t |= ((u16(val) & u16(0b11111000)) << 5);
+        _t &= ~(u16(0b11111) << 5);
+        _t |= ((u16(val) & u16(0b11111000)) << 5);
 
-        w = false;
+        _w = false;
     }
 }
 
@@ -306,36 +310,40 @@ void Ppu::WritePpuAddr(u8 val)
     //    // TODO: Something about resetting scrolling here?
     //}
 
-    if (!w)
+    if (!_w)
     {
         // t: .FEDCBA ........ = d: ..FEDCBA
         // t: X...... ........ = 0
         // w:                  = 1
 
-        t &= ~(u16(0b111111) << 8);
-        t |= ((u16(val) & 0b111111) << 8);
-        t &= 0x3fff;
+        _t &= ~(u16(0b111111) << 8);
+        _t |= ((u16(val) & 0b111111) << 8);
+        _t &= 0x3fff;
 
-        w = true;
+        _w = true;
     }
     else
     {
         //t: ....... HGFEDCBA = d: HGFEDCBA
         //v                   = t
         //w:                  = 0
-        t &= 0xff00;
-        t |= u16(val);
-        v = t;
+        _t &= 0xff00;
+        _t |= u16(val);
+        _v = _t;
 
-        w = false;
+        _w = false;
     }
 }
 
 void Ppu::WritePpuData(u8 val)
 {
-    _vram.storeb(_regs.addr.val, val);
+    //_vram.storeb(_regs.addr.val, val);
+    //_regs.addr.val += _regs.ctrl.VRamAddrIncrement();
 
-    _regs.addr.val += _regs.ctrl.VRamAddrIncrement();
+    // printf("addr: %04X\tdata: %02X\n", _v, val);
+
+    _vram.storeb(_v, val);
+    _v += _regs.ctrl.VRamAddrIncrement();
 }
 
 // Rendering
@@ -351,32 +359,57 @@ u8 Ppu::GetBackgroundColor(u8 x_in, u8 y_in)
 {
 
     // attempt a static scroll of 4 pixels
-    u16 x = x_in + _scrollX;
+    u16 x = (u16)x_in + ScrollX();
+    //u16 x = x_in + (256 + 255);
     //u16 x = x_in + (256 - 5);
-    u16 y = y_in + _scrollY;
+    u16 y = (u16)y_in + ScrollY();
+    //u16 x = (u16)x_in + (256 + 128);
+    //u16 y = (u16)y_in + (240 - 240);
 
-    // FOR THE TIME BEING I AM ONLY DRAWING THE CONTENTS OF THE FIRST NAME TABLE
-    // THIS IS NOT AT ALL CORRECT
 
     // The Name Tables store tile numbers
     // These Tile Numbers are indices into the pattern tables
     // The first step is to figure out the correct address to read from the name tables
 
-    // Today just use the first name table
-    u16 nameTableBaseAddress;
-    if ((x % 512) < 256)
+    bool toggleXNameTable = false;
+    bool toggleYNameTable = false;
+
+    if (x >= 256)
     {
-        nameTableBaseAddress = 0x2000;
+        toggleXNameTable = true;
     }
-    else
+    x %= 256;
+
+    if (y >= 240)
     {
-        nameTableBaseAddress = 0x2400;
+        toggleYNameTable = true;;
+    }
+    y %= 240;
+
+    u8 nameTableBits = (u8)((_t & 0b110000000000) >> 10);
+
+    if (toggleXNameTable)
+    {
+        nameTableBits ^= 0x1;
+    }
+    if (toggleYNameTable)
+    {
+        nameTableBits ^= 0x2;
+    }
+
+    u16 nameTableBaseAddress;
+    switch (nameTableBits)
+    {
+    case 0: nameTableBaseAddress = 0x2000; break;
+    case 1: nameTableBaseAddress = 0x2400; break;
+    case 2: nameTableBaseAddress = 0x2800; break;
+    case 3: nameTableBaseAddress = 0x2c00; break;
     }
 
     // A Name Table represents a 32 * 30 grid of tiles
     // A tile is 8x8, so to the tile index divide by 8
-    u8 nameTableIndexX = (x % 256) / 8;
-    u8 nameTableIndexY = (y % 240) / 8;
+    u8 nameTableIndexX = x / 8;
+    u8 nameTableIndexY = y / 8;
 
     u16 nameTableOffset = (nameTableIndexY * 32) + nameTableIndexX;
     u16 nameTableAddress = nameTableBaseAddress + nameTableOffset;
@@ -534,45 +567,59 @@ u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priori
 
 void Ppu::IncHoriV()
 {
-    if ((v & 0x1f) == 31)
+    if ((_v & 0x1f) == 31)
     {
-        v &= ~(u16(0b11111)); // coarse x = 0
-        v ^= 0x0400; // toggle horizontal name table
+        _v &= ~(u16(0b11111)); // coarse x = 0
+        _v ^= 0x0400; // toggle horizontal name table
     }
     else
     {
-        v++;
+        _v++;
     }
 }
 
 void Ppu::IncVertV()
 {
-    if ((v & 0x7000) != 0x7000)
+    if ((_v & 0x7000) != 0x7000)
     {
-        v += 0x1000;
+        _v += 0x1000;
     }
     else
     {
-        v &= ~0x7000;
-        u16 y = ((v & 0x3e0) >> 5);
+        _v &= ~0x7000;
+        u16 y = ((_v & 0x3e0) >> 5);
         if (y == 29)
         {
-            v ^ 0x0800;
+            _v ^= 0x0800;
         }
         else if (y == 31)
         {
             y += 1;
         }
 
-        v = (v & ~0x3e0) | (y << 5);
+        _v = (_v & ~0x3e0) | (y << 5);
     }
 }
 
 void Ppu::HoriVEqualsHoriT()
 {
-    v &= ~(0b10000011111);
-    v |= (t & 0b10000011111);
+    _v &= ~(0b10000011111);
+    _v |= (_t & 0b10000011111);
 
+}
+
+u8 Ppu::ScrollX()
+{
+    u8 x = ((_t & 0b11111) << 3) | _x;
+    //u16 offset = (_t & (1 << 10)) == 0 ? 0 : 256;
+    return x;// +offset;
+}
+
+u8 Ppu::ScrollY()
+{
+    u8 y = ((_t & 0b1111100000) >> 2) | ((_t & 0b111000000000000) >> 12);
+    //u16 offset = (_t & (1 << 11)) == 0 ? 0 : 240;
+    return y;// +offset;
 }
 
 void Ppu::RenderScanline()
@@ -584,26 +631,6 @@ void Ppu::RenderScanline()
 
     _spriteZeroOnLine = false;
     _spritesOnLine.clear();
-
-    if (_scanline == 261)
-    {
-        for (u16 i = 0; i <= 340; i++)
-        {
-            if ((i > 0 && i <= 256 && i % 8 == 0) || i == 328 || i == 336)
-            {
-                IncHoriV();
-            }
-            if (i == 256)
-            {
-                IncVertV();
-            }
-            if (i == 257)
-            {
-                HoriVEqualsHoriT();
-            }
-        }
-    }
-
 
     if (_regs.mask.ShowSprites())
     {
@@ -649,6 +676,7 @@ void Ppu::RenderScanline()
 
         PutPixel(x, (u8)_scanline, pixel);
     }
+    //HoriVEqualsHoriT();
 }
 
 void Ppu::StartVBlank(PpuStepResult& result)
