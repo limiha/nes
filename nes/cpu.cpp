@@ -63,12 +63,12 @@ void Cpu::Step()
     Trace();
 #endif
 
-#if defined(DEBUG)
-    if (_regs.PC == 0xb4d1)
-    {
-        __debugbreak();
-    }
-#endif
+//#if defined(DEBUG)
+//    if (_regs.PC == 0xb4d1)
+//    {
+//        __debugbreak();
+//    }
+//#endif
 
     u8 op = LoadBBumpPC();
 

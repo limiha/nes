@@ -524,14 +524,17 @@ u8 Ppu::GetBackgroundColor(u8 x_in, u8 y_in)
     return paletteIndex;
 }
 
-void Ppu::CalculateSpritesOnLine(u8 y)
+void Ppu::CalculateSpritesOnLine(u16 y)
 {
     u8 numSpritesOnLine = 0;
+    
+    u16 spriteHeight = _regs.ctrl.SpriteSize() == SpriteSize::Spr8x8 ? 8 : 16;
+
     for (int i = 0; i < 64; i++)
     {
         const Sprite* pSprite = _oam[i];
 
-        if ((pSprite->Y + 1) <= y && (pSprite->Y + 1 + 8) > y)
+        if ((u16)(pSprite->Y + 1) <= y && (u16)(pSprite->Y + 1 + spriteHeight) > y)
         {
             if (numSpritesOnLine < 8)
             {
@@ -554,6 +557,12 @@ u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priori
 {
     std::vector<std::unique_ptr<Sprite>>::iterator it = _spritesOnLine.begin();
 
+    u16 spriteHeight = _regs.ctrl.SpriteSize() == SpriteSize::Spr8x8 ? 8 : 16;
+    bool is8x16 = _regs.ctrl.SpriteSize() == SpriteSize::Spr8x16;
+
+    // which table are sprites in?
+    u16 patternTableBaseAddress = _regs.ctrl.SpriteBaseAddress();
+
     for (; it != _spritesOnLine.end(); it++)
     {
         Sprite* spr = it->get();
@@ -562,12 +571,45 @@ u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priori
         {
             // our pixel is within this sprite
 
-            // which table are sprites in?
-            u16 patternTableBaseAddress = _regs.ctrl.SpriteBaseAddress();
-
-            u16 patternTableBaseOffset = spr->TileIndex * 16;
-
+            u16 patternTableBaseOffset;
             u16 patternRowOffset = y - (spr->Y + 1);
+            if (is8x16)
+            {
+                patternTableBaseAddress = (spr->TileIndex & 1) == 0 ? 0 : 0x1000;
+
+                u16 topSpriteOffset = (spr->TileIndex & 0xFE) * 16;
+                u16 bottomSpriteOffset = topSpriteOffset + 16;
+
+                if (spr->FlipVertical())
+                {
+                    if (patternRowOffset < 8)
+                    {
+                        patternTableBaseOffset = bottomSpriteOffset;
+                    }
+                    else
+                    {
+                        patternTableBaseOffset = topSpriteOffset;
+                        patternRowOffset -= 8;
+                    }
+                }
+                else
+                {
+                    if (patternRowOffset < 8)
+                    {
+                        patternTableBaseOffset = topSpriteOffset;
+                    }
+                    else
+                    {
+                        patternTableBaseOffset = bottomSpriteOffset;
+                        patternRowOffset -= 8;
+                    }
+                }
+            }
+            else
+            {
+                u16 patternTableBaseOffset = spr->TileIndex * 16;
+            }
+
             if (spr->FlipVertical())
             {
                 patternRowOffset = 7 - patternRowOffset;

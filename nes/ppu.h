@@ -82,6 +82,12 @@ enum class SpritePriority
     Below
 };
 
+enum class SpriteSize
+{
+    Spr8x8,
+    Spr8x16
+};
+
 #pragma pack()
 struct Sprite
 {
@@ -127,6 +133,7 @@ struct PpuCtrl
     u16 VRamAddrIncrement()         { return (val & (1 << 2)) == 0 ? 1 : 32; }
     u16 SpriteBaseAddress()         { return (val & (1 << 3)) == 0 ? 0 : 0x1000; }
     u16 BackgroundBaseAddress()     { return (val & (1 << 4)) == 0 ? 0 : 0x1000; }
+    SpriteSize SpriteSize()         { return (val & (1 << 5)) == 0 ? SpriteSize::Spr8x8 : SpriteSize::Spr8x16; }
     bool VBlankNmi()                { return (val & (1 << 7)) != 0; }
 };
 
@@ -304,7 +311,7 @@ private:
     // Rendering Operations
 
     void PutPixel(u8 x, u8 y, rgb& pixel);
-    void CalculateSpritesOnLine(u8 y);
+    void CalculateSpritesOnLine(u16 y);
     
     // Returns the Palette Index of the Background pixel at (x,y)
     u8 GetBackgroundColor(u8 x_in, u8 y_in);
