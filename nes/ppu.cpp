@@ -404,7 +404,7 @@ void Ppu::PutPixel(u8 x, u8 y, rgb& pixel)
     Screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
-u8 Ppu::GetBackgroundColor(u8 x_in, u8 y_in)
+bool Ppu::GetBackgroundColor(u8 x_in, u8 y_in, u8& paletteIndex)
 {
 
     // attempt a static scroll of 4 pixels
@@ -499,7 +499,7 @@ u8 Ppu::GetBackgroundColor(u8 x_in, u8 y_in)
 
     if (patternColor == 0)
     {
-        return 0;
+        return false;
     }
 
     u16 attributeTableBaseAddress = nameTableBaseAddress + 0x3c0;
@@ -519,9 +519,9 @@ u8 Ppu::GetBackgroundColor(u8 x_in, u8 y_in)
 
     u8 tileColor = (attributeColor << 2) | patternColor;
 
-    u8 paletteIndex = _vram.loadb(0x3f00 + (u16)tileColor) & 0x3f;
+    paletteIndex = _vram.loadb(0x3f00 + (u16)tileColor) & 0x3f;
 
-    return paletteIndex;
+    return true;
 }
 
 void Ppu::CalculateSpritesOnLine(u16 y)
@@ -553,7 +553,7 @@ void Ppu::CalculateSpritesOnLine(u16 y)
     }
 }
 
-u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priority)
+bool Ppu::GetSpriteColor(u8 x, u8 y, u8& paletteIndex, bool backgroundOpaque, SpritePriority& priority)
 {
     std::vector<std::unique_ptr<Sprite>>::iterator it = _spritesOnLine.begin();
 
@@ -633,6 +633,10 @@ u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priori
 
             if (patternColor == 0)
             {
+                if (it == _spritesOnLine.end())
+                {
+                    return false;
+                }
                 // This sprite pixel is transparent, continue searching for lower pri sprites
                 continue;
             }
@@ -647,9 +651,8 @@ u8 Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priori
 
             u8 tileColor = (spr->Palette() << 2) | patternColor;
 
-            u8 paletteIndex = _vram.loadb(0x3f10 + (u16)tileColor) & 0x3f;
-
-            return paletteIndex;
+            paletteIndex = _vram.loadb(0x3f10 + (u16)tileColor) & 0x3f;
+            return true;
         }
     }
 
@@ -715,7 +718,7 @@ u8 Ppu::ScrollY()
 
 void Ppu::RenderScanline()
 {
-    SpritePriority spritePriority;
+    SpritePriority spritePriority = SpritePriority::Below;
     rgb pixel;
 
     u8 backdropColorIndex = _vram.loadw(0x3f00) & 0x3f; // get the universal background color
@@ -732,27 +735,29 @@ void Ppu::RenderScanline()
     {
         pixel.Reset();
 
-        u32 backgroundPaletteIndex = 0;
+        u8 backgroundPaletteIndex = 0;
+        bool backgroundOpaque = false;
         if (_regs.mask.ShowBackground() && !((x < 8) && _regs.mask.clipBackground()))
         {
-            backgroundPaletteIndex = GetBackgroundColor(x, (u8)_scanline);
+            backgroundOpaque = GetBackgroundColor(x, (u8)_scanline, backgroundPaletteIndex);
         }
 
-        u32 spritePaletteIndex = 0;
+        u8 spritePaletteIndex = 0;
+        bool spriteOpqaue = false;
         if (_spritesOnLine.size() > 0 && !((x < 8) && _regs.mask.clipSprites()))
         {
-            spritePaletteIndex = GetSpriteColor(x, (u8)_scanline, backgroundPaletteIndex != 0, spritePriority);
+            spriteOpqaue = GetSpriteColor(x, (u8)_scanline, spritePaletteIndex, backgroundPaletteIndex != 0, spritePriority);
         }
 
-        if (backgroundPaletteIndex == 0 && spritePaletteIndex == 0)
+        if (!backgroundOpaque && !spriteOpqaue)
         {
             pixel.SetColor(backdropColorIndex);
         }
-        else if (spritePaletteIndex == 0)
+        else if (!spriteOpqaue)
         {
             pixel.SetColor(backgroundPaletteIndex);
         }
-        else if (backgroundPaletteIndex == 0)
+        else if (!backgroundOpaque)
         {
             pixel.SetColor(spritePaletteIndex);
         }

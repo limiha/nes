@@ -314,10 +314,10 @@ private:
     void CalculateSpritesOnLine(u16 y);
     
     // Returns the Palette Index of the Background pixel at (x,y)
-    u8 GetBackgroundColor(u8 x_in, u8 y_in);
+    bool GetBackgroundColor(u8 x_in, u8 y_in, u8& paletteIndex);
 
     // Returns the palette index of the sprite pixel at (x,y)
-    u8 GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, SpritePriority& priority);
+    bool GetSpriteColor(u8 x, u8 y, u8& paletteIndex, bool backgroundOpaque, SpritePriority& priority);
 
     void RenderScanline();
 };
