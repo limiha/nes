@@ -34,3 +34,5 @@
 // Emulator constants
 #define CPU_FREQ_NTSC 1789773
 #define CPU_FREQ_PAL 1662607
+
+//#define RENDER_NAMETABLE

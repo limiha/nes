@@ -260,6 +260,9 @@ public:
 
     void Step(u32& cycles, PpuStepResult& result);
 
+#if defined(RENDER_NAMETABLE)
+    void RenderNameTable(u8 screen[], int i);
+#endif
 public:
     u8 Screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
 private:

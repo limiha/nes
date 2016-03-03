@@ -812,3 +812,58 @@ void Ppu::Step(u32& cycles, PpuStepResult& result)
         }
     }
 }
+
+#if defined(RENDER_NAMETABLE)
+void Ppu::RenderNameTable(u8 screen[], int index)
+{
+    u16 backgroundBaseAddress = _regs.ctrl.BackgroundBaseAddress();
+
+    u16 nameTableBaseAddress = 0;
+    switch (index)
+    {
+    case 0: nameTableBaseAddress = 0x2000; break;
+    case 1: nameTableBaseAddress = 0x2400; break;
+    case 2: nameTableBaseAddress = 0x2800; break;
+    case 3: nameTableBaseAddress = 0x2c00; break;
+    }
+    u16 attributeTableBaseAddress = nameTableBaseAddress + 0x3c0;
+
+    rgb pixel;
+
+    for (u32 ntIndex = 0; ntIndex < 32 * 30; ntIndex++)
+    {
+        u8 patternLoPlane[8];
+        u8 patternHiPlane[8];
+
+        u8 patternIndex = _vram.loadb(nameTableBaseAddress + ntIndex);
+
+        for (int patternRow = 0; patternRow < 8; patternRow++)
+        {
+            u16 ntAddress = backgroundBaseAddress + (16 * patternIndex) + patternRow;
+
+            patternHiPlane[patternRow] = _vram.loadb(ntAddress);
+            patternLoPlane[patternRow] = _vram.loadb(ntAddress + 8);
+        }
+
+        u8 patternColor;
+
+        for (int patternRow = 0; patternRow < 8; patternRow++)
+        {
+            for (int patternCol = 0; patternCol < 8; patternCol++)
+            {
+                patternColor = ((patternLoPlane[patternRow] >> (7 - patternCol)) & 1) | (((patternHiPlane[patternRow] >> (7 - patternCol)) << 1) & 1);
+
+                pixel.SetColor(_vram.loadb(0x3f00 + patternColor));
+
+                u64 screenLoc = ((ntIndex / 32) * 256 * 8) + ((ntIndex % 32) * 8) + (patternRow * 256) + patternCol;
+
+                screen[(screenLoc * 3) + 0] = pixel.r;
+                screen[(screenLoc * 3) + 1] = pixel.g;
+                screen[(screenLoc * 3) + 2] = pixel.b;
+
+                pixel.Reset();
+            }
+        }
+    }
+}
+#endif

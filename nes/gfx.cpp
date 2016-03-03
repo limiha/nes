@@ -13,6 +13,8 @@ const u32 SCREEN_WIDTH = 256 +32;
 const u32 SCREEN_HEIGHT = 240 +30;
 
 u8 grid_screen[SCREEN_HEIGHT * SCREEN_WIDTH * 3];
+
+u8 grid_color = 0xff;
 #endif
 
 
@@ -42,6 +44,37 @@ Gfx::Gfx(u32 scale)
         SCREEN_WIDTH,
         SCREEN_HEIGHT
         );
+
+#if defined(RENDER_NAMETABLE)
+    for (int i = 0; i < 4; i++)
+    {
+        char name[sizeof("ntxx") + 1];
+        sprintf(name, "nt%02d", i);
+
+        _nt_window[i] = SDL_CreateWindow(
+            name,
+            256 * 2 * i,
+            240,
+            256 * 2,
+            240 * 2,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE
+            );
+
+        _nt_renderer[i] = SDL_CreateRenderer(
+            _nt_window[i],
+            -1,
+            SDL_RENDERER_ACCELERATED
+            );
+
+        _nt_texture[i] = SDL_CreateTexture(
+            _nt_renderer[i],
+            SDL_PIXELFORMAT_RGB24,
+            SDL_TEXTUREACCESS_STREAMING,
+            256,
+            240
+            );
+    }
+#endif
 }
 
 Gfx::~Gfx()
@@ -66,15 +99,15 @@ void render_grid(u8 screen[])
         {
             for (int j = 0; j < 864; j++)
             {
-                grid_screen[i++] = 0x00;
+                grid_screen[i++] = grid_color;
             }
         }
         else 
             if (i % (9 * 3) == 0)
         {
-            grid_screen[i++] = 0x00;
-            grid_screen[i++] = 0x00;
-            grid_screen[i++] = 0x00;
+            grid_screen[i++] = grid_color;
+            grid_screen[i++] = grid_color;
+            grid_screen[i++] = grid_color;
         }
         else
         {
@@ -99,3 +132,13 @@ void Gfx::Blit(u8 screen[])
     SDL_RenderCopy(_renderer, _texture, NULL, NULL);
     SDL_RenderPresent(_renderer);
 }
+
+#if defined(RENDER_NAMETABLE)
+void Gfx::BlitNameTable(u8 screen[], int i)
+{
+    SDL_UpdateTexture(_nt_texture[i], NULL, (void*)screen, SCREEN_WIDTH * 3);
+    SDL_RenderClear(_nt_renderer[i]);
+    SDL_RenderCopy(_nt_renderer[i], _nt_texture[i], NULL, NULL);
+    SDL_RenderPresent(_nt_renderer[i]);
+}
+#endif

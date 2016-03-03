@@ -30,6 +30,11 @@ void calc_fps(std::chrono::time_point<std::chrono::high_resolution_clock>& last_
     }
 }
 
+#if defined(RENDER_NAMETABLE)
+u8 nt_screen[256 * 240 * 3];
+#endif
+
+
 int main(int argc, char* argv[])
 {
     if (argc < 2)
@@ -90,6 +95,13 @@ int main(int argc, char* argv[])
 
         if (ppuResult.NewFrame)
         {
+#if defined(RENDER_NAMETABLE)
+            for (int i = 0; i < 4; i++)
+            {
+                ppu.RenderNameTable(nt_screen, i);
+                gfx.BlitNameTable(nt_screen, i);
+            }
+#endif
             gfx.Blit(ppu.Screen);
             calc_fps(last_time, frames);
         }
