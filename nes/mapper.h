@@ -52,6 +52,19 @@ public:
     void chr_storeb(u16 addr, u8 val);
 
 private:
+    enum class ChrMode
+    {
+        Mode8k = 0,
+        Mode4k = 1
+    };
+
+    enum class PrgSize
+    {
+        Size32k = 0,
+        Size16k = 1,
+    };
+
+
     enum class SxPrgBankMode
     {
         Switch32K,
@@ -86,4 +99,5 @@ private:
     u8 _accumulator;
     u8 _writeCount;
     u8 _chrRam[0x2000];
+    u8 _prgRam[0x2000];
 };

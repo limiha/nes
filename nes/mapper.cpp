@@ -80,6 +80,7 @@ SxRom::SxRom(Rom& rom)
     , _writeCount(0)
 {
     ZeroMemory(_chrRam, sizeof(_chrRam));
+    ZeroMemory(_prgRam, sizeof(_prgRam));
     control.val = 3 << 2;
 }
 
@@ -89,9 +90,9 @@ SxRom::~SxRom()
 
 u8 SxRom::prg_loadb(u16 addr)
 {
-    if (addr < 0x800)
+    if (addr < 0x8000)
     {
-        return 0;
+        return _prgRam[addr & 0x1fff];
     }
     else if (addr < 0xc000)
     {
@@ -133,6 +134,7 @@ void SxRom::prg_storeb(u16 addr, u8 val)
 {
     if (addr < 0x8000)
     {
+        _prgRam[addr & 0x1fff] = val;
         return;
     }
 
