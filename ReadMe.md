@@ -8,8 +8,8 @@
 ## Controls
 ```
 Nes     ->  Keyboard
-A       ->  Z
-B       ->  X
+A       ->  Left Alt
+B       ->  Left Ctrl
 Select  ->  Right Shift
 Start   ->  Enter (Return)
 Up      ->  Up

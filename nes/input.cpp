@@ -67,10 +67,10 @@ void Input::HandleKeyPress(SDL_Keycode code, bool isDown)
 {
     switch (code)
     {
-    case SDLK_z:
+    case SDLK_LALT:
         _joypad.HandleKeyPress(JoypadButton::A, isDown);
         break;
-    case SDLK_x:
+    case SDLK_LCTRL:
         _joypad.HandleKeyPress(JoypadButton::B, isDown);
         break;
     case SDLK_RSHIFT:
