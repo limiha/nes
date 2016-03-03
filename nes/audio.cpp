@@ -2,7 +2,7 @@
 #include "audio.h"
 
 // Values tweaked for performance/audio quality
-#define SAMPLE_BUFFER_SIZE 4096
+#define SAMPLE_BUFFER_SIZE 1024
 #define WAVETABLE_FREQUENCY_STEPS 64
 #define WAVETABLE_SAMPLES 256
 
@@ -92,8 +92,10 @@ void AudioEngine::StartAudio(
     _nyquistFreq = _sampleRate / 2;
     _pulseMinFreq = pulseMinFreq;
     _pulseMaxFreq = pulseMaxFreq;
+    _pulseFreqStep = (int)((_pulseMaxFreq - _pulseMinFreq) / WAVETABLE_FREQUENCY_STEPS);
     _triangleMinFreq = triangleMinFreq;
     _triangleMaxFreq = triangleMaxFreq;
+    _triangleFreqStep = (int)((_triangleMaxFreq - _triangleMinFreq) / WAVETABLE_FREQUENCY_STEPS);
 
     // We can't synthesize any frequency above the Nyquist frequency.
     // Clip the max frequencies at the Nyquist frequency.
@@ -217,29 +219,50 @@ void AudioEngine::ExecuteCallback(u8 *stream, int len)
     int phaseDivider = _sampleRate / WAVETABLE_SAMPLES;
     for (int i = 0; i < len; i++)
     {
-        int value = 0;
-        value += SamplePulse1(phaseDivider);
-        value += SamplePulse2(phaseDivider);
+        u32 value = 0;
+        // TODO: Balance channel volumes correctly
+        value += SamplePulse(_pulse1, _pulse1Phase, phaseDivider);
+        value += SamplePulse(_pulse2, _pulse2Phase, phaseDivider);
         value += SampleTriangle(phaseDivider);
+        value += SampleNoise();
 
-        stream[i] = (u8)(value / 3);
+        stream[i] = (u8)(value / 4);
     }
 }
 
-u8 AudioEngine::SamplePulse1(int phaseDivider)
+u32 AudioEngine::SampleWaveform(int freq, int freqStep, int volume, int& phase, int phaseDivider, u8* wavetable)
 {
-    int freq = _pulse1->frequency;
-    if (_pulse1->enabled && freq > 0)
+    int rowIndex = freq / freqStep;
+    int phaseIndex = phase / phaseDivider;
+    u8 sample = (wavetable + (rowIndex * WAVETABLE_FREQUENCY_STEPS))[phaseIndex];
+
+    phase += freq;
+    if (phase >= _sampleRate)
+        phase -= _sampleRate;
+
+    sample = _silenceValue + ((u32)sample * volume) >> 4;
+
+    return sample;
+}
+
+u32 AudioEngine::SamplePulse(NesAudioPulseCtrl* pulseChannel, int& phase, int phaseDivider)
+{
+    int freq = pulseChannel->frequency;
+    if (pulseChannel->lengthCounter > 0 && freq > 0)
     {
-        int rowIndex = freq / (int)((_pulseMaxFreq - _pulseMinFreq) / WAVETABLE_FREQUENCY_STEPS);
-        int phaseIndex = _pulse1Phase / phaseDivider;
-        u8 sample = (_pulseWavetable50 + (rowIndex * WAVETABLE_FREQUENCY_STEPS))[phaseIndex];
+        if (pulseChannel->phaseReset)
+        {
+            pulseChannel->phaseReset = false;
+            phase = 0;
+        }
 
-        _pulse1Phase += freq;
-        if (_pulse1Phase >= _sampleRate)
-            _pulse1Phase -= _sampleRate;
-
-        return sample / 8; // volume is NYI
+        return SampleWaveform(
+            freq,
+            _pulseFreqStep,
+            pulseChannel->volume,
+            phase,
+            phaseDivider,
+            _pulseWavetable50);
     }
     else
     {
@@ -247,44 +270,30 @@ u8 AudioEngine::SamplePulse1(int phaseDivider)
     }
 }
 
-u8 AudioEngine::SamplePulse2(int phaseDivider)
-{
-    int freq = _pulse2->frequency;
-    if (_pulse2->enabled && freq > 0)
-    {
-        int rowIndex = freq / (int)((_pulseMaxFreq - _pulseMinFreq) / WAVETABLE_FREQUENCY_STEPS);
-        int phaseIndex = _pulse2Phase / phaseDivider;
-        u8 sample = (_pulseWavetable50 + (rowIndex * WAVETABLE_FREQUENCY_STEPS))[phaseIndex];
-
-        _pulse2Phase += freq;
-        if (_pulse2Phase >= _sampleRate)
-            _pulse2Phase -= _sampleRate;
-
-        return sample / 8; // volume is NYI
-    }
-    else
-    {
-        return _silenceValue;
-    }
-}
-
-u8 AudioEngine::SampleTriangle(int phaseDivider)
+u32 AudioEngine::SampleTriangle(int phaseDivider)
 {
     int freq = _triangle->frequency;
-    if (_triangle->enabled && freq > 0)
+    if (_triangle->lengthCounter > 0 && _triangle->linearCounter > 0 && freq > 0)
     {
-        int rowIndex = freq / (int)((_triangleMaxFreq - _triangleMinFreq) / WAVETABLE_FREQUENCY_STEPS);
-        int phaseIndex = _trianglePhase / phaseDivider;
-        u8 sample = (_triangleWavetable + (rowIndex * WAVETABLE_FREQUENCY_STEPS))[phaseIndex];
-
-        _trianglePhase += freq;
-        if (_trianglePhase >= _sampleRate)
-            _trianglePhase -= _sampleRate;
-
-        return sample / 4; // volume is NYI
+        return SampleWaveform(
+            freq,
+            _triangleFreqStep,
+            15 /* volume - triangle volume can't be changed */,
+            _trianglePhase,
+            phaseDivider,
+            _triangleWavetable);
     }
     else
     {
         return _silenceValue;
     }
+}
+
+u32 AudioEngine::SampleNoise()
+{
+    u32 sample = _silenceValue;
+    if (_noise->lengthCounter > 0 && _noise->on)
+        sample += _noise->volume;
+
+    return sample;
 }
