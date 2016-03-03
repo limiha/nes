@@ -6,6 +6,7 @@ class AudioEngine;
 struct ApuPulseState;
 struct ApuTriangleState;
 struct ApuNoiseState;
+struct ApuEnvelop;
 struct NesAudioPulseCtrl;
 struct NesAudioTriangeCtrl;
 struct NesAudioNoiseCtrl;
@@ -44,10 +45,10 @@ private:
     u8 ReadApuStatus();
     void WriteApuStatus(u8 newStatus);
 
-    void WriteApuPulse0(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* pState);
+    void WriteApuPulse0(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop);
     void WriteApuPulse1(u8 val, ApuPulseState* pState);
-    void WriteApuPulse2(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* pState);
-    void WriteApuPulse3(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* pState);
+    void WriteApuPulse2(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* state);
+    void WriteApuPulse3(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop, ApuPulseState* state);
 
     void WriteApuTriangle0(u8 val);
     void WriteApuTriangle2(u8 val);
@@ -69,10 +70,9 @@ private:
     void DoHalfFrameStep();
     
     void StepNoise();
-    static void StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuPulseState* pulseState);
-    static void StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuNoiseState* noiseState);
-    static void StepEnvelop(NesAudioPulseCtrl* audioCtrl, ApuPulseState* pulseState);
-    static void StepEnvelop(NesAudioNoiseCtrl* audioCtrl, ApuNoiseState* noiseState);
+    static void StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop);
+    static void StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuEnvelop* envelop);
+    static int StepEnvelop(ApuEnvelop* pulseState); // Returns current volume
 
     // Utility
     int WavelengthToFrequency(bool isTriangle, int wavelength);
@@ -91,6 +91,9 @@ private:
     ApuPulseState* _pulseState2;
     ApuTriangleState* _triangleState;
     ApuNoiseState* _noiseState;
+    ApuEnvelop* _pulseEnvelop1;
+    ApuEnvelop* _pulseEnvelop2;
+    ApuEnvelop* _noiseEnvelop;
 
     // Emulator information:
     bool _isPal;

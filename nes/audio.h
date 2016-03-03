@@ -58,7 +58,8 @@ private:
     void InitializeTables();
     void ReleaseTables();
 
-    u8* GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic));
+    void GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic), u8* wavetable);
+    void GenarateOtherPulseTables();
 
     void AudioError(const char* error);
 
@@ -86,7 +87,8 @@ private:
     int _trianglePhase;
 
     // Wavetables
-    u8* _pulseWavetable50; // Pulse 50% duty cycle
+    u8* _pulseWavetableMemory;
+    u8* _pulseWavetables[4];
     u8* _triangleWavetable;
 
     // These structures are updated by the APU on the emulator thread.  The audio engine generates

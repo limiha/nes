@@ -5,6 +5,7 @@
 #define SAMPLE_BUFFER_SIZE 1024
 #define WAVETABLE_FREQUENCY_STEPS 64
 #define WAVETABLE_SAMPLES 256
+#define WAVETABLE_SIZE WAVETABLE_FREQUENCY_STEPS * WAVETABLE_SAMPLES
 
 static volatile unsigned int g_engineCount;
 
@@ -133,16 +134,24 @@ void AudioEngine::UnpauseAudio()
 
 void AudioEngine::InitializeTables()
 {
-    _pulseWavetable50 = GenerateTable(_pulseMinFreq, _pulseMaxFreq, PulseFourierFunction50);
-    _triangleWavetable = GenerateTable(_triangleMinFreq, _triangleMaxFreq, TriangleFourierFunction);
+    _triangleWavetable = new u8[WAVETABLE_SIZE];
+    _pulseWavetableMemory = new u8[WAVETABLE_SIZE * 4];
+    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_12_5] = _pulseWavetableMemory;
+    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25] = _pulseWavetableMemory + WAVETABLE_SIZE;
+    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_50] = _pulseWavetableMemory + WAVETABLE_SIZE * 2;
+    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25N] = _pulseWavetableMemory + WAVETABLE_SIZE * 3;
+
+    GenerateTable(_pulseMinFreq, _pulseMaxFreq, PulseFourierFunction50, _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_50]);
+    GenerateTable(_triangleMinFreq, _triangleMaxFreq, TriangleFourierFunction, _triangleWavetable);
+    GenarateOtherPulseTables();
 }
 
 void AudioEngine::ReleaseTables()
 {
-    if (_pulseWavetable50 != nullptr)
+    if (_pulseWavetableMemory != nullptr)
     {
-        delete[] _pulseWavetable50;
-        _pulseWavetable50 = nullptr;
+        delete[] _pulseWavetableMemory;
+        _pulseWavetableMemory = nullptr;
     }
 
     if (_triangleWavetable != nullptr)
@@ -152,9 +161,9 @@ void AudioEngine::ReleaseTables()
     }
 }
 
-u8* AudioEngine::GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic))
+void AudioEngine::GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic), u8* wavetable)
 {
-    double* rawTable = new double[WAVETABLE_FREQUENCY_STEPS * WAVETABLE_SAMPLES];
+    double* rawTable = new double[WAVETABLE_SIZE];
     double minSample = 1.0;
     double maxSample = -1.0;
 
@@ -192,12 +201,11 @@ u8* AudioEngine::GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFu
     }
 
     // Now normalize the calculated values so the wavetable only contains 0-255 value samples
-    u8* normalizedTable = new u8[WAVETABLE_FREQUENCY_STEPS * WAVETABLE_SAMPLES];
     double range = maxSample - minSample;
     for (int row = 0; row < WAVETABLE_FREQUENCY_STEPS; row++)
     {
         double* rawRow = rawTable + row * WAVETABLE_SAMPLES;
-        u8* normalizedRow = normalizedTable + row * WAVETABLE_SAMPLES;
+        u8* normalizedRow = wavetable + row * WAVETABLE_SAMPLES;
         for (int column = 0; column < WAVETABLE_SAMPLES; column++)
         {
             normalizedRow[column] = (byte)((rawRow[column] - minSample) * 255.0 / range);
@@ -205,7 +213,77 @@ u8* AudioEngine::GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFu
     }
 
     delete[] rawTable;
-    return normalizedTable;
+}
+
+void AudioEngine::GenarateOtherPulseTables()
+{
+    int halfWave = WAVETABLE_SAMPLES / 2;
+    int quarterWave = halfWave / 2;
+    int eighthWave = quarterWave / 2;
+    int sixteenthWave = eighthWave / 2;
+
+    for (int row = 0; row < WAVETABLE_FREQUENCY_STEPS; row++)
+    {
+        u8* tableRow12_5 = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_12_5] + row * WAVETABLE_SAMPLES;
+        u8* tableRow25 = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25] + row * WAVETABLE_SAMPLES;
+        u8* tableRow50 = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_50] + row * WAVETABLE_SAMPLES;
+        u8* tableRow25N = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25N] + row * WAVETABLE_SAMPLES;
+        int square12phase = 0;
+        int square25phase = 0;
+        int square50phase = 0;
+
+        // Create 25% and 25% negated duty cycle pulse tables
+
+        // Copy ascending portion of square wave
+        while (square25phase < eighthWave)
+        {
+            tableRow25[square25phase] = tableRow50[square50phase];
+            tableRow25N[square25phase++] = 255 - tableRow50[square50phase++];
+        }
+
+        // Copy next 1/4+1/8 of the the square wave starting at the 1/8 point of the 25% wave
+        // (we'll end up at the half-way point)
+        square50phase += quarterWave;
+        while (square25phase < halfWave)
+        {
+            tableRow25[square25phase] = tableRow50[square50phase];
+            tableRow25N[square25phase++] = 255 - tableRow50[square50phase++];
+        }
+
+        // Duplicate the current sample for 1/4 of the 25% wave
+        while (square25phase < halfWave + quarterWave)
+        {
+            tableRow25[square25phase] = tableRow50[square50phase];
+            tableRow25N[square25phase++] = 255 - tableRow50[square50phase];
+        }
+
+        // Copy the final 1/4 of the wave
+        while (square25phase < WAVETABLE_SAMPLES)
+        {
+            tableRow25[square25phase] = tableRow50[square50phase];
+            tableRow25N[square25phase++] = 255 - tableRow50[square50phase++];
+        }
+
+        // Create the 12.5% duty cycle pulse table
+
+        // Copy ascending portion of square wave
+        square50phase = 0;
+        while (square12phase < sixteenthWave)
+            tableRow12_5[square12phase++] = tableRow50[square50phase++];
+
+        // Copy next 1/4+1/16 of the the square wave starting at the 1/16 point of the 25% wave
+        square50phase += quarterWave + eighthWave;
+        while (square12phase < halfWave)
+            tableRow12_5[square12phase++] = tableRow50[square50phase++];
+
+        // Duplicate the current sample for 3/8 of the 25% wave
+        while (square12phase < halfWave + eighthWave * 3)
+            tableRow12_5[square12phase++] = tableRow50[square50phase];
+
+        // Copy the rest of the wave
+        while (square12phase < WAVETABLE_SAMPLES)
+            tableRow12_5[square12phase++] = tableRow50[square50phase++];
+    }
 }
 
 void AudioEngine::AudioError(const char* error)
@@ -262,7 +340,7 @@ u32 AudioEngine::SamplePulse(NesAudioPulseCtrl* pulseChannel, int& phase, int ph
             pulseChannel->volume,
             phase,
             phaseDivider,
-            _pulseWavetable50);
+            _pulseWavetables[pulseChannel->dutyCycle]);
     }
     else
     {
