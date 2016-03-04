@@ -6,6 +6,7 @@ Ppu::Ppu(VRam& vram)
     : _vram(vram)
     , _cycle(0)
     , _scanline(241)
+    , _frameOdd(false)
     , _v(0)
     , _t(0)
     , _x(0)
@@ -273,7 +274,10 @@ void Ppu::Step(PpuStepResult& result)
         {
             _lineSprites.clear();
             _spriteZeroOnLine = false;
-            ProcessSprites();
+            if (_showSprites)
+            {
+                ProcessSprites();
+            }
         }
         if (_cycle >=1 && _cycle <= 256)
         {
@@ -332,6 +336,10 @@ void Ppu::Step(PpuStepResult& result)
                 VertVEqualsVertT();
             }
         }
+        else if (_cycle == 339 && _frameOdd)
+        {
+            _cycle++;
+        }
     }
 
     // Increment and Reset
@@ -343,6 +351,7 @@ void Ppu::Step(PpuStepResult& result)
         if (_scanline == 262)
         {
             _scanline = 0;
+            _frameOdd ^= true;
         }
     }
 }
@@ -360,7 +369,7 @@ void Ppu::DrawScanline(u8 x)
     SpritePriority spritePriority = SpritePriority::Below;
     rgb pixel;
 
-u8 backdropColorIndex = _vram.loadw(0x3f00) & 0x3f; // get the universal background color
+    u8 backdropColorIndex = _vram.loadw(0x3f00) & 0x3f; // get the universal background color
 
     pixel.Reset();
 
@@ -368,7 +377,7 @@ u8 backdropColorIndex = _vram.loadw(0x3f00) & 0x3f; // get the universal backgro
     bool backgroundOpaque = false;
     if (_showBackground && !((x < 8) && _clipBackground))
     {
-        backgroundOpaque = GetBackgroundColor(x, (u8)_scanline, backgroundPaletteIndex);
+        backgroundOpaque = GetBackgroundColor(backgroundPaletteIndex);
     }
 
     u8 spritePaletteIndex = 0;
@@ -431,49 +440,28 @@ void Ppu::ProcessSprites()
     }
 }
 
-bool Ppu::GetBackgroundColor(u8 x_in, u8 y_in, u8& paletteIndex)
+bool Ppu::GetBackgroundColor(u8& paletteIndex)
 {
-    // attempt a static scroll of 4 pixels
     u16 x = _cycle - 1 + ScrollX();
-    //u16 x = x_in + (256 + 255);
-    //u16 x = x_in + (256 - 5);
     u16 y = _scanline + ScrollY();
-    //u16 x = (u16)x_in + (256 + 128);
-    //u16 y = (u16)y_in + (240 - 240);
 
+    // wrap values around and toggle name table
+    if (x == 256)
+    {
+        _v ^= (1 << 10);
+        x = 0;
+    }
+    if (y == 240)
+    {
+        _v ^= (1 << 11);
+        y = 0;
+    }
 
     // The Name Tables store tile numbers
     // These Tile Numbers are indices into the pattern tables
     // The first step is to figure out the correct address to read from the name tables
 
-    if (x == 511)
-    {
-        __debugbreak();
-    }
-
-    bool toggleXNameTable = false;
-    bool toggleYNameTable = false;
-
-    if (x >= 256)
-    {
-        toggleXNameTable = true;
-    }
-
-    if (y >= 240)
-    {
-        toggleYNameTable = true;;
-    }
-
     u8 nameTableBits = (u8)((_v & 0b110000000000) >> 10);
-
-    if (toggleXNameTable)
-    {
-        nameTableBits ^= 0x1;
-    }
-    if (toggleYNameTable)
-    {
-        nameTableBits ^= 0x2;
-    }
 
     u16 nameTableBaseAddress;
     switch (nameTableBits)

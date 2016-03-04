@@ -202,7 +202,7 @@ private:
     u8 ScrollY();
 
     void DrawScanline(u8 x);
-    bool GetBackgroundColor(u8 x, u8 y, u8& paletteIndex);
+    bool GetBackgroundColor(u8& paletteIndex);
     bool GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, SpritePriority& priority);
     void ProcessSprites();
     void PutPixel(u8 x, u8 y, rgb& pixel);
@@ -260,4 +260,8 @@ private:
     // This means x scrolls before cycle 256 will take effect on the next scanline (hori(v) = hori(t) at 256 of visible scanlines)
     // Y scrolls effect the next full frame and are not latched in until near the end of _scanline 261
     u32 _scanline;
+
+    // Toggled on every frame
+    // If true, the last cycle of the pre render scanline is skipped
+    bool _frameOdd;
 };
