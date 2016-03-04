@@ -77,6 +77,7 @@ ipch/
 *.opensdf
 *.sdf
 *.cachefile
+*.VC.db
 
 # Visual Studio profiler
 *.psess
@@ -210,3 +211,6 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+
+# Never check in ROMs
+*.nes
