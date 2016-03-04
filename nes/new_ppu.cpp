@@ -28,6 +28,7 @@ u8 Ppu::loadb(u16 addr)
         break;
     case 2:
         //return ReadPpuStatus();
+        return Read2002();
         break;
     case 3:
         // cannot read $2003
@@ -85,6 +86,20 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
+// PPUCTRL
+u8 Ppu::Read2002()
+{
+    u8 regVal = _ppuStatus.val;
+
+    // Reading clears VBlank
+    _ppuStatus.SetInVBlank(false);
+
+    // Reset write toggle for $2005/$2006
+    // w = 0
+
+    return regVal;
+}
+
 void Ppu::Step(PpuStepResult& result)
 {
     if (_scanline >= 0 && _scanline <= 239)
@@ -94,6 +109,10 @@ void Ppu::Step(PpuStepResult& result)
         if (_cycle == 256)
         {
             DrawScanline();
+            if (_scanline == 239)
+            {
+                result.NewFrame = true;
+            }
         }
         else if (_cycle == 257)
         {
@@ -110,7 +129,8 @@ void Ppu::Step(PpuStepResult& result)
 
         if (_scanline == 241 && _cycle == 1)
         {
-            // set VBlank
+            _ppuStatus.SetInVBlank(true);
+            result.VBlankNmi = true;
         }
 
         // idle
@@ -122,6 +142,7 @@ void Ppu::Step(PpuStepResult& result)
         if (_cycle == 1)
         {
             // clear VBlank, Sprite 0, Sprite Overflow
+            _ppuStatus.val = 0;
         }
         else if (_cycle >= 280 && _cycle <= 304)
         {
@@ -208,7 +229,7 @@ void Ppu::DrawScanline()
             pixel.SetColor(backgroundPaletteIndex);
         }
 
-        PutPixel(x, (u8)_scanline, pixel);
+        PutPixel(x, _scanline, pixel);
     }
 }
 

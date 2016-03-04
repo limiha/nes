@@ -135,6 +135,33 @@ struct PpuStepResult
     }
 };
 
+// Ppu Registers
+
+struct PpuStatus
+{
+    u8 val;
+
+    PpuStatus() : val(0) { }
+
+    void SetInVBlank(bool on)
+    {
+        if (on) val |= (1 << 7);
+        else val &= ~(1 << 7);
+    }
+
+    void SetSpriteOverflow(bool on)
+    {
+        if (on) val |= (1 << 5);
+        else val &= ~(1 << 5);
+    }
+
+    void SetSpriteZeroHit(bool on)
+    {
+        if (on) val |= (1 << 6);
+        else val &= ~(1 << 6);
+    }
+};
+
 class Ppu : public IMem
 {
 public:
@@ -151,6 +178,9 @@ public:
 
 private:
     void Step(PpuStepResult& resutl);
+
+    u8 Read2002();
+
     void DrawScanline();
     void CalculateSpritesOnLine(u16 y);
     void PutPixel(u8 x, u8 y, rgb& pixel);
@@ -160,7 +190,9 @@ public:
 
 private:
     VRam& _vram;
+    u16 _oamAddr;
 
+    PpuStatus _ppuStatus;
 
     // the current cycle number, 341 cycles in a scan line, 0 - 340
     // TODO: figure out the extra _cycle/odd frame thing.
