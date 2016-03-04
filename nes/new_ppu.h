@@ -176,6 +176,10 @@ public:
 public:
     void Step(u8 cycles, PpuStepResult& result);
 
+#if defined(RENDER_NAMETABLE)
+    void RenderNameTable(u8 screen[], int i);
+#endif
+
 private:
     void Step(PpuStepResult& resutl);
 
@@ -191,13 +195,16 @@ private:
     void Write2007(u8 val);
 
     // Scrolling
+    bool IsRendering() { return _showBackground || _showSprites; }
     void HoriVEqualsHoriT();
     void VertVEqualsVertT();
     u8 ScrollX();
     u8 ScrollY();
 
-    void DrawScanline();
-    void CalculateSpritesOnLine(u16 y);
+    void DrawScanline(u8 x);
+    bool GetBackgroundColor(u8 x, u8 y, u8& paletteIndex);
+    bool GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, SpritePriority& priority);
+    void ProcessSprites();
     void PutPixel(u8 x, u8 y, rgb& pixel);
 
 public:
@@ -205,8 +212,12 @@ public:
 
 private:
     VRam& _vram;
+
+    // Sprites
     Oam _oam;
     u16 _oamAddr;
+    std::vector<std::unique_ptr<Sprite>> _lineSprites;
+    bool _spriteZeroOnLine;
 
     // Ppu Register Data
     PpuStatus _ppuStatus;
