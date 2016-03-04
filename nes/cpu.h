@@ -4,10 +4,10 @@
 
 // Base Cycle Counts 
 static u8 CYCLE_TABLE[0x100] = {
-    /*0x00*/ 7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6,
-    /*0x10*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
-    /*0x20*/ 6,6,2,8,3,3,5,5,4,2,2,2,4,4,6,6,
-    /*0x30*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    /*0x00*/ 7,6,2,8,3,2,5,5,3,2,2,2,4,4,6,6,
+    /*0x10*/ 2,5,2,8,4,3,6,6,2,4,2,7,4,4,7,7,
+    /*0x20*/ 6,6,2,8,3,2,5,5,4,2,2,2,4,4,6,6,
+    /*0x30*/ 2,5,2,8,4,3,6,6,2,4,2,7,4,4,7,7,
     /*0x40*/ 6,6,2,8,3,3,5,5,3,2,2,2,3,4,6,6,
     /*0x50*/ 2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
     /*0x60*/ 6,6,2,8,3,3,5,5,4,2,2,2,5,4,6,6,
@@ -103,6 +103,8 @@ private:
     CpuRegs _regs;
     IMem* _mem;
 
+    u8 _op;
+
 private:
     void Dma(u8 val);
     void Trace();
@@ -150,10 +152,46 @@ private:
     void ZeroPageX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)(u8)(LoadBBumpPC() + _regs.X)); }
     void ZeroPageY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)(u8)(LoadBBumpPC() + _regs.Y)); }
     void Absolute(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC()); }
-    void AbsoluteX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + (u16)_regs.X); }
-    void AbsoluteY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC() + (u16)_regs.Y); }
+    
+    void AbsoluteX(IAddressingMode* &am)
+    {
+        u16 addr = LoadWBumpPC();
+        u16 indexedAddr = addr + (u16)_regs.X;
+
+        if (_op != 0x1e // asl
+            && _op != 0xde // dec
+            && _op != 0x5e // lsr
+            && _op != 0x3e // rol
+            && _op != 0x7e // ror
+            && _op != 0x9d // sta
+            )
+        {
+            checkPageCross(addr, indexedAddr);
+        }
+
+        am = new MemoryAddressingMode(*this, indexedAddr);
+    }
+    void AbsoluteY(IAddressingMode* &am)
+    {
+        u16 addr = LoadWBumpPC();
+        u16 indexedAddr = addr + (u16)_regs.Y;
+
+        if (_op != 0x99) // sta
+        {
+            checkPageCross(addr, indexedAddr);
+        }
+        am = new MemoryAddressingMode(*this, indexedAddr);
+    }
+    
     void IndexedIndirectX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC() + _regs.X)); }
-    void IndirectIndexedY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC()) + _regs.Y); }
+
+    void IndirectIndexedY(IAddressingMode* &am)
+    {
+        u16 addr = loadw_zp(LoadBBumpPC());
+        u16 indexedAddr = addr + (u16)_regs.Y;
+        checkPageCross(addr, indexedAddr);
+        am = new MemoryAddressingMode(*this, indexedAddr);
+    }
 
     // Memory Acess Helpers
     u8 LoadBBumpPC() { return loadb(_regs.PC++); }
@@ -162,6 +200,14 @@ private:
         u16 val = loadw(_regs.PC);
         _regs.PC += 2;
         return val;
+    }
+
+    void checkPageCross(u16 lhs, u16 rhs)
+    {
+        if ((lhs & 0xff00) != (rhs & 0xff00))
+        {
+            Cycles++;
+        }
     }
 
     // Stack Helpers
@@ -316,7 +362,11 @@ private:
         i8 disp = (i8)LoadBBumpPC();
         if (cond)
         {
-            _regs.PC = (u16)((i32)_regs.PC + (i32)disp);
+            Cycles++;
+            u16 newPC = (u16)((i32)_regs.PC + (i32)disp);
+            checkPageCross(_regs.PC, newPC);
+
+            _regs.PC = newPC;
         }
     }
     void bpl(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Negative)); }

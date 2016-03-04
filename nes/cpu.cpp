@@ -70,12 +70,12 @@ void Cpu::Step()
 //    }
 //#endif
 
-    u8 op = LoadBBumpPC();
+    _op = LoadBBumpPC();
 
     IAddressingMode* am = nullptr;
-    DECODE(op)
+    DECODE(_op)
 
-    Cycles += CYCLE_TABLE[op];
+    Cycles += CYCLE_TABLE[_op];
 
     if (am != nullptr)
     {
