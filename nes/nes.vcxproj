@@ -207,7 +207,8 @@
     <ClInclude Include="gfx.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="mapper.h" />
-    <ClInclude Include="ppu.h" />
+    <ClInclude Include="new_ppu.h" />
+    <ClInclude Include="old_ppu.h" />
     <ClInclude Include="rom.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="mem.h" />
@@ -224,7 +225,8 @@
     <ClCompile Include="mapper.cpp" />
     <ClCompile Include="mem.cpp" />
     <ClCompile Include="nes.cpp" />
-    <ClCompile Include="ppu.cpp" />
+    <ClCompile Include="new_ppu.cpp" />
+    <!--<ClCompile Include="old_ppu.cpp" />-->
     <ClCompile Include="rom.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

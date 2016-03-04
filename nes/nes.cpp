@@ -3,8 +3,10 @@
 
 #include "stdafx.h"
 #include "cpu.h"
+#include "new_ppu.h"
 #include "mem.h"
-#include "ppu.h"
+//#include "ppu.h"
+#include "new_ppu.h"
 #include "input.h"
 #include "rom.h"
 #include "apu.h"
