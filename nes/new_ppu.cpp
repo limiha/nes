@@ -250,6 +250,34 @@ void Ppu::VertVEqualsVertT()
     _v |= (_t & 0b111101111100000);
 }
 
+void Ppu::IncVertV()
+{
+    if ((_v & 0x7000) != 0x7000)
+    {
+        _v += 0x1000;
+    }
+    else
+    {
+        _v &= ~0x7000;
+        u16 y = ((_v & 0b1111100000) >> 5);
+        if (y == 29)
+        {
+            y = 0;
+            _v ^= 0x0800;
+        }
+        else if (y == 31)
+        {
+            y = 0;
+        }
+        else
+        {
+            y += 1;
+        }
+
+        _v = (_v & ~0b1111100000) | (y << 5);
+    }
+}
+
 u8 Ppu::ScrollX()
 {
     u8 x = ((_v & 0b11111) << 3) | _x;
@@ -282,6 +310,10 @@ void Ppu::Step(PpuStepResult& result)
         if (_cycle >=1 && _cycle <= 256)
         {
             DrawScanline(_cycle - 1);
+            if (_cycle == 256 && IsRendering())
+            {
+                IncVertV();
+            }
             if (_scanline == 239 && _cycle == 256)
             {
                 result.NewFrame = true;
@@ -320,6 +352,10 @@ void Ppu::Step(PpuStepResult& result)
         {
             // clear VBlank, Sprite 0, Sprite Overflow
             _ppuStatus.val = 0;
+        }
+        else if (_cycle == 256 && IsRendering())
+        {
+            IncVertV();
         }
         else if (_cycle == 257)
         {
@@ -443,18 +479,13 @@ void Ppu::ProcessSprites()
 bool Ppu::GetBackgroundColor(u8& paletteIndex)
 {
     u16 x = _cycle - 1 + ScrollX();
-    u16 y = _scanline + ScrollY();
+    u16 y = ScrollY();
 
     // wrap values around and toggle name table
     if (x == 256)
     {
         _v ^= (1 << 10);
         x = 0;
-    }
-    if (y == 240)
-    {
-        _v ^= (1 << 11);
-        y = 0;
     }
 
     // The Name Tables store tile numbers
@@ -471,9 +502,6 @@ bool Ppu::GetBackgroundColor(u8& paletteIndex)
     case 2: nameTableBaseAddress = 0x2800; break;
     case 3: nameTableBaseAddress = 0x2c00; break;
     }
-
-    x %= 256;
-    y %= 240;
 
     // A Name Table represents a 32 * 30 grid of tiles
     // A tile is 8x8, so to the tile index divide by 8

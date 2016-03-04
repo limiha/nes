@@ -198,6 +198,7 @@ private:
     bool IsRendering() { return _showBackground || _showSprites; }
     void HoriVEqualsHoriT();
     void VertVEqualsVertT();
+    void IncVertV();
     u8 ScrollX();
     u8 ScrollY();
 
