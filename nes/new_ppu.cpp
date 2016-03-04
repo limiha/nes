@@ -633,7 +633,7 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, Sp
             }
 
             // Now we know we have an opaque sprite pixel
-            if (backgroundOpaque && _spriteZeroOnLine && it == _lineSprites.begin())
+            if (backgroundOpaque && _spriteZeroOnLine && it == _lineSprites.begin() && x != 255)
             {
                 _ppuStatus.SetSpriteZeroHit(true);
             }
