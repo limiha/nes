@@ -5,7 +5,6 @@
 
 const u32 SCREEN_HEIGHT = 240;
 const u32 SCREEN_WIDTH = 256;
-const u32 CYCLES_PER_SCANLINE = 114;
 const u32 VBLANK_SCANLINE = 241;
 const u32 LAST_SCANLINE = 261;
 
@@ -148,14 +147,16 @@ public:
     void storeb(u16 addr, u8 val);
 
 public:
-    // If step returns trun, draw a new frame
-    // TOOO: IRQ return
     void Step(u8 cycles, PpuStepResult& result);
-    void DrawScanline();
 
+private:
+    void Step(PpuStepResult& resutl);
+    void DrawScanline();
+    void CalculateSpritesOnLine(u16 y);
+    void PutPixel(u8 x, u8 y, rgb& pixel);
 
 public:
-    u8 Screen[256 * 240 * 3];   
+    u8 Screen[256 * 240 * 3];
 
 private:
     VRam& _vram;

@@ -85,71 +85,139 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
+void Ppu::Step(PpuStepResult& result)
+{
+    if (_scanline >= 0 && _scanline <= 239)
+    {
+        // visible scanlines
+
+        if (_cycle == 256)
+        {
+            DrawScanline();
+        }
+        else if (_cycle == 257)
+        {
+            /*
+            / if rendering,
+            / latch X scroll:
+            / HoriVEqualHoriT();
+            */
+        }
+    }
+    else if (_scanline >= 240 && _scanline <= 260)
+    {
+        // post render
+
+        if (_scanline == 241 && _cycle == 1)
+        {
+            // set VBlank
+        }
+
+        // idle
+    }
+    else if (_scanline == 261)
+    {
+        // pre render
+
+        if (_cycle == 1)
+        {
+            // clear VBlank, Sprite 0, Sprite Overflow
+        }
+        else if (_cycle >= 280 && _cycle <= 304)
+        {
+            /*
+            / if rendering,
+            / latch Y scroll:
+            / VertVEqualsVertT();
+            */
+        }
+    }
+
+    // Increment and Reset
+    _scanline++;
+    if (_scanline == 262)
+    {
+        _scanline = 0;
+    }
+    _cycle++;
+    if (_cycle == 341)
+    {
+        _cycle = 0;
+    }
+}
+
 void Ppu::Step(u8 cycles, PpuStepResult& result)
 {
     for (u8 i = 0; i < cycles; i++)
     {
-        if (_scanline >= 0 && _scanline <= 239)
-        {
-            // visible scanlines
-
-            if (_cycle == 256)
-            {
-                DrawScanline();
-            }
-            else if (_cycle == 257)
-            {
-                // latch X scroll
-                // HoriVEqualHoriT();
-            }
-        }
-        else if (_scanline >= 240 && _scanline <= 260)
-        {
-            // post render
-
-            if (_scanline == 241 && _cycle == 1)
-            {
-                // set VBlank
-            }
-
-            // idle
-        }
-        else if (_scanline == 261)
-        {
-            // pre render
-
-            if (_cycle == 1)
-            {
-                // clear VBlank, Sprite 0, Sprite Overflow
-            }
-            else if (_cycle >= 280 && _cycle <= 304)
-            {
-                // latch Y scroll
-                // VertVEqualsVertT();
-            }
-        }
-
-
-        // Increment and Reset
-        _scanline++;
-        if (_scanline == 262)
-        {
-            _scanline = 0;
-        }
-        _cycle++;
-        if (_cycle == 341)
-        {
-            _cycle = 0;
-        }
+        Step(result);
     }
 }
 
 void Ppu::DrawScanline()
 {
+    SpritePriority spritePriority = SpritePriority::Below;
+    rgb pixel;
 
+    u8 backdropColorIndex = _vram.loadw(0x3f00) & 0x3f; // get the universal background color
+
+    // _spriteZeroOnLine = false;
+    // _spritesOnLine.clear();
+
+    //if (_regs.mask.ShowSprites())
+    //{
+    //    CalculateSpritesOnLine((u8)_scanline); // This cast works for now because we don't get called when _scanline > 240
+    //}
+
+    for (u32 x = 0; x < SCREEN_WIDTH; x++)
+    {
+        pixel.Reset();
+
+        u8 backgroundPaletteIndex = 0;
+        bool backgroundOpaque = false;
+        //if (_regs.mask.ShowBackground() && !((x < 8) && _regs.mask.clipBackground()))
+        //{
+        //    backgroundOpaque = GetBackgroundColor(x, (u8)_scanline, backgroundPaletteIndex);
+        //}
+
+        u8 spritePaletteIndex = 0;
+        bool spriteOpqaue = false;
+        //if (_spritesOnLine.size() > 0 && !((x < 8) && _regs.mask.clipSprites()))
+        //{
+        //    spriteOpqaue = GetSpriteColor(x, (u8)_scanline, spritePaletteIndex, backgroundPaletteIndex != 0, spritePriority);
+        //}
+
+        if (!backgroundOpaque && !spriteOpqaue)
+        {
+            pixel.SetColor(backdropColorIndex);
+        }
+        else if (!spriteOpqaue)
+        {
+            pixel.SetColor(backgroundPaletteIndex);
+        }
+        else if (!backgroundOpaque)
+        {
+            pixel.SetColor(spritePaletteIndex);
+        }
+        else if (spritePriority == SpritePriority::Above)
+        {
+            pixel.SetColor(spritePaletteIndex);
+        }
+        else if (spritePriority == SpritePriority::Below)
+        {
+            pixel.SetColor(backgroundPaletteIndex);
+        }
+
+        PutPixel(x, (u8)_scanline, pixel);
+    }
 }
 
-
+void Ppu::PutPixel(u8 x, u8 y, rgb& pixel)
+{
+    Screen[(y * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
+    Screen[(y * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
+    Screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
+}
 
 ///
 /// VRam
@@ -202,9 +270,10 @@ u8 VRam::loadb(u16 addr)
     }
     else if (addr < 0x4000)
     {
+        addr &= 0x1f;
         // if addr is a multiple of 4, return palette entry 0
         u16 palette_addr = (addr % 4 == 0) ? 0 : addr;
-        return _pallete[palette_addr & 0x1f];
+        return _pallete[palette_addr] & 0x3f;
     }
     return 0;
 }
@@ -245,12 +314,12 @@ void VRam::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x4000)
     {
-        u16 palette_addr = addr & 0x1f;
-        if (palette_addr == 0x10)
+        addr &= 0x1f;
+        if (addr == 0x10)
         {
-            palette_addr = 0x00;
+            addr = 0x00;
         }
-        _pallete[palette_addr] = val;
+        _pallete[addr] = val;
     }
 }
 

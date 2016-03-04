@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
         cpu.Step();
 
         apu.Step(cpu.Cycles, apuResult);
-        ppu.Step(cpu.Cycles, ppuResult);
+        ppu.Step(cpu.Cycles * 3, ppuResult);
         if (ppuResult.VBlankNmi)
         {
             cpu.Nmi();
