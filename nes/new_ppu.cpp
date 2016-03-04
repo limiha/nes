@@ -5,7 +5,7 @@
 Ppu::Ppu(VRam& vram)
     : _vram(vram)
     , _cycle(0)
-    , _scanline(261) // play around with this number
+    , _scanline(241)
     , _v(0)
     , _t(0)
     , _x(0)
