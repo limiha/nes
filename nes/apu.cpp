@@ -29,6 +29,12 @@ const int NoisePeriodValues[16] =
 struct ApuPulseState
 {
     int wavelength;
+    int sweepPeriod;
+    int sweepCounter;
+    int shiftAmount;
+    bool sweepEnabled;
+    bool sweepReset;
+    bool negate;
 };
 
 struct ApuTriangleState
@@ -348,9 +354,11 @@ void Apu::WriteApuPulse0(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envel
 
 void Apu::WriteApuPulse1(u8 val, ApuPulseState* state)
 {
-    // Sweep unit
-
-    // Not implemented
+    state->sweepEnabled = (val & 0x80) != 0;
+    state->negate = (val & 0x08) != 0;
+    state->sweepPeriod = (val >> 4) & 0x07;
+    state->shiftAmount = val & 0x07;
+    state->sweepReset = true;
 }
 
 void Apu::WriteApuPulse2(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* state)
@@ -377,7 +385,8 @@ void Apu::WriteApuPulse3(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envel
     else
         audioCtrl->frequency = WavelengthToFrequency(false, state->wavelength);
 
-    audioCtrl->phaseReset = true;
+    // Add this back after audio buffering is fixed
+    //audioCtrl->phaseReset = true;
 }
 
 void Apu::WriteApuTriangle0(u8 val)
@@ -492,6 +501,8 @@ void Apu::DoHalfFrameStep()
     StepLengthCounter(_pulse1, _pulseEnvelop1);
     StepLengthCounter(_pulse2, _pulseEnvelop2);
     StepLengthCounter(_noise, _noiseEnvelop);
+    StepSweep(_pulse1, _pulseState1, true);
+    StepSweep(_pulse2, _pulseState2, false);
 }
 
 void Apu::StepNoise()
@@ -507,6 +518,45 @@ void Apu::StepNoise()
     _noiseState->shiftRegister |= feedback << 15;
     _noise->on = !(_noiseState->shiftRegister & 1);
 }
+
+void Apu::StepSweep(NesAudioPulseCtrl* audioCtrl, ApuPulseState* state, bool channel1)
+{
+    if (state->sweepEnabled)
+    {
+        if (state->sweepReset)
+        {
+            state->sweepCounter = 0;
+            state->sweepReset = false;
+        }
+        else if (state->sweepCounter != 0)
+        {
+            state->sweepCounter--;
+        }
+        else
+        {
+            int wavelength = state->wavelength;
+            int delta = wavelength >> state->shiftAmount;
+            if (state->negate)
+            {
+                wavelength -= delta;
+                if (channel1)
+                    wavelength--;
+            }
+            else
+            {
+                wavelength += delta;
+            }
+
+            if (wavelength < 8 || wavelength > 0x07FF)
+                wavelength = 0;
+
+            state->wavelength = wavelength;
+            state->sweepCounter = state->sweepPeriod;
+            audioCtrl->frequency = WavelengthToFrequency(false, state->wavelength);
+        }
+    }
+}
+
 
 void Apu::StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop)
 {
@@ -545,9 +595,11 @@ int Apu::StepEnvelop(ApuEnvelop* envelop)
     else
         return envelop->setVolume;
 }
-
 int Apu::WavelengthToFrequency(bool isTriangle, int wavelength)
 {
+    if (wavelength == 0)
+        return 0;
+
     double steps = isTriangle ? TRIANGLE_WAVEFORM_STEPS : PULSE_WAVEFORM_STEPS;
     double cpuFreq = _isPal ? CPU_FREQ_PAL : CPU_FREQ_NTSC;
     return (int)(cpuFreq / (steps * (wavelength + 1)));

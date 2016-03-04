@@ -70,9 +70,10 @@ private:
     void DoHalfFrameStep();
     
     void StepNoise();
+    void StepSweep(NesAudioPulseCtrl* audioCtrl, ApuPulseState* state, bool channel1);
     static void StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop);
     static void StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuEnvelop* envelop);
-    static int StepEnvelop(ApuEnvelop* pulseState); // Returns current volume
+    static int StepEnvelop(ApuEnvelop* envelop); // Returns current volume
 
     // Utility
     int WavelengthToFrequency(bool isTriangle, int wavelength);
