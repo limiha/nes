@@ -29,11 +29,6 @@ const int NoisePeriodValues[16] =
 struct ApuPulseState
 {
     int wavelength;
-    int envelopCounter;
-    int setVolume;
-    bool start;
-    bool haltCounter;
-    bool constantVolume;
 };
 
 struct ApuTriangleState
@@ -46,14 +41,20 @@ struct ApuTriangleState
 
 struct ApuNoiseState
 {
-    int envelopCounter;
-    int setVolume;
     int period;
+    bool mode1;
+    u16 shiftRegister;
+};
+
+struct ApuEnvelop
+{
+    int envelopDivider;
+    int dividerCounter;
+    int setVolume;
+    int envelopVolume;
     bool start;
     bool haltCounter;
     bool constantVolume;
-    bool mode1;
-    u16 shiftRegister;
 };
 
 // APU implementation
@@ -77,6 +78,13 @@ Apu::Apu(bool isPal)
     memset(_pulseState2, 0, sizeof(ApuPulseState));
     memset(_triangleState, 0, sizeof(ApuTriangleState));
     memset(_noiseState, 0, sizeof(ApuNoiseState));
+
+    _pulseEnvelop1 = new ApuEnvelop();
+    _pulseEnvelop2 = new ApuEnvelop();
+    _noiseEnvelop = new ApuEnvelop();
+    memset(_pulseEnvelop1, 0, sizeof(ApuEnvelop));
+    memset(_pulseEnvelop2, 0, sizeof(ApuEnvelop));
+    memset(_noiseEnvelop, 0, sizeof(ApuEnvelop));
 
     _pulse1 = new NesAudioPulseCtrl();
     _pulse2 = new NesAudioPulseCtrl();
@@ -166,7 +174,7 @@ void Apu::storeb(u16 addr, u8 val)
     switch (addr)
     {
     case 0x4000:
-        WriteApuPulse0(val, _pulse1, _pulseState1);
+        WriteApuPulse0(val, _pulse1, _pulseEnvelop1);
         break;
     case 0x4001:
         WriteApuPulse1(val, _pulseState1);
@@ -175,10 +183,10 @@ void Apu::storeb(u16 addr, u8 val)
         WriteApuPulse2(val, _pulse1, _pulseState1);
         break;
     case 0x4003:
-        WriteApuPulse3(val, _pulse1, _pulseState1);
+        WriteApuPulse3(val, _pulse1, _pulseEnvelop1, _pulseState1);
         break;
     case 0x4004:
-        WriteApuPulse0(val, _pulse2, _pulseState2);
+        WriteApuPulse0(val, _pulse2, _pulseEnvelop2);
         break;
     case 0x4005:
         WriteApuPulse1(val, _pulseState2);
@@ -187,7 +195,7 @@ void Apu::storeb(u16 addr, u8 val)
         WriteApuPulse2(val, _pulse2, _pulseState2);
         break;
     case 0x4007:
-        WriteApuPulse3(val, _pulse2, _pulseState2);
+        WriteApuPulse3(val, _pulse2, _pulseEnvelop2, _pulseState2);
         break;
     case 0x4008:
         WriteApuTriangle0(val);
@@ -324,16 +332,17 @@ void Apu::WriteApuStatus(u8 newStatus)
         _dmc->enabled = 0;
 }
 
-void Apu::WriteApuPulse0(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* state)
+void Apu::WriteApuPulse0(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop)
 {
     int dutyCycle = (val >> 6) & 0x03;
     bool haltCounter = (val & 0x20) != 0;
     bool constantVolumeFlag = (val & 0x10) != 0;
-    int volume = val & 0x0F;
+    int volumeOrDivider = val & 0x0F;
 
-    state->haltCounter = haltCounter;
-    state->setVolume = volume;
-    state->constantVolume = constantVolumeFlag;
+    envelop->haltCounter = haltCounter;
+    envelop->setVolume = volumeOrDivider;
+    envelop->envelopDivider = volumeOrDivider;
+    envelop->constantVolume = constantVolumeFlag;
     audioCtrl->dutyCycle = dutyCycle;
 }
 
@@ -355,13 +364,13 @@ void Apu::WriteApuPulse2(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* st
         audioCtrl->frequency = WavelengthToFrequency(false, state->wavelength);
 }
 
-void Apu::WriteApuPulse3(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* state)
+void Apu::WriteApuPulse3(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop, ApuPulseState* state)
 {
     audioCtrl->lengthCounter = LengthCounterSetValues[(val >> 3) & 0x1F];
 
     state->wavelength &= 0x00FF;
     state->wavelength |= (val & 0x07) << 8;
-    state->start = true;
+    envelop->start = true;
 
     if (state->wavelength < 8)
         audioCtrl->frequency = 0;
@@ -401,11 +410,12 @@ void Apu::WriteApuNoise0(u8 val)
 {
     bool haltCounter = (val & 0x20) != 0;
     bool constantVolumeFlag = (val & 0x10) != 0;
-    int volume = val & 0x0F;
+    int volumeOrDivider = val & 0x0F;
 
-    _noiseState->haltCounter = haltCounter;
-    _noiseState->setVolume = volume;
-    _noiseState->constantVolume = constantVolumeFlag;
+    _noiseEnvelop->haltCounter = haltCounter;
+    _noiseEnvelop->setVolume = volumeOrDivider;
+    _noiseEnvelop->envelopDivider = volumeOrDivider;
+    _noiseEnvelop->constantVolume = constantVolumeFlag;
 }
 
 void Apu::WriteApuNoise2(u8 val)
@@ -417,7 +427,7 @@ void Apu::WriteApuNoise2(u8 val)
 void Apu::WriteApuNoise3(u8 val)
 {
     _noise->lengthCounter = LengthCounterSetValues[(val >> 3) & 0x1F];
-    _noiseState->start = true;
+    _noiseEnvelop->start = true;
 }
 
 void Apu::WriteApuDmc0(u8 val)
@@ -462,9 +472,9 @@ void Apu::WriteApuFrameCounter(u8 val)
 
 void Apu::DoQuarterFrameStep()
 {
-    StepEnvelop(_pulse1, _pulseState1);
-    StepEnvelop(_pulse2, _pulseState2);
-    StepEnvelop(_noise, _noiseState);
+    _pulse1->volume = StepEnvelop(_pulseEnvelop1);
+    _pulse2->volume = StepEnvelop(_pulseEnvelop2);
+    _noise->volume = StepEnvelop(_noiseEnvelop);
 
     if (_triangleState->reloadCounter)
         _triangle->linearCounter = _triangleState->counterReloadValue;
@@ -479,9 +489,9 @@ void Apu::DoHalfFrameStep()
 {
     DoQuarterFrameStep();
 
-    StepLengthCounter(_pulse1, _pulseState1);
-    StepLengthCounter(_pulse2, _pulseState2);
-    StepLengthCounter(_noise, _noiseState);
+    StepLengthCounter(_pulse1, _pulseEnvelop1);
+    StepLengthCounter(_pulse2, _pulseEnvelop2);
+    StepLengthCounter(_noise, _noiseEnvelop);
 }
 
 void Apu::StepNoise()
@@ -498,64 +508,42 @@ void Apu::StepNoise()
     _noise->on = !(_noiseState->shiftRegister & 1);
 }
 
-void Apu::StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuPulseState* pulseState)
+void Apu::StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop)
 {
-    if (!pulseState->haltCounter && audioCtrl->lengthCounter != 0)
+    if (!envelop->haltCounter && audioCtrl->lengthCounter != 0)
         audioCtrl->lengthCounter--;
 }
 
-void Apu::StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuNoiseState* noiseState)
+void Apu::StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuEnvelop* envelop)
 {
-    if (!noiseState->haltCounter && audioCtrl->lengthCounter != 0)
+    if (!envelop->haltCounter && audioCtrl->lengthCounter != 0)
         audioCtrl->lengthCounter--;
 }
 
-void Apu::StepEnvelop(NesAudioPulseCtrl* audioCtrl, ApuPulseState* pulseState)
+int Apu::StepEnvelop(ApuEnvelop* envelop)
 {
-    if (pulseState->start)
+    if (envelop->start)
     {
-        pulseState->envelopCounter = 0x0F;
-        pulseState->start = false;
+        envelop->envelopVolume = 0x0F;
+        envelop->dividerCounter = 0;
+        envelop->start = false;
     }
-    else
+    else if (!envelop->haltCounter)
     {
-        if (!pulseState->haltCounter)
+        if (envelop->dividerCounter++ == 0x0F)
         {
-            if (pulseState->envelopCounter == 0)
-                pulseState->envelopCounter = 0x0F;
+            envelop->dividerCounter = 0;
+            if (envelop->envelopVolume == 0)
+                envelop->envelopVolume = 0x0F;
             else
-                pulseState->envelopCounter--;
+                envelop->envelopVolume--;
         }
     }
 
-    if (!pulseState->constantVolume)
-        audioCtrl->volume = pulseState->envelopCounter;
+    if (!envelop->constantVolume)
+        return envelop->envelopVolume;
     else
-        audioCtrl->volume = pulseState->setVolume;
-}
-
-void Apu::StepEnvelop(NesAudioNoiseCtrl* audioCtrl, ApuNoiseState* noiseState)
-{
-    if (noiseState->start)
-    {
-        noiseState->envelopCounter = 0x0F;
-        noiseState->start = false;
-    }
-    else
-    {
-        if (!noiseState->haltCounter)
-        {
-            if (noiseState->envelopCounter == 0)
-                noiseState->envelopCounter = 0x0F;
-            else
-                noiseState->envelopCounter--;
-        }
-    }
-
-    if (!noiseState->constantVolume)
-        audioCtrl->volume = noiseState->envelopCounter;
-    else
-        audioCtrl->volume = noiseState->setVolume;
+        return envelop->setVolume;
 }
 
 int Apu::WavelengthToFrequency(bool isTriangle, int wavelength)
