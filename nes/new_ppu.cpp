@@ -218,6 +218,35 @@ void Ppu::Write2007(u8 val)
     _v += _vramAddrIncrement;
 }
 
+// Scrolling Functions
+void Ppu::HoriVEqualsHoriT()
+{
+    // copy scroll X bits from v to t
+    _v &= ~(0b10000011111);
+    _v |= (_t & 0b10000011111);
+}
+
+void Ppu::VertVEqualsVertT()
+{
+    // copy scroll Y bits from v to t
+    _v &= ~(0b111101111100000);
+    _v |= (_t & 0b111101111100000);
+}
+
+u8 Ppu::ScrollX()
+{
+    u8 x = ((_t & 0b11111) << 3) | _x;
+    //u16 offset = (_t & (1 << 10)) == 0 ? 0 : 256;
+    return x;// +offset;
+}
+
+u8 Ppu::ScrollY()
+{
+    u8 y = ((_t & 0b1111100000) >> 2) | ((_t & 0b111000000000000) >> 12);
+    //u16 offset = (_t & (1 << 11)) == 0 ? 0 : 240;
+    return y;// +offset;
+}
+
 void Ppu::Step(PpuStepResult& result)
 {
     if (_scanline >= 0 && _scanline <= 239)
@@ -234,11 +263,8 @@ void Ppu::Step(PpuStepResult& result)
         }
         else if (_cycle == 257)
         {
-            /*
-            / if rendering,
-            / latch X scroll:
-            / HoriVEqualHoriT();
-            */
+            // latch X Scroll
+            HoriVEqualsHoriT();
         }
     }
     else if (_scanline >= 240 && _scanline <= 260)
@@ -268,11 +294,8 @@ void Ppu::Step(PpuStepResult& result)
         }
         else if (_cycle >= 280 && _cycle <= 304)
         {
-            /*
-            / if rendering,
-            / latch Y scroll:
-            / VertVEqualsVertT();
-            */
+            // latch Y scroll
+            VertVEqualsVertT();
         }
     }
 

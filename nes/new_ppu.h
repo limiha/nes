@@ -190,6 +190,12 @@ private:
     void Write2006(u8 val);
     void Write2007(u8 val);
 
+    // Scrolling
+    void HoriVEqualsHoriT();
+    void VertVEqualsVertT();
+    u8 ScrollX();
+    u8 ScrollY();
+
     void DrawScanline();
     void CalculateSpritesOnLine(u16 y);
     void PutPixel(u8 x, u8 y, rgb& pixel);
