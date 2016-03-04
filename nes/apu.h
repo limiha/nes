@@ -73,6 +73,7 @@ private:
     void StepSweep(NesAudioPulseCtrl* audioCtrl, ApuPulseState* state, bool channel1);
     static void StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop);
     static void StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuEnvelop* envelop);
+    static void StepLengthCounter(NesAudioTriangeCtrl* audioCtrl, ApuTriangleState* state);
     static int StepEnvelop(ApuEnvelop* envelop); // Returns current volume
 
     // Utility
@@ -83,6 +84,7 @@ private:
     bool _counterEnabledFlag;
     bool _frameCounterMode1;
     bool _frameInterrupt;
+    bool _frameInterruptInhibit;
     bool _dmcInterrupt;
     int _frameCycleCount;
     int _noiseCycleCount;
