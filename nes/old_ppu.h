@@ -129,7 +129,6 @@ struct PpuCtrl
     u16 ScrollXOffset() { return (val & (1 << 0)) == 0 ? 0 : 256; }
     u16 ScrollYOffset() { return (val & (1 << 1)) == 0 ? 0 : 240; }
 
-
     u16 VRamAddrIncrement()         { return (val & (1 << 2)) == 0 ? 1 : 32; }
     u16 SpriteBaseAddress()         { return (val & (1 << 3)) == 0 ? 0 : 0x1000; }
     u16 BackgroundBaseAddress()     { return (val & (1 << 4)) == 0 ? 0 : 0x1000; }

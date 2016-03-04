@@ -180,6 +180,15 @@ private:
     void Step(PpuStepResult& resutl);
 
     u8 Read2002();
+    u8 Read2007();
+
+    void Write2000(u8 val);
+    void Write2001(u8 val);
+    void Write2003(u8 val);
+    void Write2004(u8 val);
+    void Write2005(u8 val);
+    void Write2006(u8 val);
+    void Write2007(u8 val);
 
     void DrawScanline();
     void CalculateSpritesOnLine(u16 y);
@@ -190,9 +199,32 @@ public:
 
 private:
     VRam& _vram;
+    Oam _oam;
     u16 _oamAddr;
 
+    // Ppu Register Data
     PpuStatus _ppuStatus;
+    u8 _ppuDataBuffer;
+
+    // PPUCTRL
+    u16 _vramAddrIncrement;
+    u16 _spriteBaseAddress;
+    u16 _backgroundBaseAddress;
+    SpriteSize _spriteSize;
+    bool _doVBlankNmi;
+
+    // PPUMASK
+    bool _clipBackground;
+    bool _clipSprites;
+    bool _showBackground;
+    bool _showSprites;
+
+    // VRam Registers Registers PPUSCROLL and PPUADDR
+    // http://wiki.nesdev.com/w/index.php/PPU_scrolling
+    u16 _v; // VRam Address
+    u16 _t; // Temporary VRam Address
+    u8 _x; // Fine X Scroll
+    bool _w; // Write toggle
 
     // the current cycle number, 341 cycles in a scan line, 0 - 340
     // TODO: figure out the extra _cycle/odd frame thing.

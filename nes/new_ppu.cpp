@@ -27,7 +27,6 @@ u8 Ppu::loadb(u16 addr)
         // cannot read $20001
         break;
     case 2:
-        //return ReadPpuStatus();
         return Read2002();
         break;
     case 3:
@@ -43,7 +42,7 @@ u8 Ppu::loadb(u16 addr)
         // cannot read $2006
         break;
     case 7:
-        //return ReadPpuData();
+        return Read2007();
         break;
     default:
         // can't happen
@@ -57,28 +56,28 @@ void Ppu::storeb(u16 addr, u8 val)
     switch (addr & 0x7)
     {
     case 0:
-        //WritePpuCtrl(val);
+        Write2000(val);
         break;
     case 1:
-        //WritePpuMask(val);
+        Write2001(val);
         break;
     case 2:
         // cannot write $2002
         break;
     case 3:
-        //WriteOamAddr(val);
+        Write2003(val);
         break;
     case 4:
-        //WriteOamData(val);
+        Write2004(val);
         break;
     case 5:
-        //WritePpuScroll(val);
+        Write2005(val);
         break;
     case 6:
-        //WritePpuAddr(val);
+        Write2006(val);
         break;
     case 7:
-        //WritePpuData(val);
+        Write2007(val);
         break;
     default:
         // can't happen
@@ -86,7 +85,7 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
-// PPUCTRL
+// PPUSTATUS
 u8 Ppu::Read2002()
 {
     u8 regVal = _ppuStatus.val;
@@ -95,9 +94,128 @@ u8 Ppu::Read2002()
     _ppuStatus.SetInVBlank(false);
 
     // Reset write toggle for $2005/$2006
-    // w = 0
+    _w = false;
 
     return regVal;
+}
+
+// PPUDATA
+u8 Ppu::Read2007()
+{
+    u16 addr = _v;
+    u8 val = _vram.loadb(addr);
+    _v += _vramAddrIncrement;
+
+    // quirk: If reading from nametables, data is buffered
+    if (addr < 0x3f00)
+    {
+        u8 bufferedData = _ppuDataBuffer;
+        _ppuDataBuffer = val;
+        return bufferedData;
+    }
+    else
+    {
+        // FIXME: Reading from the palettes still updates the buffer in someway
+        // FIXME: But not with the palette data
+
+        return val;
+    }
+}
+
+// PPUCTRL
+void Ppu::Write2000(u8 val)
+{
+    _vramAddrIncrement = (val & (1 << 2)) == 0 ? 1 : 32;
+    _spriteBaseAddress = (val & (1 << 3)) == 0 ? 0 : 0x1000;
+    _backgroundBaseAddress = (val & (1 << 4)) == 0 ? 0 : 0x1000;
+    _spriteSize = (val & (1 << 5)) == 0 ? SpriteSize::Spr8x8 : SpriteSize::Spr8x16;
+    _doVBlankNmi = (val & (1 << 7)) != 0;
+}
+
+// PPUMASK
+void Ppu::Write2001(u8 val)
+{
+    _clipBackground =   (val & (1 << 1)) == 0;
+    _clipSprites =      (val & (1 << 2)) == 0;
+    _showBackground =   (val & (1 << 3)) != 0;
+    _showSprites =      (val & (1 << 4)) != 0;
+}
+
+// OAMADDR
+void Ppu::Write2003(u8 val)
+{
+    _oamAddr = val;
+}
+
+// OAMDATA
+void Ppu::Write2004(u8 val)
+{
+    _oam.storeb(_oamAddr, val);
+    _oamAddr++;
+}
+
+// PPUSCROLL
+void Ppu::Write2005(u8 val)
+{
+    if (!_w)
+    {
+        // t: ....... ...HGFED = d: HGFED...
+        // x:              CBA = d: .....CBA
+        // w:                  = 1
+
+        _t &= ~(u16(0b11111));
+        _t |= ((u16(val) & u16(0b11111000)) >> 3);
+        _x = val & 0b111;
+
+        _w = true;
+    }
+    else
+    {
+        // t: CBA..HG FED..... = d: HGFEDCBA
+        // w:                  = 0
+        _t &= ~(u16(0b111) << 12);
+        _t |= ((u16(val) & u16(0b111)) << 12);
+
+        _t &= ~(u16(0b11111) << 5);
+        _t |= ((u16(val) & u16(0b11111000)) << 2);
+
+        _w = false;
+    }
+}
+
+// PPUADDR
+void Ppu::Write2006(u8 val)
+{
+    if (!_w)
+    {
+        // t: .FEDCBA ........ = d: ..FEDCBA
+        // t: X...... ........ = 0
+        // w:                  = 1
+
+        _t &= ~(u16(0b111111) << 8);
+        _t |= ((u16(val) & 0b111111) << 8);
+        _t &= 0x3fff;
+
+        _w = true;
+    }
+    else
+    {
+        //t: ....... HGFEDCBA = d: HGFEDCBA
+        //v                   = t
+        //w:                  = 0
+        _t &= 0xff00;
+        _t |= u16(val);
+        _v = _t;
+
+        _w = false;
+    }
+}
+
+// PPUDATA
+void Ppu::Write2007(u8 val)
+{
+    _vram.storeb(_v, val);
+    _v += _vramAddrIncrement;
 }
 
 void Ppu::Step(PpuStepResult& result)
@@ -130,7 +248,11 @@ void Ppu::Step(PpuStepResult& result)
         if (_scanline == 241 && _cycle == 1)
         {
             _ppuStatus.SetInVBlank(true);
-            result.VBlankNmi = true;
+
+            if (_doVBlankNmi)
+            {
+                result.VBlankNmi = true;
+            }
         }
 
         // idle
