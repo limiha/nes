@@ -31,6 +31,14 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(Rom& rom)
 NRom::NRom(Rom& rom)
     : IMapper(rom)
 {
+    if (rom.Header.ChrRomSize > 0)
+    {
+        _buf = &rom.ChrRom[0];
+    }
+    else
+    {
+        _buf = _chrRam;
+    }
 }
 
 NRom::~NRom()
@@ -63,12 +71,12 @@ void NRom::prg_storeb(u16 addr, u8 val)
 
 u8 NRom::chr_loadb(u16 addr)
 {
-    return _rom.ChrRom[addr];
+    return _buf[addr]; // this will return ChrRom if present or ChrRam if not
 }
 
 void NRom::chr_storeb(u16 addr, u8 val)
 {
-    // Does nothing
+    _chrRam[addr] = val; // This will only ever store to ChrRam
 }
 
 /// SxRom (Mapper #1)

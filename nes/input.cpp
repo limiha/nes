@@ -68,13 +68,16 @@ void Input::HandleKeyPress(SDL_Keycode code, bool isDown)
     switch (code)
     {
     case SDLK_LALT:
+    case SDLK_s:
         _joypad.HandleKeyPress(JoypadButton::A, isDown);
         break;
     case SDLK_LCTRL:
+    case SDLK_a:
         _joypad.HandleKeyPress(JoypadButton::B, isDown);
         break;
     case SDLK_RSHIFT:
     case SDLK_LSHIFT:
+    case SDLK_BACKSLASH:
         _joypad.HandleKeyPress(JoypadButton::Select, isDown);
         break;
     case SDLK_RETURN:

@@ -3,8 +3,10 @@
 
 #include "stdafx.h"
 #include "cpu.h"
+#include "new_ppu.h"
 #include "mem.h"
-#include "ppu.h"
+//#include "ppu.h"
+#include "new_ppu.h"
 #include "input.h"
 #include "rom.h"
 #include "apu.h"
@@ -85,7 +87,8 @@ int main(int argc, char* argv[])
         cpu.Step();
 
         apu.Step(cpu.Cycles, apuResult);
-        ppu.Step(cpu.Cycles, ppuResult);
+        ppu.Step(cpu.Cycles * 3, ppuResult);
+
         if (ppuResult.VBlankNmi)
         {
             cpu.Nmi();

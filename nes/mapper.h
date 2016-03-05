@@ -37,6 +37,10 @@ public:
     virtual void prg_storeb(u16 addr, u8 val);
     virtual u8 chr_loadb(u16 addr);
     virtual void chr_storeb(u16 addr, u8 val);
+
+private:
+    u8* _buf;
+    u8 _chrRam[0x2000]; // If no ChrRom is provided we will give ChrRam
 };
 
 class SxRom : public IMapper

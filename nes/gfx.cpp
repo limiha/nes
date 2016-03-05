@@ -3,8 +3,6 @@
 
 #include <SDL.h>
 
-//#define RENDER_GRID
-
 #if !defined(RENDER_GRID)
 const u32 SCREEN_WIDTH = 256;
 const u32 SCREEN_HEIGHT = 240;
