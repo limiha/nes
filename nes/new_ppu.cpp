@@ -482,10 +482,11 @@ bool Ppu::GetBackgroundColor(u8& paletteIndex)
     u16 y = ScrollY();
 
     // wrap values around and toggle name table
-    if (x == 256)
+    bool toggleNameTableX = false;
+    if (x >= 256)
     {
-        _v ^= (1 << 10);
-        x = 0;
+        toggleNameTableX = true;
+        x &= 0xff;
     }
 
     // The Name Tables store tile numbers
@@ -493,6 +494,11 @@ bool Ppu::GetBackgroundColor(u8& paletteIndex)
     // The first step is to figure out the correct address to read from the name tables
 
     u8 nameTableBits = (u8)((_v & 0b110000000000) >> 10);
+
+    if (toggleNameTableX)
+    {
+        nameTableBits ^= 0b01;
+    }
 
     u16 nameTableBaseAddress;
     switch (nameTableBits)
@@ -842,21 +848,37 @@ void Ppu::RenderNameTable(u8 screen[], int index)
         {
             u16 ntAddress = backgroundBaseAddress + (16 * patternIndex) + patternRow;
 
-            patternHiPlane[patternRow] = _vram.loadb(ntAddress);
-            patternLoPlane[patternRow] = _vram.loadb(ntAddress + 8);
+            patternLoPlane[patternRow] = _vram.loadb(ntAddress);
+            patternHiPlane[patternRow] = _vram.loadb(ntAddress + 8);
         }
 
-        u8 patternColor;
+        u8 nameTableIndexX = ntIndex % 32;
+        u8 nameTableIndexY = ntIndex / 32;
 
+        u16 attributeTableIndexX = nameTableIndexX / 4;
+        u16 attributeTableIndexY = nameTableIndexY / 4;
+        u16 attributeTableOffset = (attributeTableIndexY * 8) + attributeTableIndexX;
+        u16 attributeTableAddress = attributeTableBaseAddress + attributeTableOffset;
+
+        u8 attributeByte = _vram.loadb(attributeTableAddress);
+
+        u8 attributeByteIndexX = (nameTableIndexX % 4) / 2;
+        u8 attributeByteIndexY = (nameTableIndexY % 4) / 2;
+        u8 attributeByteIndex = (attributeByteIndexY * 2) + attributeByteIndexX;
+
+        u8 attributeColor = (attributeByte >> (attributeByteIndex * 2)) & 0x3;
+
+        u8 patternColor;
         for (int patternRow = 0; patternRow < 8; patternRow++)
         {
             for (int patternCol = 0; patternCol < 8; patternCol++)
             {
                 patternColor = ((patternLoPlane[patternRow] >> (7 - patternCol)) & 1) | (((patternHiPlane[patternRow] >> (7 - patternCol)) << 1) & 1);
 
-                pixel.SetColor(_vram.loadb(0x3f00 + patternColor));
+                u8 tileColor = (attributeColor << 2) | patternColor;
 
-                u64 screenLoc = ((ntIndex / 32) * 256 * 8) + ((ntIndex % 32) * 8) + (patternRow * 256) + patternCol;
+                u64 screenLoc = (nameTableIndexY * 256 * 8) + (nameTableIndexX * 8) + (patternRow * 256) + patternCol;
+                pixel.SetColor(_vram.loadb(0x3f00 + (u16)tileColor));
 
                 screen[(screenLoc * 3) + 0] = pixel.r;
                 screen[(screenLoc * 3) + 1] = pixel.g;
