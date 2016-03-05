@@ -837,7 +837,7 @@ void Ppu::RenderNameTable(u8 screen[], int index)
 
     rgb pixel;
 
-    for (u32 ntIndex = 959; ntIndex < 32 * 30; ntIndex++)
+    for (u32 ntIndex = 0; ntIndex < 32 * 30; ntIndex++)
     {
         u8 patternLoPlane[8];
         u8 patternHiPlane[8];
@@ -873,14 +873,14 @@ void Ppu::RenderNameTable(u8 screen[], int index)
         {
             for (int patternCol = 0; patternCol < 8; patternCol++)
             {
-                patternColor = ((patternLoPlane[patternRow] >> (7 - patternCol)) & 1) | (((patternHiPlane[patternRow] >> (7 - patternCol)) << 1) & 1);
+                patternColor = ((patternLoPlane[patternRow] >> (7 - patternCol)) & 1) | (((patternHiPlane[patternRow] >> (7 - patternCol)) & 1) << 1);
 
                 u8 tileColor = (attributeColor << 2) | patternColor;
 
-                //u8 tileColor = patternColor;
+                u8 paletteIndex = _vram.loadb(0x3f00 + (u16)tileColor);
 
                 u64 screenLoc = (nameTableIndexY * 256 * 8) + (nameTableIndexX * 8) + (patternRow * 256) + patternCol;
-                pixel.SetColor(_vram.loadb(0x3f00 + (u16)tileColor));
+                pixel.SetColor(paletteIndex);
 
                 screen[(screenLoc * 3) + 0] = pixel.r;
                 screen[(screenLoc * 3) + 1] = pixel.g;
