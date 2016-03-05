@@ -7,13 +7,18 @@
 #define PULSE_WAVEFORM_STEPS 16
 #define TRIANGLE_WAVEFORM_STEPS 32
 
-const int FrameSequenceCpuCycles[5] =
+// The number of CPU cycles per sub-frame in frame counter Mode 0
+const int SubFrameCountMode0 = 5;
+const int SubFrameCpuCycles_Mode0[SubFrameCountMode0] =
 {
-    7457,
-    14913,
-    22371,
-    29828,
-    37281,
+    7457, 14912, 22371, 29828, 29829,
+};
+
+// The number of CPU cycles per sub-frame in frame counter Mode 1
+const int SubFrameCountMode1 = 4;
+const int SubFrameCpuCycles_Mode1[SubFrameCountMode1] =
+{
+    7457, 14912, 22371, 37281
 };
 
 const int LengthCounterSetValues[32] =
@@ -71,15 +76,14 @@ struct ApuEnvelop
 // APU implementation
 
 Apu::Apu(bool isPal)
-    : _counterEnabledFlag(false)
-    , _frameInterrupt(false)
+    : _frameInterrupt(false)
     , _frameInterruptInhibit(false)
     , _frameCounterMode1(false)
     , _dmcInterrupt(false)
-    , _frameNum(false)
     , _frameCycleCount(0)
-    , _noiseCycleCount(0)
-    , _lengthCounterCode(0)
+    , _frameCycleResetCounter(0)
+    , _subframeCount(0)
+    , _nextSubframeCycleCount(0)
     , _isPal(isPal)
 {
     _pulseState1 = new ApuPulseState();
@@ -260,70 +264,36 @@ void Apu::storeb(u16 addr, u8 val)
 
 void Apu::Step(u32 cycles, ApuStepResult& result)
 {
-    _noiseCycleCount += cycles;
-    if (_noiseCycleCount >= _noiseState->period)
+    if (_frameCycleResetCounter != 0)
     {
-        _noiseCycleCount -= _noiseState->period;
-        StepNoise();
-    }
+        // Frame cycle counter reset is pending
+        _frameCycleResetCounter -= cycles;
+        if (_frameCycleResetCounter <= 0)
+        {
+            _frameCycleCount = -_frameCycleResetCounter;
+            _frameCycleResetCounter = 0;
 
-    _frameCycleCount += cycles;
-    if (_frameCycleCount < FrameSequenceCpuCycles[_frameNum])
+            // Reset the frame counter.
+            ResetFrameCounter();
+        }
+        else
+        {
+            _frameCycleCount += cycles;
+        }
+    }
+    else
+    {
+        _frameCycleCount += cycles;
+    }
+    
+    if (_frameCycleCount < _nextSubframeCycleCount)
     {
         // Don't need to move to the next internal step yet
         return;
     }
 
     // Advance to the next frame
-    switch (_frameNum)
-    {
-    case 0:
-        DoQuarterFrameStep();
-        _frameNum++;
-        break;
-    case 1:
-        DoHalfFrameStep();
-        _frameNum++;
-        break;
-    case 2:
-        DoQuarterFrameStep();
-        _frameNum++;
-        break;
-    case 3:
-        if (!_frameCounterMode1)
-        {
-            _frameCycleCount -= FrameSequenceCpuCycles[_frameNum];
-            _frameNum = 0;
-
-            if (!_frameInterruptInhibit)
-            {
-                // Generate IRQ
-                if (!_frameInterrupt)
-                    result.Irq = true;
-
-                _frameInterrupt = true;
-            }
-        }
-        else
-        {
-            _frameNum++;
-        }
-        break;
-    case 4:
-        DoHalfFrameStep();
-        if (!_frameCounterMode1 && !_frameInterruptInhibit)
-        {
-            // Generate IRQ
-            if (!_frameInterrupt)
-                result.Irq = true;
-
-            _frameInterrupt = true;
-        }
-
-        _frameCycleCount -= FrameSequenceCpuCycles[_frameNum];
-        _frameNum = 0;
-        break;
-    }
+    AdvanceFrameCounter(result);
 }
 
 u8 Apu::ReadApuStatus()
@@ -510,12 +480,77 @@ void Apu::WriteApuFrameCounter(u8 val)
     _frameCounterMode1 = (val & 0x80) != 0;
     if (_frameCounterMode1)
     {
-        // Setting the frame counter mode 1 bit resets the frame counter and
-        // immediately clocks the half frame units
-        _frameNum = 0;
-        _frameCycleCount = 0;
+        // Setting the frame counter mode 1 bit immediately clocks the half frame units
+        DoHalfFrameStep();
+    }
+
+    // We need to reset the frame counter, but it doesn't take effect immediately so set
+    // a count-down timer for reseting the frame counter.
+    // Count-down time is set to:
+    //     3 clock cycles if the write occured on an even clock cycle
+    //     4 clock cycles if the write occured on an odd clock cycle
+    _frameCycleResetCounter = 3 + (_frameCycleCount & 1);
+}
+
+void Apu::ResetFrameCounter()
+{
+    _subframeCount = 0;
+
+    // Get the next cycle number to advance on.
+    // Doesn't matter which mode we use because the first 3 indices are the same.
+    _nextSubframeCycleCount = SubFrameCpuCycles_Mode0[0];
+}
+
+void Apu::AdvanceFrameCounter(ApuStepResult& result)
+{
+    _subframeCount++;
+
+    // Determine when we need to advance to the next frame
+    if (_frameCounterMode1)
+        _nextSubframeCycleCount = SubFrameCpuCycles_Mode1[_subframeCount];
+    else
+        _nextSubframeCycleCount = SubFrameCpuCycles_Mode0[_subframeCount];
+
+    // The first 3 frames are the same for both mode 0 and 1
+    switch (_subframeCount)
+    {
+    case 1:
+        DoQuarterFrameStep();
+        return;
+    case 2:
+        DoHalfFrameStep();
+        return;
+    case 3:
+        DoQuarterFrameStep();
+        return;
+    }
+
+    if (!_frameCounterMode1)
+    {
+        // Mode 0
+
+        if (!_frameInterruptInhibit)
+        {
+            // Generate IRQ
+            if (!_frameInterrupt)
+                result.Irq = true;
+
+            _frameInterrupt = true;
+        }
 
         DoHalfFrameStep();
+
+        _frameCycleCount -= SubFrameCpuCycles_Mode0[SubFrameCountMode0 - 2];
+        ResetFrameCounter();
+    }
+    else
+    {
+        // Mode 1
+
+        DoHalfFrameStep();
+
+        _frameCycleCount -= SubFrameCpuCycles_Mode1[SubFrameCountMode1 - 1];
+        ResetFrameCounter();
     }
 }
 

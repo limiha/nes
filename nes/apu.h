@@ -66,6 +66,8 @@ private:
     void WriteApuFrameCounter(u8 val);
 
     // Step control
+    void ResetFrameCounter();
+    void AdvanceFrameCounter(ApuStepResult& result);
     void DoQuarterFrameStep();
     void DoHalfFrameStep();
     
@@ -81,15 +83,14 @@ private:
 
     // APU state information:
     AudioEngine* _audioEngine;
-    bool _counterEnabledFlag;
     bool _frameCounterMode1;
     bool _frameInterrupt;
     bool _frameInterruptInhibit;
     bool _dmcInterrupt;
     int _frameCycleCount;
-    int _noiseCycleCount;
-    int _frameNum;
-    int _lengthCounterCode; // The value read/written via the APU registers.  Actual length is read from a lookup table.
+    int _frameCycleResetCounter;
+    int _subframeCount;
+    int _nextSubframeCycleCount;
     ApuPulseState* _pulseState1;
     ApuPulseState* _pulseState2;
     ApuTriangleState* _triangleState;
