@@ -39,7 +39,7 @@ public:
     virtual void chr_storeb(u16 addr, u8 val);
 
 private:
-    u8* _buf;
+    u8* _chrBuf;
     u8 _chrRam[0x2000]; // If no ChrRom is provided we will give ChrRam
 };
 
@@ -56,6 +56,9 @@ public:
     void chr_storeb(u16 addr, u8 val);
 
 private:
+    u32 ChrBufAddress(u16 addr);
+
+private:
     enum class ChrMode
     {
         Mode8k = 0,
@@ -68,42 +71,43 @@ private:
         Size16k = 1,
     };
 
+    //enum class SxPrgBankMode
+    //{
+    //    Switch32K,
+    //    FixFirstBank,
+    //    FixLastBank
+    //};
 
-    enum class SxPrgBankMode
-    {
-        Switch32K,
-        FixFirstBank,
-        FixLastBank
-    };
+    //struct SxControl
+    //{
+    //    u8 val;
 
-    struct SxControl
-    {
-        u8 val;
-
-        SxPrgBankMode PrgRomMode()
-        {
-            switch ((val >> 2) & 0x3)
-            {
-            case 0:
-            case 1:
-                return SxPrgBankMode::Switch32K;
-            case 2:
-                return SxPrgBankMode::FixFirstBank;
-            case 3:
-                return SxPrgBankMode::FixLastBank;
-            }
-        }
-    };
+    //    SxPrgBankMode PrgRomMode()
+    //    {
+    //        switch ((val >> 2) & 0x3)
+    //        {
+    //        case 0:
+    //        case 1:
+    //            return SxPrgBankMode::Switch32K;
+    //        case 2:
+    //            return SxPrgBankMode::FixFirstBank;
+    //        case 3:
+    //            return SxPrgBankMode::FixLastBank;
+    //        }
+    //    }
+    //};
 
 private:
-    SxControl control;
+    PrgSize _prgSize;
+    ChrMode _chrMode;
+    bool _slotSelect;
     u8 _chrBank0;
     u8 _chrBank1;
     u8 _prgBank;
     u8 _accumulator;
     u8 _writeCount;
-    u8 _chrRam[0x2000];
-    u8 _prgRam[0x2000];
+    u8* _chrBuf;
+    std::vector<u8> _chrRam;
 };
 
 class CNRom : public NRom

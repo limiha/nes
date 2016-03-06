@@ -313,10 +313,10 @@ void Ppu::Step(PpuStepResult& result)
             if (_cycle == 256 && IsRendering())
             {
                 IncVertV();
-            }
-            if (_scanline == 239 && _cycle == 256)
-            {
-                result.NewFrame = true;
+                if (_scanline == 239)
+                {
+                    result.NewFrame = true;
+                }
             }
         }
         else if (_cycle == 257)

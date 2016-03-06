@@ -33,11 +33,11 @@ NRom::NRom(Rom& rom)
 {
     if (rom.Header.ChrRomSize > 0)
     {
-        _buf = &rom.ChrRom[0];
+        _chrBuf = &rom.ChrRom[0];
     }
     else
     {
-        _buf = _chrRam;
+        _chrBuf = _chrRam;
     }
 }
 
@@ -49,7 +49,7 @@ u8 NRom::prg_loadb(u16 addr)
 {
     if (addr < 0x8000)
     {
-        return 0;
+        return _rom.PrgRam[addr & 0x1fff];
     }
     else
     {
@@ -66,12 +66,15 @@ u8 NRom::prg_loadb(u16 addr)
 
 void NRom::prg_storeb(u16 addr, u8 val)
 {
-    // Does nothing 
+    if (addr < 0x8000)
+    {
+        _rom.PrgRam[addr & 0x1fff] = val;
+    }
 }
 
 u8 NRom::chr_loadb(u16 addr)
 {
-    return _buf[addr]; // this will return ChrRom if present or ChrRam if not
+    return _chrBuf[addr]; // this will return ChrRom if present or ChrRam if not
 }
 
 void NRom::chr_storeb(u16 addr, u8 val)
@@ -83,15 +86,24 @@ void NRom::chr_storeb(u16 addr, u8 val)
 
 SxRom::SxRom(Rom& rom)
     : IMapper(rom)
+    , _prgSize(PrgSize::Size16k)
+    , _chrMode(ChrMode::Mode8k)
+    , _slotSelect(true)
     , _chrBank0(0)
     , _chrBank1(0)
     , _prgBank(0)
     , _accumulator(0)
     , _writeCount(0)
 {
-    ZeroMemory(_chrRam, sizeof(_chrRam));
-    ZeroMemory(_prgRam, sizeof(_prgRam));
-    control.val = 3 << 2;
+    if (rom.Header.ChrRomSize > 0)
+    {
+        _chrBuf = &rom.ChrRom[0];
+    }
+    else
+    {
+        _chrRam.resize(0x2000);
+        _chrBuf = &_chrRam[0];
+    }
 }
 
 SxRom::~SxRom()
@@ -102,41 +114,45 @@ u8 SxRom::prg_loadb(u16 addr)
 {
     if (addr < 0x8000)
     {
-        return _prgRam[addr & 0x1fff];
-    }
-    else if (addr < 0xc000)
-    {
-        u8 bank;
-        switch (control.PrgRomMode())
-        {
-        case SxPrgBankMode::Switch32K:
-            bank = _prgBank & 0xfe;
-            break;
-        case SxPrgBankMode::FixFirstBank: 
-            bank = 0;
-            break;
-        case SxPrgBankMode::FixLastBank:
-            bank = _prgBank;
-            break;
-        }
-        return _rom.PrgRom[((u16)bank * PRG_ROM_BANK_SIZE) | (addr & 0x3fff)];
+        return _rom.PrgRam[addr & 0x1fff];
     }
     else
     {
-        u8 bank;
-        switch (control.PrgRomMode())
+        if (_prgSize == PrgSize::Size32k)
         {
-        case SxPrgBankMode::Switch32K:
-            bank = (_prgBank & 0xfe) | 1;
-            break;
-        case SxPrgBankMode::FixFirstBank:
-            bank = _prgBank;
-            break;
-        case SxPrgBankMode::FixLastBank:
-            bank = _rom.Header.PrgRomSize - 1;
-            break;
+            return _rom.PrgRom[((_prgBank >> 1) * 0x4000 * 2) + (addr & 0x3fff)];
         }
-        return _rom.PrgRom[((u16)bank * PRG_ROM_BANK_SIZE) | (addr & 0x3fff)];
+        else if (_prgSize == PrgSize::Size16k)
+        {
+            if (addr < 0xc000)
+            {
+                if (!_slotSelect)
+                {
+                    return _rom.PrgRom[addr & 0x3fff];
+                }
+                else
+                {
+                    return _rom.PrgRom[(_prgBank * 0x4000) + (addr & 0x3fff)];
+                }
+            }
+            else
+            {
+                if (!_slotSelect)
+                {
+                    return _rom.PrgRom[(_prgBank * 0x4000) + (addr & 0x3fff)];
+                }
+                else
+                {
+                    return _rom.PrgRom[((_rom.Header.PrgRomSize - 1) * 0x4000) + (addr & 0x3fff)];
+                }
+            }
+        }
+        else
+        {
+            // can't happen
+            __debugbreak();
+            return 0;
+        }
     }
 }
 
@@ -144,7 +160,7 @@ void SxRom::prg_storeb(u16 addr, u8 val)
 {
     if (addr < 0x8000)
     {
-        _prgRam[addr & 0x1fff] = val;
+        _rom.PrgRam[addr & 0x1fff] = val;
         return;
     }
 
@@ -152,7 +168,8 @@ void SxRom::prg_storeb(u16 addr, u8 val)
     {
         _writeCount = 0;
         _accumulator = 0;
-        control.val = control.val | (3 << 2);
+        _prgSize = PrgSize::Size16k;
+        _slotSelect = true;
         return;
     }
 
@@ -163,35 +180,28 @@ void SxRom::prg_storeb(u16 addr, u8 val)
 
         if (addr <= 0x9fff)
         {
-            control.val = _accumulator;
-            if ((control.val & 0x3) == 0)
+            switch (_accumulator & 0x3)
             {
-                Mirroring = NameTableMirroring::SingleScreenLower;
+            case 0: Mirroring = NameTableMirroring::SingleScreenLower; break;
+            case 1: Mirroring = NameTableMirroring::SingleScreenUpper; break;
+            case 2: Mirroring = NameTableMirroring::Vertical; break;
+            case 3: Mirroring = NameTableMirroring::Horizontal; break;
             }
-            else if ((control.val & 0x3) == 1)
-            {
-                Mirroring = NameTableMirroring::SingleScreenUpper;
-            }
-            else if ((control.val & 0x3) == 2)
-            {
-                Mirroring = NameTableMirroring::Vertical;
-            }
-            else
-            {
-                Mirroring = NameTableMirroring::Horizontal;
-            }
+            _slotSelect = (_accumulator & (1 << 2)) != 0;
+            _prgSize = (_accumulator & (1 << 3)) == 0 ? PrgSize::Size32k : PrgSize::Size16k;
+            _chrMode = (_accumulator & (1 << 4)) == 0 ? ChrMode::Mode8k : ChrMode::Mode4k;
         }
         else if (addr <= 0xbfff)
         {
-            _chrBank0 = _accumulator;
+            _chrBank0 = _accumulator & 0x1f;
         }
         else if (addr <= 0xdfff)
         {
-            _chrBank1 = _accumulator;
+            _chrBank1 = _accumulator & 0x1f;
         }
         else
         {
-            _prgBank = _accumulator;
+            _prgBank = (_accumulator & 0xf);
         }
 
         _accumulator = 0;
@@ -200,12 +210,31 @@ void SxRom::prg_storeb(u16 addr, u8 val)
 
 u8 SxRom::chr_loadb(u16 addr)
 {
-    return _chrRam[addr];
+    return _chrBuf[ChrBufAddress(addr)];
 }
 
 void SxRom::chr_storeb(u16 addr, u8 val)
 {
-    _chrRam[addr] = val;
+    _chrBuf[ChrBufAddress(addr)] = val;
+}
+
+u32 SxRom::ChrBufAddress(u16 addr)
+{
+    if (_chrMode == ChrMode::Mode4k)
+    {
+        if (addr < 0x1000)
+        {
+            return (_chrBank0 * 0x1000) + addr;
+        }
+        else
+        {
+            return (_chrBank1 * 0x1000) + (addr & 0xfff);
+        }
+    }
+    else
+    {
+        return ((_chrBank0 >> 1) * 0x2000) + addr;
+    }
 }
 
 /// CNRom (Mapper #3)

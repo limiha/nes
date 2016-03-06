@@ -5,6 +5,7 @@
 #include <vector>
 
 const u32 PRG_ROM_BANK_SIZE = 0x4000;
+const u32 PRG_RAM_UNIT_SIZE = 0x2000;
 const u32 CHR_ROM_BANK_SIZE = 0x2000;
 
 enum class NameTableMirroring
@@ -64,5 +65,6 @@ public:
 public:
     INesHeader Header;
     std::vector<u8> PrgRom;
+    std::vector<u8> PrgRam;
     std::vector<u8> ChrRom;
 };

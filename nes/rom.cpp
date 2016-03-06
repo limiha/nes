@@ -32,6 +32,15 @@ bool Rom::Load(std::string romPath)
             return false;
         }
 
+        if (Header.PrgRamSize == 0)
+        {
+            PrgRam.resize(PRG_RAM_UNIT_SIZE);
+        }
+        else
+        {
+            PrgRam.resize(Header.PrgRamSize * PRG_RAM_UNIT_SIZE);
+        }
+
         if (Header.PrgRomSize > 0)
         {
             PrgRom.resize(Header.PrgRomSize * PRG_ROM_BANK_SIZE);
