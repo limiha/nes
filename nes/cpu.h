@@ -88,9 +88,13 @@ public:
     Cpu(IMem* mem);
     ~Cpu();
 
-    //IMem
+    // IMem
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
+
+    // ISave
+    void Load();
+    void Save();
 
     void Reset();
     void Step();

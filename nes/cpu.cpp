@@ -37,6 +37,15 @@ void Cpu::storeb(u16 addr, u8 val)
     }
 }
 
+// ISave
+void Cpu::Save()
+{
+}
+
+void Cpu::Load()
+{
+}
+
 void Cpu::Dma(u8 val)
 {
     u16 addr = ((u16)val) << 8;

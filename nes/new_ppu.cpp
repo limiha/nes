@@ -100,6 +100,14 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
+void Ppu::Save()
+{
+}
+
+void Ppu::Load()
+{
+}
+
 // PPUSTATUS
 u8 Ppu::Read2002()
 {
@@ -795,6 +803,14 @@ void VRam::storeb(u16 addr, u8 val)
     }
 }
 
+void VRam::Save()
+{
+}
+
+void VRam::Load()
+{
+}
+
 Oam::Oam()
 {
     ZeroMemory(_ram, sizeof(_ram));
@@ -812,6 +828,14 @@ u8 Oam::loadb(u16 addr)
 void Oam::storeb(u16 addr, u8 val)
 {
     _ram[(u8)addr] = val;
+}
+
+void Oam::Save()
+{
+}
+
+void Oam::Load()
+{
 }
 
 const Sprite* Oam::operator[](const int index)

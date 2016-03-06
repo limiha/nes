@@ -65,6 +65,10 @@ public:
     // IMem
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
+
+    // ISave
+    void Save();
+    void Load();
 private:
     std::shared_ptr<IMapper> _mapper;
 
@@ -111,6 +115,9 @@ public:
 
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
+
+    void Save();
+    void Load();
 
     const Sprite* operator[](const int index);
 
@@ -168,10 +175,14 @@ public:
     Ppu(VRam&);
     ~Ppu();
 
-    // IMem
 public:
+    // IMem
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
+
+    // ISave
+    void Save();
+    void Load();
 
 public:
     void Step(u8 cycles, PpuStepResult& result);

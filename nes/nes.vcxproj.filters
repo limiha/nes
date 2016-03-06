@@ -60,6 +60,9 @@
     <ClInclude Include="old_ppu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="interfaces.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -96,9 +99,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="new_ppu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="old_ppu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

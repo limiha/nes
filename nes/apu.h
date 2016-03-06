@@ -38,6 +38,10 @@ public:
     virtual u8 loadb(u16 addr);
     virtual void storeb(u16 addr, u8 val);
 
+    // Save
+    virtual void Load();
+    virtual void Save();
+
     void Step(u32 cycles, ApuStepResult& result);
 private:
 

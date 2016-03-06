@@ -1,31 +1,5 @@
 #pragma once
 
-class Rom;
-
-enum class NameTableMirroring;
-
-class IMapper
-{
-protected:
-    IMapper(Rom& rom);
-    ~IMapper();
-
-public:
-    static std::shared_ptr<IMapper> CreateMapper(Rom& rom);
-
-public:
-    virtual u8 prg_loadb(u16 addr) = 0;
-    virtual void prg_storeb(u16 addr, u8 val) = 0;
-    virtual u8 chr_loadb(u16 addr) = 0;
-    virtual void chr_storeb(u16 addr, u8 val) = 0;
-
-public:
-    NameTableMirroring Mirroring;
-    
-protected:
-    Rom& _rom;
-};
-
 class NRom : public IMapper
 {
 public:

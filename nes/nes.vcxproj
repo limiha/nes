@@ -206,6 +206,7 @@
     <ClInclude Include="diassembler.h" />
     <ClInclude Include="gfx.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="interfaces.h" />
     <ClInclude Include="mapper.h" />
     <ClInclude Include="new_ppu.h" />
     <ClInclude Include="old_ppu.h" />

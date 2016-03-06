@@ -30,6 +30,7 @@
 #include <SDL.h>
 
 #include "types.h"
+#include "interfaces.h"
 
 // Emulator constants
 #define CPU_FREQ_NTSC 1789773

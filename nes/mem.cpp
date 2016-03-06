@@ -8,30 +8,6 @@
 #include "input.h"
 
 /*
-    Ram
-*/
-Ram::Ram() 
-{
-    ZeroMemory(_ram, sizeof(_ram));
-}
-
-Ram::~Ram()
-{
-
-}
-
-// IMem
-u8 Ram::loadb(u16 addr)
-{
-    return _ram[addr & 0x7ff];
-}
-
-void Ram::storeb(u16 addr, u8 val)
-{
-    _ram[addr & 0x7ff] = val;
-}
-
-/*
     MemoryMap
 */
 MemoryMap::MemoryMap(Ppu& ppu, Apu& apu, Input& input, std::shared_ptr<IMapper> mapper)
@@ -53,7 +29,7 @@ u8 MemoryMap::loadb(u16 addr)
 {
     if (addr < 0x2000)
     {
-        return _ram.loadb(addr);
+        return _ram[addr & 0x7ff];
     }
     else if (addr < 0x4000)
     {
@@ -83,7 +59,7 @@ void MemoryMap::storeb(u16 addr, u8 val)
 {
     if (addr < 0x2000)
     {
-        _ram.storeb(addr, val);
+        _ram[addr & 0x7ff] = val;
     }
     else if (addr < 0x4000)
     {
@@ -109,4 +85,12 @@ void MemoryMap::storeb(u16 addr, u8 val)
     {
         _mapper->prg_storeb(addr, val);
     }
+}
+
+void MemoryMap::Save()
+{
+}
+
+void MemoryMap::Load()
+{
 }

@@ -12,6 +12,14 @@ IMapper::~IMapper()
 {
 }
 
+void IMapper::Save()
+{
+}
+
+void IMapper::Load()
+{
+}
+
 std::shared_ptr<IMapper> IMapper::CreateMapper(Rom& rom)
 {
     switch (rom.Header.MapperNumber())
