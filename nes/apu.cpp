@@ -56,10 +56,7 @@ struct ApuTriangleState
 
 struct ApuNoiseState
 {
-    int period;
     bool lengthDisabled;
-    bool mode1;
-    u16 shiftRegister;
 };
 
 struct ApuEnvelop
@@ -114,7 +111,6 @@ Apu::Apu(bool isPal)
     memset(_dmc, 0, sizeof(NesAudioDmcCtrl));
 
     _audioEngine = new AudioEngine(_pulse1, _pulse2, _triangle, _noise, _dmc);
-    _noiseState->shiftRegister = 1;
 }
 
 Apu::~Apu()
@@ -440,8 +436,8 @@ void Apu::WriteApuNoise0(u8 val)
 
 void Apu::WriteApuNoise2(u8 val)
 {
-    _noiseState->mode1 = (val & 0x80) != 0;
-    _noiseState->period = NoisePeriodValues[val & 0x0F];
+    _noise->mode1 = (val & 0x80) != 0;
+    _noise->period = NoisePeriodValues[val & 0x0F];
 }
 
 void Apu::WriteApuNoise3(u8 val)
@@ -589,20 +585,6 @@ void Apu::DoHalfFrameStep()
     StepSweep(_pulse2, _pulseState2, false);
 }
 
-void Apu::StepNoise()
-{
-    u16 feedback = _noiseState->shiftRegister & 1;
-
-    if (_noiseState->mode1)
-        feedback ^= (_noiseState->shiftRegister & 0x0040) >> 6;
-    else
-        feedback ^= (_noiseState->shiftRegister & 0x0002) >> 1;
-
-    _noiseState->shiftRegister >>= 1;
-    _noiseState->shiftRegister |= feedback << 15;
-    _noise->on = !(_noiseState->shiftRegister & 1);
-}
-
 void Apu::StepSweep(NesAudioPulseCtrl* audioCtrl, ApuPulseState* state, bool channel1)
 {
     if (state->sweepEnabled)
@@ -665,18 +647,27 @@ int Apu::StepEnvelop(ApuEnvelop* envelop)
     if (envelop->start)
     {
         envelop->envelopVolume = 0x0F;
-        envelop->dividerCounter = 0;
+        envelop->dividerCounter = envelop->envelopDivider;
         envelop->start = false;
     }
-    else if (!envelop->haltCounter)
+    else
     {
-        if (envelop->dividerCounter++ == 0x0F)
+        if (envelop->dividerCounter != 0)
         {
-            envelop->dividerCounter = 0;
+            envelop->dividerCounter--;
+        }
+        else
+        {
+            envelop->dividerCounter = envelop->envelopDivider;
             if (envelop->envelopVolume == 0)
-                envelop->envelopVolume = 0x0F;
+            {
+                if (envelop->haltCounter)
+                    envelop->envelopVolume = 0x0F;
+            }
             else
+            {
                 envelop->envelopVolume--;
+            }
         }
     }
 

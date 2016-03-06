@@ -24,8 +24,9 @@ struct NesAudioTriangeCtrl
 struct NesAudioNoiseCtrl
 {
     volatile int lengthCounter;
+    volatile int period;
     volatile u8 volume;
-    volatile bool on;
+    volatile bool mode1;
 };
 
 struct NesAudioDmcCtrl
@@ -68,6 +69,7 @@ private:
     u32 SamplePulse(NesAudioPulseCtrl* pulseChannel, int& phase, int phaseDivider);
     u32 SampleTriangle(int phaseDivider);
     u32 SampleNoise();
+    void StepNoiseRegister();
 
 private:
     SDL_AudioDeviceID _deviceId;
@@ -85,6 +87,9 @@ private:
     int _pulse1Phase;
     int _pulse2Phase;
     int _trianglePhase;
+    int _noisePeriodCounter;
+    u8 _noiseAmplitude;
+    u16 _noiseShiftRegister;
 
     // Wavetables
     u8* _pulseWavetableMemory;

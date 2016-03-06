@@ -39,6 +39,10 @@ AudioEngine::AudioEngine(
     , _trianglePhase(0)
     , _pulse1Phase(0)
     , _pulse2Phase(0)
+    , _noisePeriodCounter(0)
+    , _noiseAmplitude(0)
+    , _noiseShiftRegister(1)
+
 {
     _pulse1 = pulse1;
     _pulse2 = pulse2;
@@ -370,8 +374,39 @@ u32 AudioEngine::SampleTriangle(int phaseDivider)
 u32 AudioEngine::SampleNoise()
 {
     u32 sample = _silenceValue;
-    if (_noise->lengthCounter > 0 && _noise->on)
-        sample += _noise->volume;
+    if (_noise->lengthCounter > 0 && _noise->period != 0)
+    {
+        if (_noisePeriodCounter == 0)
+        {
+            StepNoiseRegister();
+            double newPeriod = (double)_sampleRate / ((double)CPU_FREQ_NTSC / 2 / _noise->period);
+            _noisePeriodCounter = (int)newPeriod;
+        }
+        else
+        {
+            _noisePeriodCounter--;
+        }
+
+        sample += _noiseAmplitude;
+    }
 
     return sample;
+}
+
+void AudioEngine::StepNoiseRegister()
+{
+    u16 feedback = _noiseShiftRegister & 1;
+
+    if (_noise->mode1)
+        feedback ^= (_noiseShiftRegister & 0x0040) >> 6;
+    else
+        feedback ^= (_noiseShiftRegister & 0x0002) >> 1;
+
+    _noiseShiftRegister >>= 1;
+    _noiseShiftRegister |= feedback << 15;
+
+    if (!(_noiseShiftRegister & 1))
+        _noiseAmplitude = _noise->volume * 3;
+    else
+        _noiseAmplitude = 0;
 }
