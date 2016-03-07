@@ -32,7 +32,7 @@ Gfx::Gfx(u32 scale)
     _renderer = SDL_CreateRenderer(
         _window,
         -1,
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
+        SDL_RENDERER_ACCELERATED// | SDL_RENDERER_PRESENTVSYNC
         );
 
     _texture = SDL_CreateTexture(
@@ -42,6 +42,8 @@ Gfx::Gfx(u32 scale)
         SCREEN_WIDTH,
         SCREEN_HEIGHT
         );
+
+	_lastTime = std::chrono::high_resolution_clock::now();
 
 #if defined(RENDER_NAMETABLE)
     for (int i = 0; i < 4; i++)
@@ -124,6 +126,15 @@ void Gfx::Blit(u8 screen[])
     render_grid(screen);
     screen_to_render = (void*)grid_screen;
 #endif
+
+	std::chrono::time_point<std::chrono::steady_clock> now;
+	long long duration;
+	do
+	{
+		now = std::chrono::high_resolution_clock::now();
+		duration = std::chrono::duration_cast<std::chrono::nanoseconds>(now - _lastTime).count();
+	} while (duration < 16666667); // 60 fps
+	_lastTime = now;
 
     SDL_UpdateTexture(_texture, NULL, (void*)screen_to_render, SCREEN_WIDTH * 3);
     SDL_RenderClear(_renderer);

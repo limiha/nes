@@ -26,6 +26,7 @@
 #include <iomanip>
 #include <memory>
 #include <vector>
+#include <chrono>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
