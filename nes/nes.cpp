@@ -141,10 +141,16 @@ void Nes::SaveState()
 {
     std::ofstream ofs("savestate.savestate", std::fstream::binary | std::fstream::trunc);
     _cpu->Save(ofs);
+    ofs.close();
+
+    printf("State Saved!\n");
 }
 
 void Nes::LoadState()
 {
     std::ifstream ifs("savestate.savestate", std::fstream::binary);
     _cpu->Load(ifs);
+    ifs.close();
+
+    printf("State Loaded!\n");
 }

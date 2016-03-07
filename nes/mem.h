@@ -15,8 +15,8 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    void Save();
-    void Load();
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
 private:
     u8 _ram[0x800];
     Ppu& _ppu;

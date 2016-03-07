@@ -100,12 +100,95 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
-void Ppu::Save()
+void Ppu::Save(std::ofstream& ofs)
 {
+    ofs.write((char*)Screen, sizeof(Screen));
+    _vram.Save(ofs);
+    _oam.Save(ofs);
+    ofs << _oamAddr;
+
+    // Save Line Sprites
+    ofs << _lineSprites.size();
+    for (auto i = _lineSprites.begin(); i != _lineSprites.end(); i++)
+    {
+        ofs << (*i)->Y;
+        ofs << (*i)->TileIndex;
+        ofs << (*i)->Attributes;
+        ofs << (*i)->X;
+    }
+    ofs << _spriteZeroOnLine;
+    
+    ofs << _ppuStatus.val;
+    ofs << _ppuDataBuffer;
+
+    ofs << _vramAddrIncrement;
+    ofs << _spriteBaseAddress;
+    ofs << _backgroundBaseAddress;
+    ofs << (u8)_spriteSize;
+    ofs << _doVBlankNmi;
+
+    ofs << _clipBackground;
+    ofs << _clipSprites;
+    ofs << _showBackground;
+    ofs << _showSprites;
+
+    ofs << _v;
+    ofs << _t;
+    ofs << _x;
+    ofs << _w;
+
+    ofs << _cycle;
+    ofs << _scanline;
+    ofs << _frameOdd;
 }
 
-void Ppu::Load()
+void Ppu::Load(std::ifstream& ifs)
 {
+    ifs.read((char*)Screen, sizeof(Screen));
+    _vram.Load(ifs);
+    _oam.Load(ifs);
+    ifs >> _oamAddr;
+
+    size_t numLineSprites = 0;
+    ifs >> numLineSprites;
+    _lineSprites.clear();
+    _lineSprites.resize(numLineSprites);
+    for (size_t i = 0; i < numLineSprites; i++)
+    {
+        auto sprite = std::make_unique<Sprite>();
+        ifs >> sprite->Y;
+        ifs >> sprite->TileIndex;
+        ifs >> sprite->Attributes;
+        ifs >> sprite->X;
+
+        _lineSprites.push_back(std::move(sprite));
+    }
+    ifs >> _spriteZeroOnLine;
+
+    ifs >> _ppuStatus.val;
+    ifs >> _ppuDataBuffer;
+
+    ifs >> _vramAddrIncrement;
+    ifs >> _spriteBaseAddress;
+    ifs >> _backgroundBaseAddress;
+    u8 spriteSizeByte = 0;
+    ifs >> spriteSizeByte;
+    _spriteSize = (SpriteSize)spriteSizeByte;
+    ifs >> _doVBlankNmi;
+
+    ifs >> _clipBackground;
+    ifs >> _clipSprites;
+    ifs >> _showBackground;
+    ifs >> _showSprites;
+
+    ifs >> _v;
+    ifs >> _t;
+    ifs >> _x;
+    ifs >> _w;
+
+    ifs >> _cycle;
+    ifs >> _scanline;
+    ifs >> _frameOdd;
 }
 
 // PPUSTATUS
@@ -707,7 +790,7 @@ VRam::VRam(std::shared_ptr<IMapper> mapper)
     : _mapper(mapper)
 {
     ZeroMemory(_nametables, sizeof(_nametables));
-    ZeroMemory(_pallete, sizeof(_pallete));
+    ZeroMemory(_palette, sizeof(_palette));
 }
 
 VRam::~VRam()
@@ -753,7 +836,7 @@ u8 VRam::loadb(u16 addr)
         addr &= 0x1f;
         // if addr is a multiple of 4, return palette entry 0
         u16 palette_addr = (addr % 4 == 0) ? 0 : addr;
-        return _pallete[palette_addr] & 0x3f;
+        return _palette[palette_addr] & 0x3f;
     }
     return 0;
 }
@@ -799,16 +882,21 @@ void VRam::storeb(u16 addr, u8 val)
         {
             addr = 0x00;
         }
-        _pallete[addr] = val;
+        _palette[addr] = val;
     }
 }
 
-void VRam::Save()
+void VRam::Save(std::ofstream& ofs)
 {
+    // mapper is saved by memory map
+    ofs.write((char*)_nametables, sizeof(_nametables));
+    ofs.write((char*)_palette, sizeof(_palette));
 }
 
-void VRam::Load()
+void VRam::Load(std::ifstream& ifs)
 {
+    ifs.read((char*)_nametables, sizeof(_nametables));
+    ifs.read((char*)_palette, sizeof(_palette));
 }
 
 Oam::Oam()
@@ -830,12 +918,14 @@ void Oam::storeb(u16 addr, u8 val)
     _ram[(u8)addr] = val;
 }
 
-void Oam::Save()
+void Oam::Save(std::ofstream& ofs)
 {
+    ofs.write((char*)_ram, sizeof(_ram));
 }
 
-void Oam::Load()
+void Oam::Load(std::ifstream& ifs)
 {
+    ifs.read((char*)_ram, sizeof(_ram));
 }
 
 const Sprite* Oam::operator[](const int index)

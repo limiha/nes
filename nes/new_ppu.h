@@ -67,8 +67,8 @@ public:
     void storeb(u16 addr, u8 val);
 
     // ISave
-    void Save();
-    void Load();
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
 private:
     std::shared_ptr<IMapper> _mapper;
 
@@ -76,19 +76,19 @@ private:
     // FIXME: Which is not correct for all mapper scenarios
     u8 _nametables[0x800];
 
-    u8 _pallete[0x20];
+    u8 _palette[0x20];
 };
 
-enum class SpritePriority
+enum class SpritePriority : u8
 {
-    Above,
-    Below
+    Above = 0,
+    Below = 1
 };
 
-enum class SpriteSize
+enum class SpriteSize : u8
 {
-    Spr8x8,
-    Spr8x16
+    Spr8x8 = 0,
+    Spr8x16 = 1
 };
 
 #pragma pack()
@@ -116,8 +116,8 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    void Save();
-    void Load();
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
 
     const Sprite* operator[](const int index);
 
@@ -181,8 +181,8 @@ public:
     void storeb(u16 addr, u8 val);
 
     // ISave
-    void Save();
-    void Load();
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
 
 public:
     void Step(u8 cycles, PpuStepResult& result);

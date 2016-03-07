@@ -82,6 +82,24 @@ void NRom::chr_storeb(u16 addr, u8 val)
     _chrRam[addr] = val; // This will only ever store to ChrRam
 }
 
+void NRom::Save(std::ofstream& ofs)
+{
+    ofs.write((char*)_chrRam, sizeof(_chrRam));
+}
+
+void NRom::Load(std::ifstream& ifs)
+{
+    ifs.read((char*)_chrRam, sizeof(_chrRam));
+    if (_rom->Header.ChrRomSize > 0)
+    {
+        _chrBuf = &_rom->ChrRom[0];
+    }
+    else
+    {
+        _chrBuf = _chrRam;
+    }
+}
+
 /// SxRom (Mapper #1)
 
 SxRom::SxRom(std::shared_ptr<Rom> rom)

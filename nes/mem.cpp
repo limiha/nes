@@ -16,7 +16,7 @@ MemoryMap::MemoryMap(Ppu& ppu, Apu& apu, Input& input, std::shared_ptr<IMapper> 
     , _input(input)
     , _mapper(mapper)
 {
-
+    ZeroMemory(_ram, sizeof(_ram));
 }
 
 MemoryMap::~MemoryMap()
@@ -87,10 +87,18 @@ void MemoryMap::storeb(u16 addr, u8 val)
     }
 }
 
-void MemoryMap::Save()
+void MemoryMap::Save(std::ofstream& ofs)
 {
+    ofs.write((char*)_ram, sizeof(_ram));
+    _ppu.Save(ofs);
+    _apu.Save();
+    _mapper->Save(ofs);
 }
 
-void MemoryMap::Load()
+void MemoryMap::Load(std::ifstream& ifs)
 {
+    ifs.read((char*)_ram, sizeof(_ram));
+    _ppu.Load(ifs);
+    _apu.Load();
+    _mapper->Load(ifs);
 }

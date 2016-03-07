@@ -73,7 +73,7 @@ private:
     // FIXME: Which is not correct for all mapper scenarios
     u8 _nametables[0x800];
 
-    u8 _pallete[0x20];
+    u8 _palette[0x20];
 };
 
 enum class SpritePriority

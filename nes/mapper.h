@@ -12,6 +12,11 @@ public:
     virtual u8 chr_loadb(u16 addr);
     virtual void chr_storeb(u16 addr, u8 val);
 
+public:
+    // ISave
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
+
 private:
     u8* _chrBuf;
     u8 _chrRam[0x2000]; // If no ChrRom is provided we will give ChrRam
