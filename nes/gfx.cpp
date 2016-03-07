@@ -127,14 +127,14 @@ void Gfx::Blit(u8 screen[])
     screen_to_render = (void*)grid_screen;
 #endif
 
-	std::chrono::time_point<std::chrono::steady_clock> now;
-	long long duration;
-	do
-	{
-		now = std::chrono::high_resolution_clock::now();
-		duration = std::chrono::duration_cast<std::chrono::nanoseconds>(now - _lastTime).count();
-	} while (duration < 16666667); // 60 fps
-	_lastTime = now;
+    std::chrono::time_point<std::chrono::steady_clock> now;
+    long long duration;
+    do
+    {
+        now = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::nanoseconds>(now - _lastTime).count();
+    } while (duration < 16666667); // 60 fps
+    _lastTime = now;
 
     SDL_UpdateTexture(_texture, NULL, (void*)screen_to_render, SCREEN_WIDTH * 3);
     SDL_RenderClear(_renderer);
