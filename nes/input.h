@@ -16,6 +16,13 @@ enum class JoypadButton : u8
     Right = 1 << 7
 };
 
+enum class InputResult
+{
+    Continue,
+    SaveState,
+    LoadState,
+    Quit
+};
 
 class Joypad
 {
@@ -53,7 +60,7 @@ public:
     void Save() {}
     void Load() {}
 
-    void CheckInput();
+    InputResult CheckInput();
 
 private:
     void HandleKeyPress(SDL_Keycode code, bool isDown);

@@ -98,14 +98,25 @@ void Input::HandleKeyPress(SDL_Keycode code, bool isDown)
     }
 }
 
-void Input::CheckInput()
+InputResult Input::CheckInput()
 {
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
         if (event.type == SDL_KEYDOWN)
         {
-            HandleKeyPress(event.key.keysym.sym, true);
+            if (event.key.keysym.sym == SDLK_F1)
+            {
+                return InputResult::SaveState;
+            }
+            else if (event.key.keysym.sym == SDLK_F2)
+            {
+                return InputResult::LoadState;
+            }
+            else
+            {
+                HandleKeyPress(event.key.keysym.sym, true);
+            }
         }
         else if (event.type == SDL_KEYUP)
         {
@@ -120,4 +131,5 @@ void Input::CheckInput()
             }
         }
     }
+    return InputResult::Continue;
 }

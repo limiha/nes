@@ -75,6 +75,7 @@ int main(int argc, char* argv[])
     auto last_time = std::chrono::high_resolution_clock::now();
     u32 frames = 0;
 
+    InputResult inputResult;
     ApuStepResult apuResult;
     PpuStepResult ppuResult;
     for (;;)
@@ -82,7 +83,17 @@ int main(int argc, char* argv[])
         apuResult.Reset();
         ppuResult.Reset();
 
-        input.CheckInput();
+         inputResult = input.CheckInput();
+         if (inputResult == InputResult::SaveState)
+         {
+             std::fstream fs("test.savestate", std::fstream::out | std::fstream::binary);
+             cpu.Save();
+         }
+         else if (inputResult == InputResult::LoadState)
+         {
+             std::fstream fs("test.savestate", std::fstream::in | std::fstream::binary);
+             cpu.Load();
+         }
 
         cpu.Step();
 
