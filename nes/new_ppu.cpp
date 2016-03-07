@@ -124,7 +124,7 @@ void Ppu::Save(std::ofstream& ofs)
     ofs << _vramAddrIncrement;
     ofs << _spriteBaseAddress;
     ofs << _backgroundBaseAddress;
-    ofs << (u8)_spriteSize;
+    ofs.write((char*)&_spriteSize, sizeof(_spriteSize));
     ofs << _doVBlankNmi;
 
     ofs << _clipBackground;
@@ -171,9 +171,7 @@ void Ppu::Load(std::ifstream& ifs)
     ifs >> _vramAddrIncrement;
     ifs >> _spriteBaseAddress;
     ifs >> _backgroundBaseAddress;
-    u8 spriteSizeByte = 0;
-    ifs >> spriteSizeByte;
-    _spriteSize = (SpriteSize)spriteSizeByte;
+    ifs.read((char*)&_spriteSize, sizeof(_spriteSize));
     ifs >> _doVBlankNmi;
 
     ifs >> _clipBackground;
