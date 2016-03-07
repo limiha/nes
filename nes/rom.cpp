@@ -62,3 +62,13 @@ bool Rom::Load(std::string romPath)
         return false;
     }
 }
+
+void Rom::Save(std::ofstream& ofs)
+{
+    ofs.write((char*)&PrgRam[0], PrgRam.size());
+}
+
+void Rom::Load(std::ifstream& ifs)
+{
+    ifs.read((char*)&PrgRam[0], PrgRam.size());
+}

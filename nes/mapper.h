@@ -34,17 +34,22 @@ public:
     u8 chr_loadb(u16 addr);
     void chr_storeb(u16 addr, u8 val);
 
+public:
+    // ISave
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
+
 private:
     u32 ChrBufAddress(u16 addr);
 
 private:
-    enum class ChrMode
+    enum class ChrMode : u8
     {
         Mode8k = 0,
         Mode4k = 1
     };
 
-    enum class PrgSize
+    enum class PrgSize : u8
     {
         Size32k = 0,
         Size16k = 1,

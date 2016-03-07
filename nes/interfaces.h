@@ -48,7 +48,7 @@ public:
 
 // Mapper Interface
 class Rom;
-enum class NameTableMirroring;
+enum class NameTableMirroring : u8;
 class IMapper : public ISave
 {
 protected:
@@ -65,9 +65,8 @@ public:
     virtual void chr_storeb(u16 addr, u8 val) = 0;
 
 public:
-    // Default ISave
-    virtual void Save(std::ofstream& ofs) { }
-    virtual void Load(std::ifstream& ifs) { }
+    virtual void Save(std::ofstream& ofs);
+    virtual void Load(std::ifstream& ifs);
 
 public:
     NameTableMirroring Mirroring;

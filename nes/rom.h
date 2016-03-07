@@ -8,12 +8,12 @@ const u32 PRG_ROM_BANK_SIZE = 0x4000;
 const u32 PRG_RAM_UNIT_SIZE = 0x2000;
 const u32 CHR_ROM_BANK_SIZE = 0x2000;
 
-enum class NameTableMirroring
+enum class NameTableMirroring : u8
 {
-    SingleScreenUpper,
-    SingleScreenLower,
-    Vertical,
-    Horizontal
+    SingleScreenUpper = 0,
+    SingleScreenLower = 1,
+    Vertical = 2,
+    Horizontal = 3
 };
 
 #pragma pack()
@@ -54,13 +54,17 @@ struct INesHeader
     }
 };
 
-class Rom
+class Rom : public ISave
 {
 public:
     Rom();
     ~Rom();
 
     bool Load(std::string romPath);
+
+public:
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
 
 public:
     INesHeader Header;
