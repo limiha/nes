@@ -2,27 +2,19 @@
 #include "mapper.h"
 #include "rom.h"
 
-IMapper::IMapper(Rom& rom)
+IMapper::IMapper(std::shared_ptr<Rom> rom)
     : _rom(rom)
 {
-    Mirroring = _rom.Header.Mirroring();
+    Mirroring = _rom->Header.Mirroring();
 }
 
 IMapper::~IMapper()
 {
 }
 
-void IMapper::Save()
+std::shared_ptr<IMapper> IMapper::CreateMapper(std::shared_ptr<Rom> rom)
 {
-}
-
-void IMapper::Load()
-{
-}
-
-std::shared_ptr<IMapper> IMapper::CreateMapper(Rom& rom)
-{
-    switch (rom.Header.MapperNumber())
+    switch (rom->Header.MapperNumber())
     {
     case 0:
         return std::make_shared<NRom>(rom);
@@ -31,17 +23,17 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(Rom& rom)
     case 3:
         return std::make_shared<CNRom>(rom);
     default:
-        printf("Unsupported mapper: %d\n", rom.Header.MapperNumber());
+        printf("Unsupported mapper: %d\n", rom->Header.MapperNumber());
         return nullptr;
     }
 }
 
-NRom::NRom(Rom& rom)
+NRom::NRom(std::shared_ptr<Rom> rom)
     : IMapper(rom)
 {
-    if (rom.Header.ChrRomSize > 0)
+    if (rom->Header.ChrRomSize > 0)
     {
-        _chrBuf = &rom.ChrRom[0];
+        _chrBuf = &rom->ChrRom[0];
     }
     else
     {
@@ -57,17 +49,17 @@ u8 NRom::prg_loadb(u16 addr)
 {
     if (addr < 0x8000)
     {
-        return _rom.PrgRam[addr & 0x1fff];
+        return _rom->PrgRam[addr & 0x1fff];
     }
     else
     {
-        if (_rom.Header.PrgRomSize == 1)
+        if (_rom->Header.PrgRomSize == 1)
         {
-            return _rom.PrgRom[addr & 0x3fff];
+            return _rom->PrgRom[addr & 0x3fff];
         }
         else
         {
-            return _rom.PrgRom[addr & 0x7fff];
+            return _rom->PrgRom[addr & 0x7fff];
         }
     }
 }
@@ -76,7 +68,7 @@ void NRom::prg_storeb(u16 addr, u8 val)
 {
     if (addr < 0x8000)
     {
-        _rom.PrgRam[addr & 0x1fff] = val;
+        _rom->PrgRam[addr & 0x1fff] = val;
     }
 }
 
@@ -92,7 +84,7 @@ void NRom::chr_storeb(u16 addr, u8 val)
 
 /// SxRom (Mapper #1)
 
-SxRom::SxRom(Rom& rom)
+SxRom::SxRom(std::shared_ptr<Rom> rom)
     : IMapper(rom)
     , _prgSize(PrgSize::Size16k)
     , _chrMode(ChrMode::Mode8k)
@@ -103,9 +95,9 @@ SxRom::SxRom(Rom& rom)
     , _accumulator(0)
     , _writeCount(0)
 {
-    if (rom.Header.ChrRomSize > 0)
+    if (rom->Header.ChrRomSize > 0)
     {
-        _chrBuf = &rom.ChrRom[0];
+        _chrBuf = &rom->ChrRom[0];
     }
     else
     {
@@ -122,13 +114,13 @@ u8 SxRom::prg_loadb(u16 addr)
 {
     if (addr < 0x8000)
     {
-        return _rom.PrgRam[addr & 0x1fff];
+        return _rom->PrgRam[addr & 0x1fff];
     }
     else
     {
         if (_prgSize == PrgSize::Size32k)
         {
-            return _rom.PrgRom[((_prgBank >> 1) * 0x4000 * 2) + (addr & 0x3fff)];
+            return _rom->PrgRom[((_prgBank >> 1) * 0x4000 * 2) + (addr & 0x3fff)];
         }
         else if (_prgSize == PrgSize::Size16k)
         {
@@ -136,22 +128,22 @@ u8 SxRom::prg_loadb(u16 addr)
             {
                 if (!_slotSelect)
                 {
-                    return _rom.PrgRom[addr & 0x3fff];
+                    return _rom->PrgRom[addr & 0x3fff];
                 }
                 else
                 {
-                    return _rom.PrgRom[(_prgBank * 0x4000) + (addr & 0x3fff)];
+                    return _rom->PrgRom[(_prgBank * 0x4000) + (addr & 0x3fff)];
                 }
             }
             else
             {
                 if (!_slotSelect)
                 {
-                    return _rom.PrgRom[(_prgBank * 0x4000) + (addr & 0x3fff)];
+                    return _rom->PrgRom[(_prgBank * 0x4000) + (addr & 0x3fff)];
                 }
                 else
                 {
-                    return _rom.PrgRom[((_rom.Header.PrgRomSize - 1) * 0x4000) + (addr & 0x3fff)];
+                    return _rom->PrgRom[((_rom->Header.PrgRomSize - 1) * 0x4000) + (addr & 0x3fff)];
                 }
             }
         }
@@ -168,7 +160,7 @@ void SxRom::prg_storeb(u16 addr, u8 val)
 {
     if (addr < 0x8000)
     {
-        _rom.PrgRam[addr & 0x1fff] = val;
+        _rom->PrgRam[addr & 0x1fff] = val;
         return;
     }
 
@@ -247,7 +239,7 @@ u32 SxRom::ChrBufAddress(u16 addr)
 
 /// CNRom (Mapper #3)
 
-CNRom::CNRom(Rom& rom)
+CNRom::CNRom(std::shared_ptr<Rom> rom)
     : NRom(rom)
     , _chrBank(0)
 {
@@ -264,5 +256,5 @@ void CNRom::prg_storeb(u16 addr, u8 val)
 
 u8 CNRom::chr_loadb(u16 addr)
 {
-    return _rom.ChrRom[(_chrBank * CHR_ROM_BANK_SIZE) + addr];
+    return _rom->ChrRom[(_chrBank * CHR_ROM_BANK_SIZE) + addr];
 }

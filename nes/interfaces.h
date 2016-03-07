@@ -3,8 +3,8 @@
 class ISave
 {
 public:
-    virtual void Save() = 0;
-    virtual void Load() = 0;
+    virtual void Save(std::ofstream& ofs) = 0;
+    virtual void Load(std::ifstream& ifs) = 0;
 };
 
 // Standard Memory Interace
@@ -13,6 +13,11 @@ class IMem : public ISave
 public:
     virtual u8 loadb(u16 addr) = 0;
     virtual void storeb(u16 addr, u8 val) = 0;
+
+    // default ISave
+    virtual void Save(std::ofstream& ofs) { }
+
+    virtual void Load(std::ifstream& ifs) { }
 
     u16 loadw(u16 addr)
     {
@@ -47,11 +52,11 @@ enum class NameTableMirroring;
 class IMapper : public ISave
 {
 protected:
-    IMapper(Rom& rom);
+    IMapper(std::shared_ptr<Rom> rom);
     ~IMapper();
 
 public:
-    static std::shared_ptr<IMapper> CreateMapper(Rom& rom);
+    static std::shared_ptr<IMapper> CreateMapper(std::shared_ptr<Rom> rom);
 
 public:
     virtual u8 prg_loadb(u16 addr) = 0;
@@ -60,12 +65,13 @@ public:
     virtual void chr_storeb(u16 addr, u8 val) = 0;
 
 public:
-    virtual void Save();
-    virtual void Load();
+    // Default ISave
+    virtual void Save(std::ofstream& ofs) { }
+    virtual void Load(std::ifstream& ifs) { }
 
 public:
     NameTableMirroring Mirroring;
 
 protected:
-    Rom& _rom;
+    std::shared_ptr<Rom> _rom;
 };

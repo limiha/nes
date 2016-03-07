@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "nes.h"
 #include "cpu.h"
 #include "new_ppu.h"
 #include "mem.h"
@@ -36,28 +37,40 @@ void calc_fps(std::chrono::time_point<std::chrono::high_resolution_clock>& last_
 u8 nt_screen[256 * 240 * 3];
 #endif
 
-
-int main(int argc, char* argv[])
+Nes::Nes(std::shared_ptr<Rom> rom)
+    : _rom(rom)
 {
-    if (argc < 2)
-    {
-        printf("No ROM specified\n");
-        return -1;
-    }
+}
 
-    Gfx gfx(3);
+Nes::~Nes()
+{
+}
 
-    Rom rom;
-    if (!rom.Load(std::string(argv[1])))
+std::unique_ptr<Nes> Nes::Create(const char* romPath)
+{
+    auto rom = std::make_shared<Rom>();
+    if (!rom->Load(romPath))
     {
         printf("Incompatible ROM\n");
-        return -1;
+        return nullptr;
     }
 
-    std::shared_ptr<IMapper> mapper = IMapper::CreateMapper(rom);
+    return std::make_unique<Nes>(rom);
+}
+
+std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom)
+{
+    return std::make_unique<Nes>(rom);
+}
+
+void Nes::Run()
+{
+    Gfx gfx(3);
+
+    std::shared_ptr<IMapper> mapper = IMapper::CreateMapper(_rom);
     if (mapper == nullptr)
     {
-        return -1;
+        return;
     }
 
     VRam vram(mapper);
@@ -123,6 +136,4 @@ int main(int argc, char* argv[])
     }
 
     apu.StopAudio();
-
-    return 0;
 }

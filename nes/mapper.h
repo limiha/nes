@@ -3,7 +3,7 @@
 class NRom : public IMapper
 {
 public:
-    NRom(Rom& rom);
+    NRom(std::shared_ptr<Rom> rom);
     ~NRom();
 
 public:
@@ -20,7 +20,7 @@ private:
 class SxRom : public IMapper
 {
 public:
-    SxRom(Rom& rom);
+    SxRom(std::shared_ptr<Rom> rom);
     ~SxRom();
 
 public:
@@ -45,32 +45,6 @@ private:
         Size16k = 1,
     };
 
-    //enum class SxPrgBankMode
-    //{
-    //    Switch32K,
-    //    FixFirstBank,
-    //    FixLastBank
-    //};
-
-    //struct SxControl
-    //{
-    //    u8 val;
-
-    //    SxPrgBankMode PrgRomMode()
-    //    {
-    //        switch ((val >> 2) & 0x3)
-    //        {
-    //        case 0:
-    //        case 1:
-    //            return SxPrgBankMode::Switch32K;
-    //        case 2:
-    //            return SxPrgBankMode::FixFirstBank;
-    //        case 3:
-    //            return SxPrgBankMode::FixLastBank;
-    //        }
-    //    }
-    //};
-
 private:
     PrgSize _prgSize;
     ChrMode _chrMode;
@@ -87,7 +61,7 @@ private:
 class CNRom : public NRom
 {
 public:
-    CNRom(Rom& rom);
+    CNRom(std::shared_ptr<Rom> rom);
     ~CNRom();
 
     void prg_storeb(u16 addr, u8 val);
