@@ -148,7 +148,7 @@ u8 SxRom::prg_loadb(u16 addr)
     {
         if (_prgSize == PrgSize::Size32k)
         {
-            return _rom->PrgRom[((_prgBank >> 1) * 0x4000 * 2) + (addr & 0x3fff)];
+            return _rom->PrgRom[((_prgBank >> 1) * 0x4000 * 2) + (addr & 0x7fff)];
         }
         else if (_prgSize == PrgSize::Size16k)
         {
