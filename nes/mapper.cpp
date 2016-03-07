@@ -305,7 +305,9 @@ CNRom::~CNRom()
 
 void CNRom::prg_storeb(u16 addr, u8 val)
 {
-    _chrBank = val;
+    // CNROM only supports 32KB of CHR ROM, but some games write values
+    // such as $FF to switch to bank 3 so we need to mask with 0x03
+    _chrBank = val & 0x03;
 }
 
 u8 CNRom::chr_loadb(u16 addr)
