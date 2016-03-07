@@ -79,9 +79,10 @@ void Nes::Run()
     Apu apu(false /* isPal */);
     Input input;
     MemoryMap mem(ppu, apu, input, mapper);
-    Cpu cpu(&mem);
+    //Cpu cpu(&mem);
+    _cpu = std::make_unique<Cpu>(mem);
 
-    cpu.Reset();
+    _cpu->Reset();
     
     apu.StartAudio(44100);
 
@@ -99,23 +100,21 @@ void Nes::Run()
          inputResult = input.CheckInput();
          if (inputResult == InputResult::SaveState)
          {
-             std::fstream fs("test.savestate", std::fstream::out | std::fstream::binary);
-             cpu.Save();
+             SaveState();
          }
          else if (inputResult == InputResult::LoadState)
          {
-             std::fstream fs("test.savestate", std::fstream::in | std::fstream::binary);
-             cpu.Load();
+             LoadState();
          }
 
-        cpu.Step();
+        _cpu->Step();
 
-        apu.Step(cpu.Cycles, apuResult);
-        ppu.Step(cpu.Cycles * 3, ppuResult);
+        apu.Step(_cpu->Cycles, apuResult);
+        ppu.Step(_cpu->Cycles * 3, ppuResult);
 
         if (ppuResult.VBlankNmi)
         {
-            cpu.Nmi();
+            _cpu->Nmi();
         } 
         // else if IRQ
 
@@ -132,8 +131,20 @@ void Nes::Run()
             calc_fps(last_time, frames);
         }
 
-        cpu.Cycles = 0;
+        _cpu->Cycles = 0;
     }
 
     apu.StopAudio();
+}
+
+void Nes::SaveState()
+{
+    std::ofstream ofs("savestate.savestate", std::fstream::binary | std::fstream::trunc);
+    _cpu->Save(ofs);
+}
+
+void Nes::LoadState()
+{
+    std::ifstream ifs("savestate.savestate", std::fstream::binary);
+    _cpu->Load(ifs);
 }

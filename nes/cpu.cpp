@@ -8,7 +8,7 @@
 using namespace std;
 
 Cpu::Cpu(
-    IMem* mem
+    IMem& mem
     )
     : _mem(mem)
     , Cycles(0)
@@ -22,7 +22,7 @@ Cpu::~Cpu()
 // IMem
 u8 Cpu::loadb(u16 addr)
 {
-    return _mem->loadb(addr);
+    return _mem.loadb(addr);
 }
 
 void Cpu::storeb(u16 addr, u8 val)
@@ -33,17 +33,31 @@ void Cpu::storeb(u16 addr, u8 val)
     }
     else
     {
-        _mem->storeb(addr, val);
+        _mem.storeb(addr, val);
     }
 }
 
 // ISave
-void Cpu::Save()
+void Cpu::Save(std::ofstream& ofs)
 {
+    ofs << _regs.A;
+    ofs << _regs.X;
+    ofs << _regs.Y;
+    ofs << _regs.P;
+    ofs << _regs.S;
+    ofs << _regs.PC;
+    _mem.Save(ofs);
 }
 
-void Cpu::Load()
+void Cpu::Load(std::ifstream& ifs)
 {
+    ifs >> _regs.A;
+    ifs >> _regs.X;
+    ifs >> _regs.Y;
+    ifs >> _regs.P;
+    ifs >> _regs.S;
+    ifs >> _regs.PC;
+    _mem.Load(ifs);
 }
 
 void Cpu::Dma(u8 val)

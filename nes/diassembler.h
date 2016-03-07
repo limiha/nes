@@ -43,24 +43,24 @@ private:
 class Disassembler
 {
 public:
-    Disassembler(u16 PC, IMem* mem);
+    Disassembler(u16 PC, IMem& mem);
     ~Disassembler();
 
     void Disassemble(DisassembledInstruction** disassembledInstruction);
 
 private:
     u16 _PC;
-    IMem* _mem;
+    IMem& _mem;
 
     // Helpers
     u8 LoadBBumpPC()
     {
-        return _mem->loadb(_PC++);
+        return _mem.loadb(_PC++);
     }
 
     u16 LoadWBumpPC()
     {
-        u16 val = _mem->loadw(_PC);
+        u16 val = _mem.loadw(_PC);
         _PC += 2;
         return val;
     }
@@ -94,7 +94,7 @@ private:
 
     u8 PeekPC(int offset = 0)
     {
-        return _mem->loadb(_PC + offset);
+        return _mem.loadb(_PC + offset);
     }
 
     // Addressing Modes
@@ -258,7 +258,7 @@ void codeName(DisassembledInstruction* instr) \
         instr->_bytes.push_back(PeekPC());
         instr->_bytes.push_back(PeekPC(1));
 
-        u16 val = _mem->loadw(LoadWBumpPC());
+        u16 val = _mem.loadw(LoadWBumpPC());
 
         instr->_ss << "JMP ($" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << val << ')';
     }

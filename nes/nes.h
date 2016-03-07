@@ -13,6 +13,11 @@ public:
     static std::unique_ptr<Nes> Create(std::shared_ptr<Rom> rom);
 
     void Run();
+
+private:
+    void SaveState();
+    void LoadState();
+
 private:
     std::shared_ptr<Rom> _rom;
     std::unique_ptr<Cpu> _cpu;

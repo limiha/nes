@@ -85,7 +85,7 @@ struct CpuRegs
 class Cpu : public IMem
 {
 public:
-    Cpu(IMem* mem);
+    Cpu(IMem& mem);
     ~Cpu();
 
     // IMem
@@ -93,8 +93,8 @@ public:
     void storeb(u16 addr, u8 val);
 
     // ISave
-    void Load();
-    void Save();
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
 
     void Reset();
     void Step();
@@ -105,7 +105,7 @@ public:
 
 private:
     CpuRegs _regs;
-    IMem* _mem;
+    IMem& _mem;
 
     u8 _op;
 
