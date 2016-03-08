@@ -346,3 +346,14 @@ u8 CNRom::chr_loadb(u16 addr)
 {
     return _rom->ChrRom[(_chrBank * CHR_ROM_BANK_SIZE) + addr];
 }
+void CNRom::Save(std::ofstream& ofs)
+{
+    NRom::Save(ofs);
+    Util::WriteBytes(_chrBank, ofs);
+}
+
+void CNRom::Load(std::ifstream& ifs)
+{
+    NRom::Load(ifs);
+    Util::ReadBytes(_chrBank, ifs);
+}

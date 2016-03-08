@@ -89,6 +89,10 @@ public:
 
     void prg_storeb(u16 addr, u8 val);
     u8 chr_loadb(u16 addr);
+
+    // ISave
+    void Save(std::ofstream& ofs);
+    void Load(std::ifstream& ifs);
 private:
     u8 _chrBank;
 };
