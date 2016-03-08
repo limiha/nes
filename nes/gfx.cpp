@@ -112,7 +112,7 @@ Gfx::Gfx(u32 scale)
         SCREEN_HEIGHT
         );
 
-	_lastTime = std::chrono::high_resolution_clock::now();
+    _lastTime = std::chrono::high_resolution_clock::now();
 }
 
 Gfx::~Gfx()

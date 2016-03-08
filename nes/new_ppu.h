@@ -229,7 +229,7 @@ public:
     u8 Screen[256 * 240 * 3];
 
 private:
-	std::shared_ptr<IMapper> _mapper;
+    std::shared_ptr<IMapper> _mapper;
     VRam _vram;
 
     // Sprites

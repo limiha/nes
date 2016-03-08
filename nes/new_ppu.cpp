@@ -3,7 +3,7 @@
 #include "rom.h"
 
 Ppu::Ppu(std::shared_ptr<IMapper> mapper)
-	: _mapper(mapper)
+    : _mapper(mapper)
     , _vram(_mapper)
     , _cycle(0)
     , _scanline(241)
