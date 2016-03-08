@@ -69,9 +69,11 @@ public:
     // ISave
     void Save(std::ofstream& ofs);
     void Load(std::ifstream& ifs);
-private:
+
+public:
     std::shared_ptr<IMapper> _mapper;
 
+private:
     // FIXME: This is enough VRAM for two name tables
     // FIXME: Which is not correct for all mapper scenarios
     u8 _nametables[0x800];
@@ -129,6 +131,7 @@ struct PpuStepResult
 {
     bool VBlankNmi;
     bool NewFrame;
+    bool WantIrq;
 
     PpuStepResult()
     {
@@ -139,6 +142,7 @@ struct PpuStepResult
     {
         VBlankNmi = false;
         NewFrame = false;
+        WantIrq = false;
     }
 };
 

@@ -32,6 +32,11 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(std::shared_ptr<Rom> rom)
     }
 }
 
+bool IMapper::Scanline()
+{
+    return false;
+}
+
 void IMapper::Save(std::ofstream& ofs)
 {
     Util::WriteBytes((u8)Mirroring, ofs);
@@ -462,16 +467,17 @@ void TxRom::prg_storeb(u16 addr, u8 val)
             // TODO: Something to do with enabling/disabling WRAM (Which i think is PrgRam);
             break;
         case 0xc000:
-            // IRQ Reload
+            _irqReload = val;
             break;
         case 0xc001:
-            // IRQ Clear
+            _irqCounter = 0;
             break;
         case 0xe000:
-            // IRQ Acknowledge/disable
+            _irqPending = false;
+            _irqEnable = false;
             break;
         case 0xe001:
-            // IRQ Enable
+            _irqEnable = true;
             break;
         }
     }
@@ -542,5 +548,24 @@ u32 TxRom::ChrBufAddress(u16 addr)
         {
             return ((_chrReg[1] >> 1) * 0x0800) + (addr & 0x07ff);
         }
+    }
+}
+
+bool TxRom::Scanline()
+{
+    if (_irqCounter == 0)
+    {
+        _irqCounter = _irqReload;
+        return false;
+    }
+    else
+    {
+        _irqCounter--;
+        if (_irqCounter == 0 && _irqEnable)
+        {
+            _irqPending = true;
+            return true;
+        }
+        return false;
     }
 }

@@ -109,6 +109,8 @@ public:
     u8 chr_loadb(u16 addr);
     void chr_storeb(u16 addr, u8 val);
 
+    bool Scanline();
+
 private:
     u32 ChrBufAddress(u16 addr);
 
@@ -121,4 +123,9 @@ private:
 
     u32 _lastBankIndex;
     u32 _secondLastBankIndex;
+
+    u16 _irqCounter;
+    u16 _irqReload;
+    bool _irqEnable;
+    bool _irqPending;
 };

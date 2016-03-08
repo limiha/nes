@@ -114,7 +114,7 @@ void Nes::Run()
         {
             _cpu->Nmi();
         }
-        else if (apuResult.Irq)
+        else if (apuResult.Irq || ppuResult.WantIrq)
         {
             _cpu->Irq();
         }

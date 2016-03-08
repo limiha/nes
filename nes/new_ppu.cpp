@@ -393,6 +393,13 @@ void Ppu::Step(PpuStepResult& result)
                 HoriVEqualsHoriT();
             }
         }
+        else if (_cycle == 260 && IsRendering())
+        {
+            if (_vram._mapper->Scanline())
+            {
+                result.WantIrq = true;
+            }
+        }
     }
     else if (_scanline >= 240 && _scanline <= 260)
     {
@@ -428,6 +435,13 @@ void Ppu::Step(PpuStepResult& result)
             if (IsRendering())
             {
                 HoriVEqualsHoriT();
+            }
+        }
+        else if (_cycle == 260 && IsRendering())
+        {
+            if (_vram._mapper->Scanline())
+            {
+                result.WantIrq = true;
             }
         }
         else if (_cycle >= 280 && _cycle <= 304)
