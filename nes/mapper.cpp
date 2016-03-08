@@ -20,6 +20,8 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(std::shared_ptr<Rom> rom)
         return std::make_shared<NRom>(rom);
     case 1:
         return std::make_shared<SxRom>(rom);
+    case 2:
+        return std::make_shared<UNRom>(rom);
     case 3:
         return std::make_shared<CNRom>(rom);
     default:
@@ -289,6 +291,36 @@ void SxRom::Load(std::ifstream& ifs)
     ifs >> _accumulator;
     ifs >> _writeCount;
     ifs.read((char*)&_chrRam[0], _chrRam.size());
+}
+
+/// UNRom (Mapper #2)
+UNRom::UNRom(std::shared_ptr<Rom> rom)
+    : NRom(rom)
+    , _prgBank(0)
+{
+    _lastBankOffset = (_rom->Header.PrgRomSize - 1) * PRG_ROM_BANK_SIZE;
+}
+
+UNRom::~UNRom()
+{
+}
+
+void UNRom::prg_storeb(u16 addr, u8 val)
+{
+    // UNROM has 8 switchable banks so mask bank switch with lower 3 bits
+    _prgBank = val & 0x07;
+}
+
+u8 UNRom::prg_loadb(u16 addr)
+{
+    if (addr > 0xC000)
+    {
+        return _rom->PrgRom[_lastBankOffset + (addr & 0x3FFF)];
+    }
+    else
+    {
+        return _rom->PrgRom[(_prgBank * PRG_ROM_BANK_SIZE) + (addr & 0x3FFF)];
+    }
 }
 
 /// CNRom (Mapper #3)
