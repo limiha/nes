@@ -6,6 +6,7 @@ class AudioEngine;
 struct ApuPulseState;
 struct ApuTriangleState;
 struct ApuNoiseState;
+struct ApuDmcState;
 struct ApuEnvelop;
 struct NesAudioPulseCtrl;
 struct NesAudioTriangeCtrl;
@@ -42,7 +43,7 @@ public:
     virtual void Load();
     virtual void Save();
 
-    void Step(u32 cycles, ApuStepResult& result);
+    void Step(u32 &cycles, bool isDmaRunning, ApuStepResult& result);
 private:
 
     // Registers
@@ -75,7 +76,7 @@ private:
     void DoQuarterFrameStep();
     void DoHalfFrameStep();
     
-    void StepNoise();
+    void StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result);
     void StepSweep(NesAudioPulseCtrl* audioCtrl, ApuPulseState* state, bool channel1);
     static void StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop);
     static void StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuEnvelop* envelop);
@@ -90,7 +91,6 @@ private:
     bool _frameCounterMode1;
     bool _frameInterrupt;
     bool _frameInterruptInhibit;
-    bool _dmcInterrupt;
     int _frameCycleCount;
     int _frameCycleResetCounter;
     int _subframeCount;
@@ -99,6 +99,7 @@ private:
     ApuPulseState* _pulseState2;
     ApuTriangleState* _triangleState;
     ApuNoiseState* _noiseState;
+    ApuDmcState* _dmcState;
     ApuEnvelop* _pulseEnvelop1;
     ApuEnvelop* _pulseEnvelop2;
     ApuEnvelop* _noiseEnvelop;
