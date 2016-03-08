@@ -64,14 +64,12 @@ void Nes::Run()
     Gfx gfx(3);
 
     std::shared_ptr<IMapper> mapper = IMapper::CreateMapper(_rom);
-    if (mapper == nullptr)
-    {
-        return;
-    }
+	if (mapper == nullptr)
+	{
+		return;
+	}
 
-    VRam vram(mapper);
-
-    Ppu ppu(vram);
+    Ppu ppu(mapper);
     Apu apu(false /* isPal */);
     Input input;
     MemoryMap mem(ppu, apu, input, mapper);

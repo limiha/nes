@@ -2,8 +2,9 @@
 #include "new_ppu.h"
 #include "rom.h"
 
-Ppu::Ppu(VRam& vram)
-    : _vram(vram)
+Ppu::Ppu(std::shared_ptr<IMapper> mapper)
+	: _mapper(mapper)
+    , _vram(_mapper)
     , _cycle(0)
     , _scanline(241)
     , _frameOdd(false)
@@ -395,7 +396,7 @@ void Ppu::Step(PpuStepResult& result)
         }
         else if (_cycle == 260 && IsRendering())
         {
-            if (_vram._mapper->Scanline())
+            if (_mapper->Scanline())
             {
                 result.WantIrq = true;
             }
@@ -439,7 +440,7 @@ void Ppu::Step(PpuStepResult& result)
         }
         else if (_cycle == 260 && IsRendering())
         {
-            if (_vram._mapper->Scanline())
+            if (_mapper->Scanline())
             {
                 result.WantIrq = true;
             }

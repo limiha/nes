@@ -70,10 +70,9 @@ public:
     void Save(std::ofstream& ofs);
     void Load(std::ifstream& ifs);
 
-public:
+private:
     std::shared_ptr<IMapper> _mapper;
 
-private:
     // FIXME: This is enough VRAM for two name tables
     // FIXME: Which is not correct for all mapper scenarios
     u8 _nametables[0x800];
@@ -176,7 +175,7 @@ struct PpuStatus
 class Ppu : public IMem
 {
 public:
-    Ppu(VRam&);
+    Ppu(std::shared_ptr<IMapper> mapper);
     ~Ppu();
 
 public:
@@ -230,7 +229,8 @@ public:
     u8 Screen[256 * 240 * 3];
 
 private:
-    VRam& _vram;
+	std::shared_ptr<IMapper> _mapper;
+    VRam _vram;
 
     // Sprites
     Oam _oam;
