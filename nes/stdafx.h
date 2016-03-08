@@ -33,6 +33,7 @@
 
 #include "types.h"
 #include "interfaces.h"
+#include "util.h"
 
 // Emulator constants
 #define CPU_FREQ_NTSC 1789773

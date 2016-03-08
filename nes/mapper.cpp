@@ -32,13 +32,13 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(std::shared_ptr<Rom> rom)
 
 void IMapper::Save(std::ofstream& ofs)
 {
-    ofs << (u8)Mirroring;
+    Util::WriteBytes((u8)Mirroring, ofs);
     _rom->Save(ofs);
 }
 
 void IMapper::Load(std::ifstream& ifs)
 {
-    ifs.read((char*)&Mirroring, sizeof(Mirroring));
+    Util::ReadBytes((u8&)Mirroring, ifs);
     _rom->Load(ifs);
 }
 
@@ -268,28 +268,28 @@ u32 SxRom::ChrBufAddress(u16 addr)
 void SxRom::Save(std::ofstream& ofs)
 {
     IMapper::Save(ofs);
-    ofs << (u8)_prgSize;
-    ofs << (u8)_chrMode;
-    ofs << _slotSelect;
-    ofs << _chrBank0;
-    ofs << _chrBank1;
-    ofs << _prgBank;
-    ofs << _accumulator;
-    ofs << _writeCount;
+    Util::WriteBytes((u8)_prgSize, ofs);
+    Util::WriteBytes((u8)_chrMode, ofs);
+    Util::WriteBytes(_slotSelect, ofs);
+    Util::WriteBytes(_chrBank0, ofs);
+    Util::WriteBytes(_chrBank1, ofs);
+    Util::WriteBytes(_prgBank, ofs);
+    Util::WriteBytes(_accumulator, ofs);
+    Util::WriteBytes(_writeCount, ofs);
     ofs.write((char*)&_chrRam[0], _chrRam.size());
 }
 
 void SxRom::Load(std::ifstream& ifs)
 {
     IMapper::Load(ifs);
-    ifs.read((char*)&_prgSize, sizeof(_prgSize));
-    ifs.read((char*)_chrMode, sizeof(_chrMode));
-    ifs >> _slotSelect;
-    ifs >> _chrBank0;
-    ifs >> _chrBank1;
-    ifs >> _prgBank;
-    ifs >> _accumulator;
-    ifs >> _writeCount;
+    Util::ReadBytes((u8&)_prgSize, ifs);
+    Util::ReadBytes((u8&)_chrMode, ifs);
+    Util::ReadBytes(_slotSelect, ifs);
+    Util::ReadBytes(_chrBank0, ifs);
+    Util::ReadBytes(_chrBank1, ifs);
+    Util::ReadBytes(_prgBank, ifs);
+    Util::ReadBytes(_accumulator, ifs);
+    Util::ReadBytes(_writeCount, ifs);
     ifs.read((char*)&_chrRam[0], _chrRam.size());
 }
 
