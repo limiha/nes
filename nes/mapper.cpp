@@ -24,6 +24,8 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(std::shared_ptr<Rom> rom)
         return std::make_shared<UNRom>(rom);
     case 3:
         return std::make_shared<CNRom>(rom);
+    case 4:
+        return std::make_shared<TxRom>(rom);
     default:
         printf("Unsupported mapper: %d\n", rom->Header.MapperNumber());
         return nullptr;
@@ -356,4 +358,189 @@ void CNRom::Load(std::ifstream& ifs)
 {
     NRom::Load(ifs);
     Util::ReadBytes(_chrBank, ifs);
+}
+
+// TXRom (MMC3, mapper #4)
+
+TxRom::TxRom(std::shared_ptr<Rom> rom)
+    : IMapper(rom)
+    , _prgMode(false)
+    , _chrMode(false)
+    , _prgReg{0, 0}
+    , _chrReg{0, 0, 0, 0, 0, 0}
+{
+    _lastBankIndex = (_rom->Header.PrgRomSize * 2) - 1; // PrgRomSize is in 0x4000 units, TxRom has 0x2000 size banks
+    _secondLastBankIndex = (_rom->Header.PrgRomSize * 2) - 2; // PrgRomSize is in 0x4000 units, TxRom has 0x2000 size banks
+}
+
+TxRom::~TxRom()
+{
+}
+
+u8 TxRom::prg_loadb(u16 addr)
+{
+    if (addr < 0x8000)
+    {
+        // TODO: This can be disabled?
+        return _rom->PrgRam[addr & 0x1fff];
+    }
+    else
+    {
+        if (!_prgMode)
+        {
+            if (addr < 0xa000)
+            {
+                return _rom->PrgRom[(_prgReg[0] * 0x2000) + (addr & 0x1fff)];
+            }
+            else if (addr < 0xc000)
+            {
+                return _rom->PrgRom[(_prgReg[1] * 0x2000) + (addr & 0x1fff)];
+            }
+            else if (addr < 0xe000)
+            {
+                return _rom->PrgRom[(_secondLastBankIndex * 0x2000) + (addr & 0x1fff)];
+            }
+            else
+            {
+                return _rom->PrgRom[(_lastBankIndex * 0x2000) + (addr & 0x1fff)];
+            }
+        }
+        else
+        {
+            if (addr < 0xa000)
+            {
+                return _rom->PrgRom[(_secondLastBankIndex * 0x2000) + (addr & 0x1fff)];
+            }
+            else if (addr < 0xc000)
+            {
+                return _rom->PrgRom[(_prgReg[1] * 0x2000) + (addr & 0x1fff)];
+            }
+            else if (addr < 0xe000)
+            {
+                return _rom->PrgRom[(_prgReg[0] * 0x2000) + (addr & 0x1fff)];
+            }
+            else
+            {
+                return _rom->PrgRom[(_lastBankIndex * 0x2000) + (addr & 0x1fff)];
+            }
+        }
+    }
+}
+
+void TxRom::prg_storeb(u16 addr, u8 val)
+{
+    if (addr < 0x8000)
+    {
+
+        // TODO: This can be disabled?
+        _rom->PrgRam[addr & 0x1fff] = val;
+    }
+    else
+    {
+        addr &= 0xe001;
+        switch (addr)
+        {
+        case 0x8000:
+            _chrMode = (val & (1 << 7)) != 0;
+            _prgMode = (val & (1 << 6)) != 0;
+            _addr8001 = val & 0b111;
+            break;
+        case 0x8001:
+            if (_addr8001 < 7)
+            {
+                _chrReg[_addr8001] = val;
+            }
+            else
+            {
+                _prgReg[_addr8001 & 1] = val;
+            }
+            break;
+        case 0xa000:
+            Mirroring = (val & 1) == 0 ? NameTableMirroring::Vertical : NameTableMirroring::Horizontal;
+            break;
+        case 0xa001:
+            // TODO: Something to do with enabling/disabling WRAM (Which i think is PrgRam);
+            break;
+        case 0xc000:
+            // IRQ Reload
+            break;
+        case 0xc001:
+            // IRQ Clear
+            break;
+        case 0xe000:
+            // IRQ Acknowledge/disable
+            break;
+        case 0xe001:
+            // IRQ Enable
+            break;
+        }
+    }
+}
+
+u8 TxRom::chr_loadb(u16 addr)
+{
+    return _rom->ChrRom[ChrBufAddress(addr)];
+}
+
+void TxRom::chr_storeb(u16 addr, u8 val)
+{
+    // not sure if mmc3 can have ChrRam
+}
+
+u32 TxRom::ChrBufAddress(u16 addr)
+{
+    if (!_chrMode)
+    {
+        if (addr < 0x0800)
+        {
+            return ((_chrReg[0] >> 1) * 0x0800) + (addr & 0x07ff);
+        }
+        else if (addr < 0x1000)
+        {
+            return ((_chrReg[1] >> 1) * 0x0800) + (addr & 0x07ff);
+        }
+        else if (addr < 0x1400)
+        {
+            return (_chrReg[2] * 0x0400) + (addr & 0x03ff);
+        }
+        else if (addr < 0x1800)
+        {
+            return (_chrReg[3] * 0x0400) + (addr & 0x03ff);
+        }
+        else if (addr < 0x1c00)
+        {
+            return (_chrReg[4] * 0x0400) + (addr & 0x03ff);
+        }
+        else
+        {
+            return (_chrReg[5] * 0x0400) + (addr & 0x03ff);
+        }
+    }
+    else
+    {
+        if (addr < 0x0400)
+        {
+            return (_chrReg[2] * 0x0400) + (addr & 0x03ff);
+        }
+        else if (addr < 0x0800)
+        {
+            return (_chrReg[3] * 0x0400) + (addr & 0x03ff);
+        }
+        else if (addr < 0x0c00)
+        {
+            return (_chrReg[4] * 0x0400) + (addr & 0x03ff);
+        }
+        else if (addr < 0x1000)
+        {
+            return (_chrReg[5] * 0x0400) + (addr & 0x03ff);
+        }
+        else if (addr < 0x1800)
+        {
+            return ((_chrReg[0] >> 1) * 0x0800) + (addr & 0x07ff);
+        }
+        else
+        {
+            return ((_chrReg[1] >> 1) * 0x0800) + (addr & 0x07ff);
+        }
+    }
 }

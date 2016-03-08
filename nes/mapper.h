@@ -96,3 +96,29 @@ public:
 private:
     u8 _chrBank;
 };
+
+// MMC3
+class TxRom : public IMapper
+{
+public:
+    TxRom(std::shared_ptr<Rom> rom);
+    ~TxRom();
+
+    u8 prg_loadb(u16 addr);
+    void prg_storeb(u16 addr, u8 val);
+    u8 chr_loadb(u16 addr);
+    void chr_storeb(u16 addr, u8 val);
+
+private:
+    u32 ChrBufAddress(u16 addr);
+
+private:
+    bool _chrMode;
+    bool _prgMode;
+    u8 _addr8001; // "address" to use when writing $80001
+    u8 _chrReg[6];
+    u8 _prgReg[2];
+
+    u32 _lastBankIndex;
+    u32 _secondLastBankIndex;
+};
