@@ -68,6 +68,19 @@ private:
     std::vector<u8> _chrRam;
 };
 
+class UNRom : public NRom
+{
+public:
+    UNRom(std::shared_ptr<Rom> rom);
+    ~UNRom();
+
+    void prg_storeb(u16 addr, u8 val);
+    u8 prg_loadb(u16 addr);
+private:
+    int _lastBankOffset;
+    u8 _prgBank;
+};
+
 class CNRom : public NRom
 {
 public:
