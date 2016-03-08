@@ -216,6 +216,7 @@
     <ClInclude Include="mem.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="apu.cpp" />
@@ -231,6 +232,7 @@
     <ClCompile Include="new_ppu.cpp" />
     <!--<ClCompile Include="old_ppu.cpp" />-->
     <ClCompile Include="rom.cpp" />
+    <ClCompile Include="util.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Trace|Win32'">Create</PrecompiledHeader>

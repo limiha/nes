@@ -61,6 +61,7 @@ public:
     ~Rom();
 
     bool Load(std::string romPath);
+    const fs::path& Path();
 
 public:
     void Save(std::ofstream& ofs);
@@ -71,4 +72,7 @@ public:
     std::vector<u8> PrgRom;
     std::vector<u8> PrgRam;
     std::vector<u8> ChrRom;
+
+private:
+    fs::path _path;
 };

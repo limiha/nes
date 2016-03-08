@@ -92,6 +92,8 @@ void Nes::Run()
     InputResult inputResult;
     ApuStepResult apuResult;
     PpuStepResult ppuResult;
+    bool wantSaveState = false;
+    bool wantLoadState = false;
     for (;;)
     {
         apuResult.Reset();
@@ -100,11 +102,11 @@ void Nes::Run()
          inputResult = input.CheckInput();
          if (inputResult == InputResult::SaveState)
          {
-             SaveState();
+             wantSaveState = true;
          }
          else if (inputResult == InputResult::LoadState)
          {
-             LoadState();
+             wantLoadState = true;
          }
 
         _cpu->Step();
@@ -132,6 +134,17 @@ void Nes::Run()
 #endif
             gfx.Blit(ppu.Screen);
             calc_fps(last_time, frames);
+
+            if (wantSaveState)
+            {
+                SaveState();
+                wantSaveState = false;
+            }
+            if (wantLoadState)
+            {
+                LoadState();
+                wantLoadState = false;
+            }
         }
 
         _cpu->Cycles = 0;
@@ -142,7 +155,7 @@ void Nes::Run()
 
 void Nes::SaveState()
 {
-    std::ofstream ofs("savestate.savestate", std::fstream::binary | std::fstream::trunc);
+    std::ofstream ofs(GetSavePath()->c_str(), std::fstream::binary | std::fstream::trunc);
     _cpu->Save(ofs);
     ofs.close();
 
@@ -151,9 +164,16 @@ void Nes::SaveState()
 
 void Nes::LoadState()
 {
-    std::ifstream ifs("savestate.savestate", std::fstream::binary);
+
+    std::ifstream ifs(GetSavePath()->c_str(), std::fstream::binary);
     _cpu->Load(ifs);
     ifs.close();
 
     printf("State Loaded!\n");
+}
+
+std::unique_ptr<fs::path> Nes::GetSavePath()
+{
+    fs::path savePath(_rom->Path());
+    return std::make_unique<fs::path>(savePath.replace_extension("ns"));
 }
