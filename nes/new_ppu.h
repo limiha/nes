@@ -190,6 +190,9 @@ public:
 #if defined(RENDER_NAMETABLE)
     void RenderNameTable(u8 screen[], int i);
 #endif
+#if defined(RENDER_PATTERNTABLE)
+    void RenderPatternTable(u16 baseAddr, u8 pt[]);
+#endif
 
 private:
     void Step(PpuStepResult& resutl);

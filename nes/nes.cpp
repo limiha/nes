@@ -33,10 +33,6 @@ void calc_fps(std::chrono::time_point<std::chrono::high_resolution_clock>& last_
     }
 }
 
-#if defined(RENDER_NAMETABLE)
-u8 nt_screen[256 * 240 * 3];
-#endif
-
 Nes::Nes(std::shared_ptr<Rom> rom)
     : _rom(rom)
 {
@@ -126,11 +122,20 @@ void Nes::Run()
         if (ppuResult.NewFrame)
         {
 #if defined(RENDER_NAMETABLE)
+            u8 nt_screen[256 * 240 * 3];
             for (int i = 0; i < 4; i++)
             {
                 ppu.RenderNameTable(nt_screen, i);
                 gfx.BlitNameTable(nt_screen, i);
             }
+#endif
+#if defined(RENDER_PATTERNTABLE)
+            u8 pt_left[8 * 8 * 32 * 8 * 3];
+            u8 pt_right[8 * 8 * 32 * 8 * 3];
+            ppu.RenderPatternTable(0x0000, pt_left);
+            ppu.RenderPatternTable(0x1000, pt_right);
+            gfx.BlitPatternTable(pt_left, pt_right);
+     
 #endif
             gfx.Blit(ppu.Screen);
             calc_fps(last_time, frames);
