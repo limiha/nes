@@ -155,7 +155,7 @@ void Nes::Run()
 
 void Nes::SaveState()
 {
-    std::ofstream ofs("savestate.savestate", std::fstream::binary | std::fstream::trunc);
+    std::ofstream ofs(GetSavePath()->c_str(), std::fstream::binary | std::fstream::trunc);
     _cpu->Save(ofs);
     ofs.close();
 
@@ -164,9 +164,16 @@ void Nes::SaveState()
 
 void Nes::LoadState()
 {
-    std::ifstream ifs("savestate.savestate", std::fstream::binary);
+
+    std::ifstream ifs(GetSavePath()->c_str(), std::fstream::binary);
     _cpu->Load(ifs);
     ifs.close();
 
     printf("State Loaded!\n");
+}
+
+std::unique_ptr<fs::path> Nes::GetSavePath()
+{
+    fs::path savePath(_rom->Path());
+    return std::make_unique<fs::path>(savePath.replace_extension("ns"));
 }

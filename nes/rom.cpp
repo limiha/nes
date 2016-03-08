@@ -15,6 +15,19 @@ Rom::~Rom()
 
 bool Rom::Load(std::string romPath)
 {
+    _path = romPath;
+
+    if (_path.is_relative())
+    {
+        _path = fs::current_path().append(_path);
+    }
+
+    if (!fs::exists(romPath))
+    {
+        printf("File does not exsit\n");
+        return false;
+    }
+
     std::ifstream stream(romPath, std::ios::in | std::ios::binary);
     if (stream.is_open())
     {
@@ -61,6 +74,11 @@ bool Rom::Load(std::string romPath)
     {
         return false;
     }
+}
+
+const fs::path& Rom::Path()
+{
+    return _path;
 }
 
 void Rom::Save(std::ofstream& ofs)

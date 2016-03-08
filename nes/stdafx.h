@@ -28,6 +28,10 @@
 #include <vector>
 #include <chrono>
 
+// for Rom and save state paths
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
