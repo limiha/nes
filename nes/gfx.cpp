@@ -20,6 +20,37 @@ Gfx::Gfx(u32 scale)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
 
+#if defined(RENDER_NAMETABLE)
+    for (int i = 0; i < 4; i++)
+    {
+        char name[sizeof("ntxx") + 1];
+        sprintf(name, "nt%02d", i);
+
+        _nt_window[i] = SDL_CreateWindow(
+            name,
+            256 * (2 * (i % 2 )),
+            240 * (2 * (i / 2)),
+            256 * 2,
+            240 * 2,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_BORDERLESS
+            );
+
+        _nt_renderer[i] = SDL_CreateRenderer(
+            _nt_window[i],
+            -1,
+            SDL_RENDERER_ACCELERATED
+            );
+
+        _nt_texture[i] = SDL_CreateTexture(
+            _nt_renderer[i],
+            SDL_PIXELFORMAT_RGB24,
+            SDL_TEXTUREACCESS_STREAMING,
+            256,
+            240
+            );
+    }
+#endif
+
     _window = SDL_CreateWindow(
         "NES",
         SDL_WINDOWPOS_CENTERED,
@@ -44,37 +75,6 @@ Gfx::Gfx(u32 scale)
         );
 
 	_lastTime = std::chrono::high_resolution_clock::now();
-
-#if defined(RENDER_NAMETABLE)
-    for (int i = 0; i < 4; i++)
-    {
-        char name[sizeof("ntxx") + 1];
-        sprintf(name, "nt%02d", i);
-
-        _nt_window[i] = SDL_CreateWindow(
-            name,
-            256 * 2 * i,
-            240,
-            256 * 2,
-            240 * 2,
-            SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE
-            );
-
-        _nt_renderer[i] = SDL_CreateRenderer(
-            _nt_window[i],
-            -1,
-            SDL_RENDERER_ACCELERATED
-            );
-
-        _nt_texture[i] = SDL_CreateTexture(
-            _nt_renderer[i],
-            SDL_PIXELFORMAT_RGB24,
-            SDL_TEXTUREACCESS_STREAMING,
-            256,
-            240
-            );
-    }
-#endif
 }
 
 Gfx::~Gfx()
