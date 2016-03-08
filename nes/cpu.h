@@ -100,6 +100,12 @@ public:
     void Step();
     void Nmi();
     void Irq();
+
+    bool IsDmaRunning()
+    {
+        return _dmaBytesRemaining > 0;
+    }
+
 public:
     u32 Cycles;
 
@@ -108,6 +114,8 @@ private:
     IMem& _mem;
 
     u8 _op;
+    u32 _dmaBytesRemaining;
+    u32 _dmaReadAddress;
 
 private:
     void Dma(u8 val);

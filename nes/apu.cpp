@@ -33,6 +33,16 @@ const int NoisePeriodValues[16] =
     0x00BE, 0x00A0, 0x008E, 0x0080, 0x006A, 0x0054, 0x0048, 0x0036
 };
 
+const int DmcRateNTSC[16] =
+{
+    428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54
+};
+
+const int DmcRatePAL[16] =
+{
+    398, 354, 316, 298, 276, 236, 210, 198, 176, 148, 132, 118, 98, 78, 66, 50
+};
+
 struct ApuPulseState
 {
     int wavelength;
@@ -59,6 +69,21 @@ struct ApuNoiseState
     bool lengthDisabled;
 };
 
+struct ApuDmcState
+{
+    bool enabled;
+    bool interrupt;
+    bool interruptEnabled;
+    bool loop;
+    u16 sampleAddress;
+    u16 readAddress;
+    int sampleSize;
+    int bytesRemaining;
+    int bitsRemaining;
+    int cycleCount;
+    u32 sampleRate;
+};
+
 struct ApuEnvelop
 {
     int envelopDivider;
@@ -76,7 +101,6 @@ Apu::Apu(bool isPal)
     : _frameInterrupt(false)
     , _frameInterruptInhibit(false)
     , _frameCounterMode1(false)
-    , _dmcInterrupt(false)
     , _frameCycleCount(0)
     , _frameCycleResetCounter(0)
     , _subframeCount(0)
@@ -87,10 +111,12 @@ Apu::Apu(bool isPal)
     _pulseState2 = new ApuPulseState();
     _triangleState = new ApuTriangleState();
     _noiseState = new ApuNoiseState();
+    _dmcState = new ApuDmcState();
     memset(_pulseState1, 0, sizeof(ApuPulseState));
     memset(_pulseState2, 0, sizeof(ApuPulseState));
     memset(_triangleState, 0, sizeof(ApuTriangleState));
     memset(_noiseState, 0, sizeof(ApuNoiseState));
+    memset(_dmcState, 0, sizeof(ApuDmcState));
 
     _pulseEnvelop1 = new ApuEnvelop();
     _pulseEnvelop2 = new ApuEnvelop();
@@ -266,8 +292,11 @@ void Apu::Save()
 {
 }
 
-void Apu::Step(u32 cycles, ApuStepResult& result)
+void Apu::Step(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
 {
+    if (_dmcState->enabled)
+        StepDmc(cycles, isDmaRunning, result);
+
     if (_frameCycleResetCounter != 0)
     {
         // Frame cycle counter reset is pending
@@ -312,12 +341,12 @@ u8 Apu::ReadApuStatus()
         status |= 0x04;
     if (_noise->lengthCounter > 0)
         status |= 0x08;
-    if (_dmc->enabled)
+    if (_dmcState->bytesRemaining > 0)
         status |= 0x10;
 
     if (_frameInterrupt)
         status |= 0x40;
-    if (_dmcInterrupt)
+    if (_dmcState->interrupt)
         status |= 0x80;
 
     _frameInterrupt = false;
@@ -331,7 +360,23 @@ void Apu::WriteApuStatus(u8 newStatus)
     _pulseState2->lengthDisabled = (newStatus & 0x02) == 0;
     _triangleState->lengthDisabled = (newStatus & 0x04) == 0;
     _noiseState->lengthDisabled = (newStatus & 0x08) == 0;
-    _dmc->enabled = (newStatus & 0x10) != 0;
+    bool enableDmc = (newStatus & 0x10) != 0;
+
+    if (enableDmc != _dmcState->enabled)
+    {
+        if (enableDmc)
+        {
+            _dmcState->readAddress = _dmcState->sampleAddress;
+            _dmcState->bytesRemaining = _dmcState->sampleSize;
+            _dmcState->bitsRemaining = 8;
+            _dmcState->enabled = _dmcState->sampleRate > 0 && _dmcState->bytesRemaining > 0;
+        }
+        else
+        {
+            _dmcState->enabled = false;
+            _dmcState->bytesRemaining = 0;
+        }
+    }
 
     if (_pulseState1->lengthDisabled)
         _pulse1->lengthCounter = 0;
@@ -450,22 +495,38 @@ void Apu::WriteApuNoise3(u8 val)
 
 void Apu::WriteApuDmc0(u8 val)
 {
-    // Not implemented
+    if ((val & 0x80) == 0)
+    {
+        _dmcState->interrupt = false;
+        _dmcState->interruptEnabled = false;
+    }
+    else
+    {
+        _dmcState->interruptEnabled = true;
+    }
+
+    _dmcState->loop = (val & 0x40) != 0;
+
+    int rateIndex = val & 0x0F;
+    if (_isPal)
+        _dmcState->sampleRate = DmcRatePAL[rateIndex];
+    else
+        _dmcState->sampleRate = DmcRateNTSC[rateIndex];
 }
 
 void Apu::WriteApuDmc1(u8 val)
 {
-    // Not implemented
+    _dmc->directLoad = val & 0x7F;
 }
 
 void Apu::WriteApuDmc2(u8 val)
 {
-    // Not implemented
+    _dmcState->sampleAddress = val * 64 + 0xC000;
 }
 
 void Apu::WriteApuDmc3(u8 val)
 {
-    // Not implemented
+    _dmcState->sampleSize = val * 16 + 1;
 }
 
 void Apu::WriteApuFrameCounter(u8 val)
@@ -583,6 +644,58 @@ void Apu::DoHalfFrameStep()
     StepLengthCounter(_triangle, _triangleState);
     StepSweep(_pulse1, _pulseState1, true);
     StepSweep(_pulse2, _pulseState2, false);
+}
+
+void Apu::StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
+{
+    _dmcState->cycleCount += cycles;
+    if (_dmcState->cycleCount < _dmcState->sampleRate)
+    {
+        // DMC doesn't have any work to do yet.
+        return;
+    }
+
+    _dmcState->cycleCount -= _dmcState->sampleRate;
+
+    if (_dmcState->bitsRemaining == 0)
+    {
+        if (_dmcState->bytesRemaining == 0)
+        {
+            if (_dmcState->loop)
+            {
+                // Loop back around again
+                _dmcState->readAddress = _dmcState->sampleAddress;
+                _dmcState->bytesRemaining = _dmcState->sampleSize;
+            }
+            else if (_dmcState->interruptEnabled)
+            {
+                // Looping disabled.  Set IRQ flag.
+                _dmcState->interrupt = true;
+                result.Irq = true;
+
+                return;
+            }
+        }
+
+        // Read the next sample into the buffer.
+        // TODO: Actual memory read
+
+        _dmcState->readAddress++;
+        _dmcState->bytesRemaining--;
+        _dmcState->bitsRemaining = 8;
+
+        // The CPU is paused while the DMC reads memory.
+        // We need to account for the time taken by incrementing the cycle count
+        // TODO: Accurate cycle counting when CPU is executing a write instruction
+        if (isDmaRunning)
+            cycles += 2; // Read takes 2 clock cycles if DMA is running
+        else
+            cycles += 4; // Read takes 4 clock cycles unless CPU is doing a write instruction - then 3 (TODO)
+    }
+    else
+    {
+        _dmcState->bitsRemaining--;
+    }
 }
 
 void Apu::StepSweep(NesAudioPulseCtrl* audioCtrl, ApuPulseState* state, bool channel1)

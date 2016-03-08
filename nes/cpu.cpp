@@ -12,6 +12,7 @@ Cpu::Cpu(
     )
     : _mem(mem)
     , Cycles(0)
+    , _dmaBytesRemaining(0)
 {
 }
 
@@ -62,13 +63,8 @@ void Cpu::Load(std::ifstream& ifs)
 
 void Cpu::Dma(u8 val)
 {
-    u16 addr = ((u16)val) << 8;
-
-    for (u16 i = 0; i < 0x100; i++)
-    {
-        storeb(0x2004, loadb(addr++));
-        Cycles += 2;
-    }
+    _dmaReadAddress = ((u16)val) << 8;
+    _dmaBytesRemaining = 0x0100;
 }
 
 void Cpu::Reset()
@@ -92,6 +88,17 @@ void Cpu::Step()
 //        __debugbreak();
 //    }
 //#endif
+
+    if (_dmaBytesRemaining > 0)
+    {
+        // DMA is in progress.
+        // The CPU is paused during the DMA process, but the APU and PPU continue to run.
+        storeb(0x2004, loadb(_dmaReadAddress++));
+        _dmaBytesRemaining--;
+        Cycles += 2;
+
+        return;
+    }
 
     _op = LoadBBumpPC();
 

@@ -109,14 +109,17 @@ void Nes::Run()
 
         _cpu->Step();
 
-        apu.Step(_cpu->Cycles, apuResult);
+        apu.Step(_cpu->Cycles, _cpu->IsDmaRunning(), apuResult);
         ppu.Step(_cpu->Cycles * 3, ppuResult);
 
         if (ppuResult.VBlankNmi)
         {
             _cpu->Nmi();
-        } 
-        // else if IRQ
+        }
+        else if (apuResult.Irq)
+        {
+            _cpu->Irq();
+        }
 
         if (ppuResult.NewFrame)
         {

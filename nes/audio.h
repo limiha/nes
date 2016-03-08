@@ -31,7 +31,8 @@ struct NesAudioNoiseCtrl
 
 struct NesAudioDmcCtrl
 {
-    volatile bool enabled;
+    volatile u8 directLoad;
+    volatile u8 sampleBuffer;
 };
 
 class AudioEngine
