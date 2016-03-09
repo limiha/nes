@@ -32,7 +32,24 @@ struct INesHeader
 
     bool ValidateHeader()
     {
-        return magic[0] == 'N' && magic[1] == 'E' && magic[2] == 'S' && magic[3] == '\x1a';
+        //return magic[0] == 'N' && magic[1] == 'E' && magic[2] == 'S' && magic[3] == '\x1a';
+
+        if (strncmp((char*)magic, "NES\x1a", 4) != 0)
+        {
+            return false;
+        }
+
+        if (strncmp(&((char*)this)[7], "DiskDude!", 9) == 0)
+        {
+            // Header Garbage, clear rest of header
+            flags7 = 0;
+            PrgRamSize = 0;
+            flags9 = 0;
+            flags10 = 0;
+            ZeroMemory(zero, sizeof(zero));
+        }
+
+        return true;
     }
 
     bool HasTrainer()
