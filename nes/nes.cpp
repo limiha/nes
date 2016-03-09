@@ -167,6 +167,13 @@ void Nes::SaveState()
 
 void Nes::LoadState()
 {
+    auto savePath = GetSavePath();
+
+    if (!fs::exists(*savePath))
+    {
+        printf("No save state for this ROM.\n");
+        return;
+    }
 
     std::ifstream ifs(GetSavePath()->c_str(), std::fstream::binary);
     _cpu->Load(ifs);
