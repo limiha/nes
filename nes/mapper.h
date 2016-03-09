@@ -13,9 +13,9 @@ public:
     virtual void chr_storeb(u16 addr, u8 val);
 
 public:
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 private:
     u8* _chrBuf;
@@ -35,9 +35,9 @@ public:
     void chr_storeb(u16 addr, u8 val);
 
 public:
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 private:
     u32 ChrBufAddress(u16 addr);
@@ -90,9 +90,9 @@ public:
     void prg_storeb(u16 addr, u8 val);
     u8 chr_loadb(u16 addr);
 
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 private:
     u8 _chrBank;
 };

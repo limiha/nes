@@ -37,16 +37,16 @@ bool IMapper::Scanline()
     return false;
 }
 
-void IMapper::Save(std::ofstream& ofs)
+void IMapper::SaveState(std::ofstream& ofs)
 {
     Util::WriteBytes((u8)Mirroring, ofs);
-    _rom->Save(ofs);
+    _rom->SaveState(ofs);
 }
 
-void IMapper::Load(std::ifstream& ifs)
+void IMapper::LoadState(std::ifstream& ifs)
 {
     Util::ReadBytes((u8&)Mirroring, ifs);
-    _rom->Load(ifs);
+    _rom->LoadState(ifs);
 }
 
 /// NRom
@@ -105,15 +105,15 @@ void NRom::chr_storeb(u16 addr, u8 val)
     _chrRam[addr] = val; // This will only ever store to ChrRam
 }
 
-void NRom::Save(std::ofstream& ofs)
+void NRom::SaveState(std::ofstream& ofs)
 {
-    IMapper::Save(ofs);
+    IMapper::SaveState(ofs);
     ofs.write((char*)_chrRam, sizeof(_chrRam));
 }
 
-void NRom::Load(std::ifstream& ifs)
+void NRom::LoadState(std::ifstream& ifs)
 {
-    IMapper::Load(ifs);
+    IMapper::LoadState(ifs);
     ifs.read((char*)_chrRam, sizeof(_chrRam));
 }
 
@@ -272,9 +272,9 @@ u32 SxRom::ChrBufAddress(u16 addr)
     }
 }
 
-void SxRom::Save(std::ofstream& ofs)
+void SxRom::SaveState(std::ofstream& ofs)
 {
-    IMapper::Save(ofs);
+    IMapper::SaveState(ofs);
     Util::WriteBytes((u8)_prgSize, ofs);
     Util::WriteBytes((u8)_chrMode, ofs);
     Util::WriteBytes(_slotSelect, ofs);
@@ -286,9 +286,9 @@ void SxRom::Save(std::ofstream& ofs)
     ofs.write((char*)&_chrRam[0], _chrRam.size());
 }
 
-void SxRom::Load(std::ifstream& ifs)
+void SxRom::LoadState(std::ifstream& ifs)
 {
-    IMapper::Load(ifs);
+    IMapper::LoadState(ifs);
     Util::ReadBytes((u8&)_prgSize, ifs);
     Util::ReadBytes((u8&)_chrMode, ifs);
     Util::ReadBytes(_slotSelect, ifs);
@@ -357,15 +357,15 @@ u8 CNRom::chr_loadb(u16 addr)
 {
     return _rom->ChrRom[(_chrBank * CHR_ROM_BANK_SIZE) + addr];
 }
-void CNRom::Save(std::ofstream& ofs)
+void CNRom::SaveState(std::ofstream& ofs)
 {
-    NRom::Save(ofs);
+    NRom::SaveState(ofs);
     Util::WriteBytes(_chrBank, ofs);
 }
 
-void CNRom::Load(std::ifstream& ifs)
+void CNRom::LoadState(std::ifstream& ifs)
 {
-    NRom::Load(ifs);
+    NRom::LoadState(ifs);
     Util::ReadBytes(_chrBank, ifs);
 }
 

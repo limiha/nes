@@ -87,18 +87,18 @@ void MemoryMap::storeb(u16 addr, u8 val)
     }
 }
 
-void MemoryMap::Save(std::ofstream& ofs)
+void MemoryMap::SaveState(std::ofstream& ofs)
 {
     ofs.write((char*)_ram, sizeof(_ram));
-    _ppu.Save(ofs);
-    _apu.Save();
-    _mapper->Save(ofs);
+    _ppu.SaveState(ofs);
+    //_apu.Save();
+    _mapper->SaveState(ofs);
 }
 
-void MemoryMap::Load(std::ifstream& ifs)
+void MemoryMap::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)_ram, sizeof(_ram));
-    _ppu.Load(ifs);
-    _apu.Load();
-    _mapper->Load(ifs);
+    _ppu.LoadState(ifs);
+    //_apu.Load();
+    _mapper->LoadState(ifs);
 }

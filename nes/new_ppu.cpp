@@ -101,11 +101,11 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
-void Ppu::Save(std::ofstream& ofs)
+void Ppu::SaveState(std::ofstream& ofs)
 {
     // don't need to save screen because we save and load state in VBlank
-    _vram.Save(ofs);
-    _oam.Save(ofs);
+    _vram.SaveState(ofs);
+    _oam.SaveState(ofs);
     Util::WriteBytes(_oamAddr, ofs);
 
     // don't need to save line sprites or sprite zero on line because we save and load in VBlank
@@ -134,11 +134,11 @@ void Ppu::Save(std::ofstream& ofs)
     Util::WriteBytes(_frameOdd, ofs);
 }
 
-void Ppu::Load(std::ifstream& ifs)
+void Ppu::LoadState(std::ifstream& ifs)
 {
     // don't need to load screen because we save and load state in VBlank
-    _vram.Load(ifs);
-    _oam.Load(ifs);
+    _vram.LoadState(ifs);
+    _oam.LoadState(ifs);
     Util::ReadBytes(_oamAddr, ifs);
 
     // don't need to save line sprites or sprite zero on line because we save and load in VBlank
@@ -876,14 +876,14 @@ void VRam::storeb(u16 addr, u8 val)
     }
 }
 
-void VRam::Save(std::ofstream& ofs)
+void VRam::SaveState(std::ofstream& ofs)
 {
     // mapper is saved by memory map
     ofs.write((char*)_nametables, sizeof(_nametables));
     ofs.write((char*)_palette, sizeof(_palette));
 }
 
-void VRam::Load(std::ifstream& ifs)
+void VRam::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)_nametables, sizeof(_nametables));
     ifs.read((char*)_palette, sizeof(_palette));
@@ -908,12 +908,12 @@ void Oam::storeb(u16 addr, u8 val)
     _ram[(u8)addr] = val;
 }
 
-void Oam::Save(std::ofstream& ofs)
+void Oam::SaveState(std::ofstream& ofs)
 {
     ofs.write((char*)_ram, sizeof(_ram));
 }
 
-void Oam::Load(std::ifstream& ifs)
+void Oam::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)_ram, sizeof(_ram));
 }

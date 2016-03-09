@@ -66,9 +66,9 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 private:
     std::shared_ptr<IMapper> _mapper;
@@ -117,8 +117,8 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
     const Sprite* operator[](const int index);
 
@@ -183,9 +183,9 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 public:
     void Step(u8 cycles, PpuStepResult& result);
