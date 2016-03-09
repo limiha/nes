@@ -54,7 +54,7 @@ struct INesHeader
     }
 };
 
-class Rom : public ISave
+class Rom : public ISaveState
 {
 public:
     Rom();
@@ -64,8 +64,8 @@ public:
     const fs::path& Path();
 
 public:
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 public:
     INesHeader Header;

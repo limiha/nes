@@ -159,7 +159,7 @@ void Nes::Run()
 void Nes::SaveState()
 {
     std::ofstream ofs(GetSavePath()->c_str(), std::fstream::binary | std::fstream::trunc);
-    _cpu->Save(ofs);
+    _cpu->SaveState(ofs);
     ofs.close();
 
     printf("State Saved!\n");
@@ -176,7 +176,7 @@ void Nes::LoadState()
     }
 
     std::ifstream ifs(GetSavePath()->c_str(), std::fstream::binary);
-    _cpu->Load(ifs);
+    _cpu->LoadState(ifs);
     ifs.close();
 
     printf("State Loaded!\n");

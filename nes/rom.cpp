@@ -81,12 +81,12 @@ const fs::path& Rom::Path()
     return _path;
 }
 
-void Rom::Save(std::ofstream& ofs)
+void Rom::SaveState(std::ofstream& ofs)
 {
     ofs.write((char*)&PrgRam[0], PrgRam.size());
 }
 
-void Rom::Load(std::ifstream& ifs)
+void Rom::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)&PrgRam[0], PrgRam.size());
 }
