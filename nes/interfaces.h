@@ -64,6 +64,8 @@ public:
     virtual u8 chr_loadb(u16 addr) = 0;
     virtual void chr_storeb(u16 addr, u8 val) = 0;
 
+    virtual bool Scanline();
+
 public:
     virtual void Save(std::ofstream& ofs);
     virtual void Load(std::ifstream& ifs);

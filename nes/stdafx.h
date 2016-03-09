@@ -45,3 +45,4 @@ namespace fs = std::experimental::filesystem;
 
 //#define RENDER_GRID
 //#define RENDER_NAMETABLE
+//#define RENDER_PATTERNTABLE

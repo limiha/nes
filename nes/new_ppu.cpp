@@ -2,8 +2,9 @@
 #include "new_ppu.h"
 #include "rom.h"
 
-Ppu::Ppu(VRam& vram)
-    : _vram(vram)
+Ppu::Ppu(std::shared_ptr<IMapper> mapper)
+    : _mapper(mapper)
+    , _vram(_mapper)
     , _cycle(0)
     , _scanline(241)
     , _frameOdd(false)
@@ -393,6 +394,13 @@ void Ppu::Step(PpuStepResult& result)
                 HoriVEqualsHoriT();
             }
         }
+        else if (_cycle == 260 && IsRendering())
+        {
+            if (_mapper->Scanline())
+            {
+                result.WantIrq = true;
+            }
+        }
     }
     else if (_scanline >= 240 && _scanline <= 260)
     {
@@ -428,6 +436,13 @@ void Ppu::Step(PpuStepResult& result)
             if (IsRendering())
             {
                 HoriVEqualsHoriT();
+            }
+        }
+        else if (_cycle == 260 && IsRendering())
+        {
+            if (_mapper->Scanline())
+            {
+                result.WantIrq = true;
             }
         }
         else if (_cycle >= 280 && _cycle <= 304)
@@ -978,6 +993,38 @@ void Ppu::RenderNameTable(u8 screen[], int index)
                 pixel.Reset();
             }
         }
+    }
+}
+#endif
+
+#if defined(RENDER_PATTERNTABLE)
+void Ppu::RenderPatternTable(u16 baseAddr, u8 pt[])
+{
+    rgb pixel;
+    for (u16 i = 0; i < 256; i++)
+    {
+        for (int patternRow = 0; patternRow < 8; patternRow++)
+        {
+            u16 ntAddress = baseAddr + (i * 16) + patternRow;
+
+            u8 patternLoPlane = _vram.loadb(ntAddress);
+            u8 patternHiPlane = _vram.loadb(ntAddress + 8);
+
+            for (int patternCol = 0; patternCol < 8; patternCol++)
+            {
+                u8 patternColor = ((patternLoPlane >> (7 - patternCol)) & 1) | (((patternHiPlane >> (7 - patternCol)) & 1) << 1);
+
+                u8 paletteIndex = _vram.loadb(0x3f00 + patternColor);
+
+                u64 screenLoc = ((i / 8) * 8 * 8 * 8) + ((i % 8) * 8) + (patternRow * 8 * 8) + patternCol;
+                pixel.SetColor(paletteIndex);
+
+                pt[(screenLoc * 3) + 0] = pixel.r;
+                pt[(screenLoc * 3) + 1] = pixel.g;
+                pt[(screenLoc * 3) + 2] = pixel.b;
+            }
+        }
+
     }
 }
 #endif

@@ -69,6 +69,7 @@ public:
     // ISave
     void Save(std::ofstream& ofs);
     void Load(std::ifstream& ifs);
+
 private:
     std::shared_ptr<IMapper> _mapper;
 
@@ -129,6 +130,7 @@ struct PpuStepResult
 {
     bool VBlankNmi;
     bool NewFrame;
+    bool WantIrq;
 
     PpuStepResult()
     {
@@ -139,6 +141,7 @@ struct PpuStepResult
     {
         VBlankNmi = false;
         NewFrame = false;
+        WantIrq = false;
     }
 };
 
@@ -172,7 +175,7 @@ struct PpuStatus
 class Ppu : public IMem
 {
 public:
-    Ppu(VRam&);
+    Ppu(std::shared_ptr<IMapper> mapper);
     ~Ppu();
 
 public:
@@ -189,6 +192,9 @@ public:
 
 #if defined(RENDER_NAMETABLE)
     void RenderNameTable(u8 screen[], int i);
+#endif
+#if defined(RENDER_PATTERNTABLE)
+    void RenderPatternTable(u16 baseAddr, u8 pt[]);
 #endif
 
 private:
@@ -223,7 +229,8 @@ public:
     u8 Screen[256 * 240 * 3];
 
 private:
-    VRam& _vram;
+    std::shared_ptr<IMapper> _mapper;
+    VRam _vram;
 
     // Sprites
     Oam _oam;
