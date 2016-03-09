@@ -40,6 +40,11 @@ struct INesHeader
         return (flags6 & (1 << 2)) != 0;
     }
 
+    bool HasSaveRam()
+    {
+        return (flags6 & (1 << 1)) != 0;
+    }
+
     u32 MapperNumber()
     {
         u8 lo = (flags6 >> 4) & 0x0f;
@@ -66,6 +71,11 @@ public:
 public:
     void SaveState(std::ofstream& ofs);
     void LoadState(std::ifstream& ifs);
+
+private:
+    void SaveGame();
+    void LoadGame();
+    std::unique_ptr<fs::path> GetSaveGamePath();
 
 public:
     INesHeader Header;

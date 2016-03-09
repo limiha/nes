@@ -102,6 +102,10 @@ void Nes::Run()
          {
              wantLoadState = true;
          }
+         else if (inputResult == InputResult::Quit)
+         {
+             break;
+         }
 
         _cpu->Step();
 
