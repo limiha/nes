@@ -8,10 +8,6 @@ struct ApuTriangleState;
 struct ApuNoiseState;
 struct ApuDmcState;
 struct ApuEnvelop;
-struct NesAudioPulseCtrl;
-struct NesAudioTriangeCtrl;
-struct NesAudioNoiseCtrl;
-struct NesAudioDmcCtrl;
 
 struct ApuStepResult
 {
@@ -50,10 +46,10 @@ private:
     u8 ReadApuStatus();
     void WriteApuStatus(u8 newStatus);
 
-    void WriteApuPulse0(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop);
-    void WriteApuPulse1(u8 val, ApuPulseState* pState);
-    void WriteApuPulse2(u8 val, NesAudioPulseCtrl* audioCtrl, ApuPulseState* state);
-    void WriteApuPulse3(u8 val, NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop, ApuPulseState* state);
+    void WriteApuPulse0(u8 val, ApuEnvelop* envelop, ApuPulseState* state);
+    void WriteApuPulse1(u8 val, ApuPulseState* state);
+    void WriteApuPulse2(u8 val, ApuPulseState* state);
+    void WriteApuPulse3(u8 val, ApuEnvelop* envelop, ApuPulseState* state);
 
     void WriteApuTriangle0(u8 val);
     void WriteApuTriangle2(u8 val);
@@ -77,14 +73,18 @@ private:
     void DoHalfFrameStep();
     
     void StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result);
-    void StepSweep(NesAudioPulseCtrl* audioCtrl, ApuPulseState* state, bool channel1);
-    static void StepLengthCounter(NesAudioPulseCtrl* audioCtrl, ApuEnvelop* envelop);
-    static void StepLengthCounter(NesAudioNoiseCtrl* audioCtrl, ApuEnvelop* envelop);
-    static void StepLengthCounter(NesAudioTriangeCtrl* audioCtrl, ApuTriangleState* state);
-    static int StepEnvelop(ApuEnvelop* envelop); // Returns current volume
+    void StepSweep(ApuPulseState* state);
+    void StepPulseLengthCounter(ApuEnvelop* envelop, ApuPulseState* state);
+    void StepTriangleLengthCounter();
+    void StepNoiseLengthCounter();
+    u32 StepEnvelop(ApuEnvelop* envelop); // Returns current volume
 
     // Utility
-    int WavelengthToFrequency(bool isTriangle, int wavelength);
+    void UpdateTriangle();
+    void UpdatePulse(ApuPulseState* state);
+    void UpdateNoise();
+    void QueueAudioEvent(int setting, u32 newValue);
+    u32 WavelengthToFrequency(bool isTriangle, int wavelength);
 
     // APU state information:
     AudioEngine* _audioEngine;
@@ -103,17 +103,8 @@ private:
     ApuEnvelop* _pulseEnvelop1;
     ApuEnvelop* _pulseEnvelop2;
     ApuEnvelop* _noiseEnvelop;
+    u32 _lastTriangleFreq;
 
     // Emulator information:
     bool _isPal;
-
-    // Channel Information:
-    //
-    // These are used to control the sound channels in real time.
-    // Information in these structs is modified by Apu on the emulator thread and read by AudioEngine on the audio callback thread.
-    NesAudioPulseCtrl* _pulse1;
-    NesAudioPulseCtrl* _pulse2;
-    NesAudioTriangeCtrl* _triangle;
-    NesAudioNoiseCtrl* _noise;
-    NesAudioDmcCtrl* _dmc;
 };

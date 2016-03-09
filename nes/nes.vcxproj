@@ -201,6 +201,7 @@
   <ItemGroup>
     <ClInclude Include="apu.h" />
     <ClInclude Include="audio.h" />
+    <ClInclude Include="eventqueue.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="decode.h" />
     <ClInclude Include="diassembler.h" />
