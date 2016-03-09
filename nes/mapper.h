@@ -68,11 +68,11 @@ private:
     std::vector<u8> _chrRam;
 };
 
-class UNRom : public NRom
+class UxRom : public NRom
 {
 public:
-    UNRom(std::shared_ptr<Rom> rom);
-    ~UNRom();
+    UxRom(std::shared_ptr<Rom> rom);
+    ~UxRom();
 
     void prg_storeb(u16 addr, u8 val);
     u8 prg_loadb(u16 addr);
