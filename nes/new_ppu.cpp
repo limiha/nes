@@ -2,8 +2,9 @@
 #include "new_ppu.h"
 #include "rom.h"
 
-Ppu::Ppu(VRam& vram)
-    : _vram(vram)
+Ppu::Ppu(std::shared_ptr<IMapper> mapper)
+    : _mapper(mapper)
+    , _vram(_mapper)
     , _cycle(0)
     , _scanline(241)
     , _frameOdd(false)
@@ -100,93 +101,70 @@ void Ppu::storeb(u16 addr, u8 val)
     }
 }
 
-void Ppu::Save(std::ofstream& ofs)
+void Ppu::SaveState(std::ofstream& ofs)
 {
-    ofs.write((char*)Screen, sizeof(Screen));
-    _vram.Save(ofs);
-    _oam.Save(ofs);
-    ofs << _oamAddr;
+    // don't need to save screen because we save and load state in VBlank
+    _vram.SaveState(ofs);
+    _oam.SaveState(ofs);
+    Util::WriteBytes(_oamAddr, ofs);
 
-    // Save Line Sprites
-    ofs << _lineSprites.size();
-    for (auto i = _lineSprites.begin(); i != _lineSprites.end(); i++)
-    {
-        ofs << (*i)->Y;
-        ofs << (*i)->TileIndex;
-        ofs << (*i)->Attributes;
-        ofs << (*i)->X;
-    }
-    ofs << _spriteZeroOnLine;
-    
-    ofs << _ppuStatus.val;
-    ofs << _ppuDataBuffer;
+    // don't need to save line sprites or sprite zero on line because we save and load in VBlank
 
-    ofs << _vramAddrIncrement;
-    ofs << _spriteBaseAddress;
-    ofs << _backgroundBaseAddress;
-    ofs.write((char*)&_spriteSize, sizeof(_spriteSize));
-    ofs << _doVBlankNmi;
+    Util::WriteBytes(_ppuStatus.val, ofs);
+    Util::WriteBytes(_ppuDataBuffer, ofs);
 
-    ofs << _clipBackground;
-    ofs << _clipSprites;
-    ofs << _showBackground;
-    ofs << _showSprites;
+    Util::WriteBytes(_vramAddrIncrement, ofs);
+    Util::WriteBytes(_spriteBaseAddress, ofs);
+    Util::WriteBytes(_backgroundBaseAddress, ofs);
+    Util::WriteBytes((u8)_spriteSize, ofs);
+    Util::WriteBytes(_doVBlankNmi, ofs);
 
-    ofs << _v;
-    ofs << _t;
-    ofs << _x;
-    ofs << _w;
+    Util::WriteBytes(_clipBackground, ofs);
+    Util::WriteBytes(_clipSprites, ofs);
+    Util::WriteBytes(_showBackground, ofs);
+    Util::WriteBytes(_showSprites, ofs);
 
-    ofs << _cycle;
-    ofs << _scanline;
-    ofs << _frameOdd;
+    Util::WriteBytes(_v, ofs);
+    Util::WriteBytes(_t, ofs);
+    Util::WriteBytes(_x, ofs);
+    Util::WriteBytes(_w, ofs);
+
+    Util::WriteBytes(_cycle, ofs);
+    Util::WriteBytes(_scanline, ofs);
+    Util::WriteBytes(_frameOdd, ofs);
 }
 
-void Ppu::Load(std::ifstream& ifs)
+void Ppu::LoadState(std::ifstream& ifs)
 {
-    ifs.read((char*)Screen, sizeof(Screen));
-    _vram.Load(ifs);
-    _oam.Load(ifs);
-    ifs >> _oamAddr;
+    // don't need to load screen because we save and load state in VBlank
+    _vram.LoadState(ifs);
+    _oam.LoadState(ifs);
+    Util::ReadBytes(_oamAddr, ifs);
 
-    size_t numLineSprites = 0;
-    ifs >> numLineSprites;
-    _lineSprites.clear();
-    _lineSprites.resize(numLineSprites);
-    for (size_t i = 0; i < numLineSprites; i++)
-    {
-        auto sprite = std::make_unique<Sprite>();
-        ifs >> sprite->Y;
-        ifs >> sprite->TileIndex;
-        ifs >> sprite->Attributes;
-        ifs >> sprite->X;
+    // don't need to save line sprites or sprite zero on line because we save and load in VBlank
 
-        _lineSprites.push_back(std::move(sprite));
-    }
-    ifs >> _spriteZeroOnLine;
+    Util::ReadBytes(_ppuStatus.val, ifs);
+    Util::ReadBytes(_ppuDataBuffer, ifs);
 
-    ifs >> _ppuStatus.val;
-    ifs >> _ppuDataBuffer;
+    Util::ReadBytes(_vramAddrIncrement, ifs);
+    Util::ReadBytes(_spriteBaseAddress, ifs);
+    Util::ReadBytes(_backgroundBaseAddress, ifs);
+    Util::ReadBytes((u8&)_spriteSize, ifs);
+    Util::ReadBytes(_doVBlankNmi, ifs);
 
-    ifs >> _vramAddrIncrement;
-    ifs >> _spriteBaseAddress;
-    ifs >> _backgroundBaseAddress;
-    ifs.read((char*)&_spriteSize, sizeof(_spriteSize));
-    ifs >> _doVBlankNmi;
+    Util::ReadBytes(_clipBackground, ifs);
+    Util::ReadBytes(_clipSprites, ifs);
+    Util::ReadBytes(_showBackground, ifs);
+    Util::ReadBytes(_showSprites, ifs);
 
-    ifs >> _clipBackground;
-    ifs >> _clipSprites;
-    ifs >> _showBackground;
-    ifs >> _showSprites;
+    Util::ReadBytes(_v, ifs);
+    Util::ReadBytes(_t, ifs);
+    Util::ReadBytes(_x, ifs);
+    Util::ReadBytes(_w, ifs);
 
-    ifs >> _v;
-    ifs >> _t;
-    ifs >> _x;
-    ifs >> _w;
-
-    ifs >> _cycle;
-    ifs >> _scanline;
-    ifs >> _frameOdd;
+    Util::ReadBytes(_cycle, ifs);
+    Util::ReadBytes(_scanline, ifs);
+    Util::ReadBytes(_frameOdd, ifs);
 }
 
 // PPUSTATUS
@@ -416,6 +394,13 @@ void Ppu::Step(PpuStepResult& result)
                 HoriVEqualsHoriT();
             }
         }
+        else if (_cycle == 260 && IsRendering())
+        {
+            if (_mapper->Scanline())
+            {
+                result.WantIrq = true;
+            }
+        }
     }
     else if (_scanline >= 240 && _scanline <= 260)
     {
@@ -451,6 +436,13 @@ void Ppu::Step(PpuStepResult& result)
             if (IsRendering())
             {
                 HoriVEqualsHoriT();
+            }
+        }
+        else if (_cycle == 260 && IsRendering())
+        {
+            if (_mapper->Scanline())
+            {
+                result.WantIrq = true;
             }
         }
         else if (_cycle >= 280 && _cycle <= 304)
@@ -773,7 +765,7 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, Sp
     return 0;
 }
 
-void Ppu::PutPixel(u8 x, u8 y, rgb& pixel)
+void Ppu::PutPixel(u16 x, u16 y, rgb& pixel)
 {
     Screen[(y * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
     Screen[(y * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
@@ -884,14 +876,14 @@ void VRam::storeb(u16 addr, u8 val)
     }
 }
 
-void VRam::Save(std::ofstream& ofs)
+void VRam::SaveState(std::ofstream& ofs)
 {
     // mapper is saved by memory map
     ofs.write((char*)_nametables, sizeof(_nametables));
     ofs.write((char*)_palette, sizeof(_palette));
 }
 
-void VRam::Load(std::ifstream& ifs)
+void VRam::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)_nametables, sizeof(_nametables));
     ifs.read((char*)_palette, sizeof(_palette));
@@ -916,12 +908,12 @@ void Oam::storeb(u16 addr, u8 val)
     _ram[(u8)addr] = val;
 }
 
-void Oam::Save(std::ofstream& ofs)
+void Oam::SaveState(std::ofstream& ofs)
 {
     ofs.write((char*)_ram, sizeof(_ram));
 }
 
-void Oam::Load(std::ifstream& ifs)
+void Oam::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)_ram, sizeof(_ram));
 }
@@ -1001,6 +993,38 @@ void Ppu::RenderNameTable(u8 screen[], int index)
                 pixel.Reset();
             }
         }
+    }
+}
+#endif
+
+#if defined(RENDER_PATTERNTABLE)
+void Ppu::RenderPatternTable(u16 baseAddr, u8 pt[])
+{
+    rgb pixel;
+    for (u16 i = 0; i < 256; i++)
+    {
+        for (int patternRow = 0; patternRow < 8; patternRow++)
+        {
+            u16 ntAddress = baseAddr + (i * 16) + patternRow;
+
+            u8 patternLoPlane = _vram.loadb(ntAddress);
+            u8 patternHiPlane = _vram.loadb(ntAddress + 8);
+
+            for (int patternCol = 0; patternCol < 8; patternCol++)
+            {
+                u8 patternColor = ((patternLoPlane >> (7 - patternCol)) & 1) | (((patternHiPlane >> (7 - patternCol)) & 1) << 1);
+
+                u8 paletteIndex = _vram.loadb(0x3f00 + patternColor);
+
+                u64 screenLoc = ((i / 8) * 8 * 8 * 8) + ((i % 8) * 8) + (patternRow * 8 * 8) + patternCol;
+                pixel.SetColor(paletteIndex);
+
+                pt[(screenLoc * 3) + 0] = pixel.r;
+                pt[(screenLoc * 3) + 1] = pixel.g;
+                pt[(screenLoc * 3) + 2] = pixel.b;
+            }
+        }
+
     }
 }
 #endif

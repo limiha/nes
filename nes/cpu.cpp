@@ -38,27 +38,27 @@ void Cpu::storeb(u16 addr, u8 val)
     }
 }
 
-// ISave
-void Cpu::Save(std::ofstream& ofs)
+// ISaveState
+void Cpu::SaveState(std::ofstream& ofs)
 {
-    ofs << _regs.A;
-    ofs << _regs.X;
-    ofs << _regs.Y;
-    ofs << _regs.P;
-    ofs << _regs.S;
-    ofs << _regs.PC;
-    _mem.Save(ofs);
+    Util::WriteBytes(_regs.A, ofs);
+    Util::WriteBytes(_regs.X, ofs);
+    Util::WriteBytes(_regs.Y, ofs);
+    Util::WriteBytes(_regs.P, ofs);
+    Util::WriteBytes(_regs.S, ofs);
+    Util::WriteBytes(_regs.PC, ofs);
+    _mem.SaveState(ofs);
 }
 
-void Cpu::Load(std::ifstream& ifs)
+void Cpu::LoadState(std::ifstream& ifs)
 {
-    ifs >> _regs.A;
-    ifs >> _regs.X;
-    ifs >> _regs.Y;
-    ifs >> _regs.P;
-    ifs >> _regs.S;
-    ifs >> _regs.PC;
-    _mem.Load(ifs);
+    Util::ReadBytes(_regs.A, ifs);
+    Util::ReadBytes(_regs.X, ifs);
+    Util::ReadBytes(_regs.Y, ifs);
+    Util::ReadBytes(_regs.P, ifs);
+    Util::ReadBytes(_regs.S, ifs);
+    Util::ReadBytes(_regs.PC, ifs);
+    _mem.LoadState(ifs);
 }
 
 void Cpu::Dma(u8 val)

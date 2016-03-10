@@ -13,9 +13,9 @@ public:
     virtual void chr_storeb(u16 addr, u8 val);
 
 public:
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 private:
     u8* _chrBuf;
@@ -35,9 +35,9 @@ public:
     void chr_storeb(u16 addr, u8 val);
 
 public:
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 private:
     u32 ChrBufAddress(u16 addr);
@@ -68,6 +68,19 @@ private:
     std::vector<u8> _chrRam;
 };
 
+class UxRom : public NRom
+{
+public:
+    UxRom(std::shared_ptr<Rom> rom);
+    ~UxRom();
+
+    void prg_storeb(u16 addr, u8 val);
+    u8 prg_loadb(u16 addr);
+private:
+    int _lastBankOffset;
+    u8 _prgBank;
+};
+
 class CNRom : public NRom
 {
 public:
@@ -76,6 +89,43 @@ public:
 
     void prg_storeb(u16 addr, u8 val);
     u8 chr_loadb(u16 addr);
+
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 private:
     u8 _chrBank;
+};
+
+// MMC3
+class TxRom : public IMapper
+{
+public:
+    TxRom(std::shared_ptr<Rom> rom);
+    ~TxRom();
+
+    u8 prg_loadb(u16 addr);
+    void prg_storeb(u16 addr, u8 val);
+    u8 chr_loadb(u16 addr);
+    void chr_storeb(u16 addr, u8 val);
+
+    bool Scanline();
+
+private:
+    u32 ChrBufAddress(u16 addr);
+
+private:
+    bool _chrMode;
+    bool _prgMode;
+    u8 _addr8001; // "address" to use when writing $80001
+    u8 _chrReg[6];
+    u8 _prgReg[2];
+
+    u32 _lastBankIndex;
+    u32 _secondLastBankIndex;
+
+    u16 _irqCounter;
+    u16 _irqReload;
+    bool _irqEnable;
+    bool _irqPending;
 };

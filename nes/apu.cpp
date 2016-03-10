@@ -289,14 +289,6 @@ void Apu::storeb(u16 addr, u8 val)
     }
 }
 
-void Apu::Load()
-{
-}
-
-void Apu::Save()
-{
-}
-
 void Apu::Step(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
 {
     if (_dmcState->enabled)

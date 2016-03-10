@@ -17,6 +17,7 @@ public:
 private:
     void SaveState();
     void LoadState();
+    std::unique_ptr<fs::path> GetSavePath();
 
 private:
     std::shared_ptr<Rom> _rom;

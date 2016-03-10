@@ -66,9 +66,10 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
+
 private:
     std::shared_ptr<IMapper> _mapper;
 
@@ -116,8 +117,8 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
     const Sprite* operator[](const int index);
 
@@ -129,6 +130,7 @@ struct PpuStepResult
 {
     bool VBlankNmi;
     bool NewFrame;
+    bool WantIrq;
 
     PpuStepResult()
     {
@@ -139,6 +141,7 @@ struct PpuStepResult
     {
         VBlankNmi = false;
         NewFrame = false;
+        WantIrq = false;
     }
 };
 
@@ -172,7 +175,7 @@ struct PpuStatus
 class Ppu : public IMem
 {
 public:
-    Ppu(VRam&);
+    Ppu(std::shared_ptr<IMapper> mapper);
     ~Ppu();
 
 public:
@@ -180,15 +183,18 @@ public:
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
 
-    // ISave
-    void Save(std::ofstream& ofs);
-    void Load(std::ifstream& ifs);
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 
 public:
     void Step(u8 cycles, PpuStepResult& result);
 
 #if defined(RENDER_NAMETABLE)
     void RenderNameTable(u8 screen[], int i);
+#endif
+#if defined(RENDER_PATTERNTABLE)
+    void RenderPatternTable(u16 baseAddr, u8 pt[]);
 #endif
 
 private:
@@ -217,13 +223,14 @@ private:
     bool GetBackgroundColor(u8& paletteIndex);
     bool GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, SpritePriority& priority);
     void ProcessSprites();
-    void PutPixel(u8 x, u8 y, rgb& pixel);
+    void PutPixel(u16 x, u16 y, rgb& pixel);
 
 public:
     u8 Screen[256 * 240 * 3];
 
 private:
-    VRam& _vram;
+    std::shared_ptr<IMapper> _mapper;
+    VRam _vram;
 
     // Sprites
     Oam _oam;
@@ -257,7 +264,7 @@ private:
 
     // the current cycle number, 341 cycles in a scan line, 0 - 340
     // TODO: figure out the extra _cycle/odd frame thing.
-    u32 _cycle;
+    u16 _cycle;
 
     // the current scane line number, 
     // 256 pixels wide, 
@@ -271,7 +278,7 @@ private:
     // The current scanline number means that vram write occue "while the scanline is being drawn"
     // This means x scrolls before cycle 256 will take effect on the next scanline (hori(v) = hori(t) at 256 of visible scanlines)
     // Y scrolls effect the next full frame and are not latched in until near the end of _scanline 261
-    u32 _scanline;
+    u16 _scanline;
 
     // Toggled on every frame
     // If true, the last cycle of the pre render scanline is skipped

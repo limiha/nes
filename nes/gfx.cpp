@@ -20,6 +20,75 @@ Gfx::Gfx(u32 scale)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
 
+#if defined(RENDER_NAMETABLE)
+    for (int i = 0; i < 4; i++)
+    {
+        char name[sizeof("ntxx") + 1];
+        sprintf(name, "nt%02d", i);
+
+        _nt_window[i] = SDL_CreateWindow(
+            name,
+            256 * (2 * (i % 2 )),
+            240 * (2 * (i / 2)),
+            256 * 2,
+            240 * 2,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_BORDERLESS
+            );
+
+        _nt_renderer[i] = SDL_CreateRenderer(
+            _nt_window[i],
+            -1,
+            SDL_RENDERER_ACCELERATED
+            );
+
+        _nt_texture[i] = SDL_CreateTexture(
+            _nt_renderer[i],
+            SDL_PIXELFORMAT_RGB24,
+            SDL_TEXTUREACCESS_STREAMING,
+            256,
+            240
+            );
+    }
+#endif
+
+#if defined(RENDER_PATTERNTABLE)
+    _pt_window = SDL_CreateWindow(
+        "pt",
+        40,
+        40,
+        16 * 8 * 2,
+        32 * 8 * 2,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI
+        );
+
+    _pt_renderer = SDL_CreateRenderer(
+        _pt_window,
+        -1,
+        SDL_RENDERER_ACCELERATED
+        );
+
+    for (int i = 0; i < 2; i++)
+    {
+        _pt_texture[i] = SDL_CreateTexture(
+            _pt_renderer,
+            SDL_PIXELFORMAT_RGB24,
+            SDL_TEXTUREACCESS_STREAMING,
+            8 * 8,
+            32 * 8
+            );
+    }
+
+    _left_rect.x = 0;
+    _left_rect.y = 0;
+    _left_rect.w = 8 * 8 * 2;
+    _left_rect.h = 32 * 8 * 2;
+
+    _right_rect.x = 8 * 8 * 2;
+    _right_rect.y = 0;
+    _right_rect.w = 8 * 8 * 2;
+    _right_rect.h = 32 * 8 * 2;
+#endif
+
     _window = SDL_CreateWindow(
         "NES",
         SDL_WINDOWPOS_CENTERED,
@@ -43,38 +112,7 @@ Gfx::Gfx(u32 scale)
         SCREEN_HEIGHT
         );
 
-	_lastTime = std::chrono::high_resolution_clock::now();
-
-#if defined(RENDER_NAMETABLE)
-    for (int i = 0; i < 4; i++)
-    {
-        char name[sizeof("ntxx") + 1];
-        sprintf(name, "nt%02d", i);
-
-        _nt_window[i] = SDL_CreateWindow(
-            name,
-            256 * 2 * i,
-            240,
-            256 * 2,
-            240 * 2,
-            SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE
-            );
-
-        _nt_renderer[i] = SDL_CreateRenderer(
-            _nt_window[i],
-            -1,
-            SDL_RENDERER_ACCELERATED
-            );
-
-        _nt_texture[i] = SDL_CreateTexture(
-            _nt_renderer[i],
-            SDL_PIXELFORMAT_RGB24,
-            SDL_TEXTUREACCESS_STREAMING,
-            256,
-            240
-            );
-    }
-#endif
+    _lastTime = std::chrono::high_resolution_clock::now();
 }
 
 Gfx::~Gfx()
@@ -149,5 +187,17 @@ void Gfx::BlitNameTable(u8 screen[], int i)
     SDL_RenderClear(_nt_renderer[i]);
     SDL_RenderCopy(_nt_renderer[i], _nt_texture[i], NULL, NULL);
     SDL_RenderPresent(_nt_renderer[i]);
+}
+#endif
+
+#if defined(RENDER_PATTERNTABLE)
+void Gfx::BlitPatternTable(u8 left[], u8 right[])
+{
+    SDL_UpdateTexture(_pt_texture[0], NULL, (void*)left, 8 * 8 * 3);
+    SDL_UpdateTexture(_pt_texture[1], NULL, (void*)right, 8 * 8 * 3);
+    SDL_RenderClear(_pt_renderer);
+    SDL_RenderCopy(_pt_renderer, _pt_texture[0], NULL, &_left_rect);
+    SDL_RenderCopy(_pt_renderer, _pt_texture[1], NULL, &_right_rect);
+    SDL_RenderPresent(_pt_renderer);
 }
 #endif

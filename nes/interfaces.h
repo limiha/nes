@@ -1,23 +1,22 @@
 #pragma once
 
-class ISave
+class ISaveState
 {
 public:
-    virtual void Save(std::ofstream& ofs) = 0;
-    virtual void Load(std::ifstream& ifs) = 0;
+    virtual void SaveState(std::ofstream& ofs) = 0;
+    virtual void LoadState(std::ifstream& ifs) = 0;
 };
 
 // Standard Memory Interace
-class IMem : public ISave
+class IMem : public ISaveState
 {
 public:
     virtual u8 loadb(u16 addr) = 0;
     virtual void storeb(u16 addr, u8 val) = 0;
 
-    // default ISave
-    virtual void Save(std::ofstream& ofs) { }
-
-    virtual void Load(std::ifstream& ifs) { }
+    // default ISaveState
+    virtual void SaveState(std::ofstream& ofs) { }
+    virtual void LoadState(std::ifstream& ifs) { }
 
     u16 loadw(u16 addr)
     {
@@ -49,7 +48,7 @@ public:
 // Mapper Interface
 class Rom;
 enum class NameTableMirroring : u8;
-class IMapper : public ISave
+class IMapper : public ISaveState
 {
 protected:
     IMapper(std::shared_ptr<Rom> rom);
@@ -64,9 +63,11 @@ public:
     virtual u8 chr_loadb(u16 addr) = 0;
     virtual void chr_storeb(u16 addr, u8 val) = 0;
 
+    virtual bool Scanline();
+
 public:
-    virtual void Save(std::ofstream& ofs);
-    virtual void Load(std::ifstream& ifs);
+    virtual void SaveState(std::ofstream& ofs);
+    virtual void LoadState(std::ifstream& ifs);
 
 public:
     NameTableMirroring Mirroring;

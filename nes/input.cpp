@@ -113,6 +113,10 @@ InputResult Input::CheckInput()
             {
                 return InputResult::LoadState;
             }
+            else if (event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                return InputResult::Quit;
+            }
             else
             {
                 HandleKeyPress(event.key.keysym.sym, true);
@@ -126,8 +130,7 @@ InputResult Input::CheckInput()
         {
             if (event.window.event == SDL_WINDOWEVENT_CLOSE)
             {
-                // FIXME: This should be cleaner
-                exit(0);
+                return InputResult::Quit;
             }
         }
     }
