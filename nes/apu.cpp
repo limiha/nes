@@ -647,10 +647,8 @@ void Apu::DoQuarterFrameStep()
 
     if (_triangleState->reloadCounter)
     {
-        bool wasZero = _triangleState->linearCounter == 0;
         _triangleState->linearCounter = _triangleState->counterReloadValue;
-        if (wasZero)
-            UpdateTriangle();
+        UpdateTriangle();
     }
     else if (_triangleState->linearCounter != 0)
     {
