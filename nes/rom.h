@@ -32,8 +32,6 @@ struct INesHeader
 
     bool ValidateHeader()
     {
-        //return magic[0] == 'N' && magic[1] == 'E' && magic[2] == 'S' && magic[3] == '\x1a';
-
         if (strncmp((char*)magic, "NES\x1a", 4) != 0)
         {
             return false;
