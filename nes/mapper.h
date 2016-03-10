@@ -76,6 +76,10 @@ public:
 
     void prg_storeb(u16 addr, u8 val);
     u8 prg_loadb(u16 addr);
+
+    // ISaveState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 private:
     int _lastBankOffset;
     u8 _prgBank;

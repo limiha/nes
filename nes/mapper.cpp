@@ -313,6 +313,18 @@ UxRom::~UxRom()
 {
 }
 
+void UxRom::SaveState(std::ofstream& ofs)
+{
+    NRom::SaveState(ofs);
+    Util::WriteBytes(_prgBank, ofs);
+}
+
+void UxRom::LoadState(std::ifstream& ifs)
+{
+    NRom::LoadState(ifs);
+    Util::ReadBytes(_prgBank, ifs);
+}
+
 void UxRom::prg_storeb(u16 addr, u8 val)
 {
     _prgBank = val;
