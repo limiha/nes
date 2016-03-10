@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "new_ppu.h"
+#include "gfx.h"
 #include "rom.h"
 
-Ppu::Ppu(std::shared_ptr<IMapper> mapper)
-    : _mapper(mapper)
+Ppu::Ppu(std::shared_ptr<IMapper> mapper, Gfx& gfx)
+    : _gfx(gfx)
+    , _mapper(mapper)
     , _vram(_mapper)
     , _cycle(0)
     , _scanline(241)
@@ -23,7 +25,7 @@ Ppu::Ppu(std::shared_ptr<IMapper> mapper)
     , _showBackground(false)
     , _showSprites(false)
 {
-
+    ZeroMemory(_screen, sizeof(_screen));
 }
 
 Ppu::~Ppu()
@@ -380,10 +382,6 @@ void Ppu::Step(PpuStepResult& result)
             if (_cycle == 256 && IsRendering())
             {
                 IncVertV();
-                if (_scanline == 239)
-                {
-                    result.NewFrame = true;
-                }
             }
         }
         else if (_cycle == 257)
@@ -467,6 +465,8 @@ void Ppu::Step(PpuStepResult& result)
         _scanline++;
         if (_scanline == 262)
         {
+            DrawFrame();
+            ZeroMemory(_screen, sizeof(_screen));
             _scanline = 0;
             _frameOdd ^= true;
         }
@@ -479,6 +479,28 @@ void Ppu::Step(u8 cycles, PpuStepResult& result)
     {
         Step(result);
     }
+}
+
+void Ppu::DrawFrame()
+{
+#if defined(RENDER_NAMETABLE)
+    u8 nt_screen[256 * 240 * 3];
+    for (int i = 0; i < 4; i++)
+    {
+        RenderNameTable(nt_screen, i);
+        _gfx.BlitNameTable(nt_screen, i);
+    }
+#endif
+#if defined(RENDER_PATTERNTABLE)
+    u8 pt_left[8 * 8 * 32 * 8 * 3];
+    u8 pt_right[8 * 8 * 32 * 8 * 3];
+    RenderPatternTable(0x0000, pt_left);
+    RenderPatternTable(0x1000, pt_right);
+    _gfx.BlitPatternTable(pt_left, pt_right);
+
+#endif
+
+    _gfx.Blit(_screen);
 }
 
 void Ppu::DrawScanline(u8 x)
@@ -767,9 +789,9 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, Sp
 
 void Ppu::PutPixel(u16 x, u16 y, rgb& pixel)
 {
-    Screen[(y * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
-    Screen[(y * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
-    Screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
+    _screen[(y * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
+    _screen[(y * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
+    _screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
 ///

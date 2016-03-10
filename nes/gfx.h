@@ -16,7 +16,10 @@ private:
     SDL_Renderer* _renderer;
     SDL_Texture* _texture;
 
-    std::chrono::time_point<std::chrono::steady_clock> _lastTime;
+    std::chrono::time_point<std::chrono::steady_clock> _lastDrawTime;
+    std::chrono::time_point<std::chrono::steady_clock> _lastFpsTime;
+
+    u8 _frameCounter;
 
 #if defined(RENDER_NAMETABLE)
 public:

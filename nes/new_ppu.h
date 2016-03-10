@@ -3,6 +3,8 @@
 #include "mem.h"
 #include "mapper.h"
 
+class Gfx;
+
 const u32 SCREEN_HEIGHT = 240;
 const u32 SCREEN_WIDTH = 256;
 const u32 VBLANK_SCANLINE = 241;
@@ -129,7 +131,6 @@ private:
 struct PpuStepResult
 {
     bool VBlankNmi;
-    bool NewFrame;
     bool WantIrq;
 
     PpuStepResult()
@@ -140,7 +141,6 @@ struct PpuStepResult
     void Reset()
     {
         VBlankNmi = false;
-        NewFrame = false;
         WantIrq = false;
     }
 };
@@ -175,7 +175,7 @@ struct PpuStatus
 class Ppu : public IMem
 {
 public:
-    Ppu(std::shared_ptr<IMapper> mapper);
+    Ppu(std::shared_ptr<IMapper> mapper, Gfx& gfx);
     ~Ppu();
 
 public:
@@ -198,6 +198,7 @@ public:
 #endif
 
 private:
+    void DrawFrame();
     void Step(PpuStepResult& resutl);
 
     u8 Read2002();
@@ -225,12 +226,12 @@ private:
     void ProcessSprites();
     void PutPixel(u16 x, u16 y, rgb& pixel);
 
-public:
-    u8 Screen[256 * 240 * 3];
-
 private:
+    Gfx& _gfx;
     std::shared_ptr<IMapper> _mapper;
     VRam _vram;
+
+    u8 _screen[256 * 240 * 3];
 
     // Sprites
     Oam _oam;

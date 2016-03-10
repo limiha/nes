@@ -14,25 +14,6 @@
 #include "gfx.h"
 #include "mapper.h"
 
-#include <chrono>
-
-void calc_fps(std::chrono::time_point<std::chrono::high_resolution_clock>& last_time, u32& frames)
-{
-    auto now = std::chrono::high_resolution_clock::now();
-
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now - last_time).count();
-    if (seconds >= 1)
-    {
-        printf("%d\n", frames);
-        frames = 0;
-        last_time = now;
-    }
-    else 
-    {
-        frames++;
-    }
-}
-
 Nes::Nes(std::shared_ptr<Rom> rom)
     : _rom(rom)
 {
@@ -69,19 +50,15 @@ void Nes::Run()
         return;
     }
 
-    Ppu ppu(mapper);
+    Ppu ppu(mapper, gfx);
     Apu apu(false /* isPal */);
     Input input;
     MemoryMap mem(ppu, apu, input, mapper);
-    //Cpu cpu(&mem);
     _cpu = std::make_unique<Cpu>(mem);
 
     _cpu->Reset();
     
     apu.StartAudio(44100);
-
-    auto last_time = std::chrono::high_resolution_clock::now();
-    u32 frames = 0;
 
     InputResult inputResult;
     ApuStepResult apuResult;
@@ -108,40 +85,14 @@ void Nes::Run()
          }
 
         _cpu->Step();
-
         apu.Step(_cpu->Cycles, _cpu->IsDmaRunning(), apuResult);
         ppu.Step(_cpu->Cycles * 3, ppuResult);
+
+        _cpu->Cycles = 0;
 
         if (ppuResult.VBlankNmi)
         {
             _cpu->Nmi();
-        }
-        else if (apuResult.Irq || ppuResult.WantIrq)
-        {
-            _cpu->Irq();
-        }
-
-        if (ppuResult.NewFrame)
-        {
-#if defined(RENDER_NAMETABLE)
-            u8 nt_screen[256 * 240 * 3];
-            for (int i = 0; i < 4; i++)
-            {
-                ppu.RenderNameTable(nt_screen, i);
-                gfx.BlitNameTable(nt_screen, i);
-            }
-#endif
-#if defined(RENDER_PATTERNTABLE)
-            u8 pt_left[8 * 8 * 32 * 8 * 3];
-            u8 pt_right[8 * 8 * 32 * 8 * 3];
-            ppu.RenderPatternTable(0x0000, pt_left);
-            ppu.RenderPatternTable(0x1000, pt_right);
-            gfx.BlitPatternTable(pt_left, pt_right);
-     
-#endif
-            gfx.Blit(ppu.Screen);
-            calc_fps(last_time, frames);
-
             if (wantSaveState)
             {
                 SaveState();
@@ -153,8 +104,10 @@ void Nes::Run()
                 wantLoadState = false;
             }
         }
-
-        _cpu->Cycles = 0;
+        else if (apuResult.Irq || ppuResult.WantIrq)
+        {
+            _cpu->Irq();
+        }
     }
 
     apu.StopAudio();

@@ -17,6 +17,7 @@ u8 grid_color = 0xff;
 
 
 Gfx::Gfx(u32 scale)
+    : _frameCounter(0)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
 
@@ -112,7 +113,8 @@ Gfx::Gfx(u32 scale)
         SCREEN_HEIGHT
         );
 
-    _lastTime = std::chrono::high_resolution_clock::now();
+    _lastDrawTime = std::chrono::high_resolution_clock::now();
+    _lastFpsTime = std::chrono::high_resolution_clock::now();
 }
 
 Gfx::~Gfx()
@@ -170,14 +172,23 @@ void Gfx::Blit(u8 screen[])
     do
     {
         now = std::chrono::high_resolution_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::nanoseconds>(now - _lastTime).count();
+        duration = std::chrono::duration_cast<std::chrono::nanoseconds>(now - _lastDrawTime).count();
     } while (duration < 16666667); // 60 fps
-    _lastTime = now;
+    _lastDrawTime = now;
 
     SDL_UpdateTexture(_texture, NULL, (void*)screen_to_render, SCREEN_WIDTH * 3);
     SDL_RenderClear(_renderer);
     SDL_RenderCopy(_renderer, _texture, NULL, NULL);
     SDL_RenderPresent(_renderer);
+
+    _frameCounter++;
+    now = std::chrono::high_resolution_clock::now();
+    if (std::chrono::duration_cast<std::chrono::seconds>(now - _lastFpsTime).count() >= 1)
+    {
+        printf("fps: %d\n", _frameCounter);
+        _frameCounter = 0;
+        _lastFpsTime = now;
+    }
 }
 
 #if defined(RENDER_NAMETABLE)
