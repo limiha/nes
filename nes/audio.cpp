@@ -399,7 +399,7 @@ void AudioEngine::GenerateSamples(u8* stream, int count)
 
         double output = 2.95e-5 * pulseSample +
             3.34e-5 * triangleSample +
-            0.00494 * noiseSample +
+            0.00247 * noiseSample +
             0.00335 * _dmcAmplitude;
 
         *stream++ = (u8)(output * _silenceValue + _silenceValue);
