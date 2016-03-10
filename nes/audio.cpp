@@ -3,9 +3,12 @@
 
 // Values tweaked for performance/audio quality
 #define SAMPLE_BUFFER_SIZE 1024
+#define WAIT_NUM_SAMPLES 32 // number of samples to play with current setting when no events are available
 #define WAVETABLE_FREQUENCY_STEPS 64
 #define WAVETABLE_SAMPLES 256
 #define WAVETABLE_SIZE WAVETABLE_FREQUENCY_STEPS * WAVETABLE_SAMPLES
+
+#define MAX_FRAME_CYCLE_COUNT 38000 // Larger than max frame clock cycle count, but can't exceed max unsigned 16-bit integer
 
 static volatile unsigned int g_engineCount;
 
@@ -27,28 +30,22 @@ static double TriangleFourierFunction(int phase, int harmonic)
     return pow(-1.0, (harmonic - 1) / 2) * (1.0 / (harmonic * harmonic)) * sin(harmonic * M_PI * 2.0 * ((double)phase / WAVETABLE_SAMPLES));
 }
 
-AudioEngine::AudioEngine(
-    NesAudioPulseCtrl* pulse1,
-    NesAudioPulseCtrl* pulse2,
-    NesAudioTriangeCtrl* triangle,
-    NesAudioNoiseCtrl* noise,
-    NesAudioDmcCtrl* dmc)
+AudioEngine::AudioEngine()
     : _deviceId(0)
     , _sampleRate(0)
     , _silenceValue(0)
-    , _trianglePhase(0)
-    , _pulse1Phase(0)
-    , _pulse2Phase(0)
-    , _noisePeriodCounter(0)
-    , _noiseAmplitude(0)
-    , _noiseShiftRegister(1)
-
+    , _eventQueue(MAX_FRAME_CYCLE_COUNT)
+    , _pendingFrameResetCount(0)
+    , _samplesRemaining(0)
+    , _eventPending(true)
+    , _cycleCounter(0)
+    , _wavetableMemory(nullptr)
 {
-    _pulse1 = pulse1;
-    _pulse2 = pulse2;
-    _triangle = triangle;
-    _noise = noise;
-    _dmc = dmc;
+    memset(&_nextEvent, 0, sizeof(AudioEvent));
+    memset(&_pulseChannel1, 0, sizeof(WavetableChannel));
+    memset(&_pulseChannel2, 0, sizeof(WavetableChannel));
+    memset(&_triangleChannel, 0, sizeof(WavetableChannel));
+    memset(&_wavetables, 0, sizeof(_wavetables));
 }
 
 AudioEngine::~AudioEngine()
@@ -58,6 +55,7 @@ AudioEngine::~AudioEngine()
 
 void AudioEngine::StartAudio(
     int preferredSampleRate,
+    int cpuFreq,
     int pulseMinFreq,
     int pulseMaxFreq,
     int triangleMinFreq,
@@ -94,6 +92,7 @@ void AudioEngine::StartAudio(
     _sampleRate = obtained.freq;
     _silenceValue = obtained.silence;
 
+    _cpuFreq = cpuFreq;
     _nyquistFreq = _sampleRate / 2;
     _pulseMinFreq = pulseMinFreq;
     _pulseMaxFreq = pulseMaxFreq;
@@ -101,6 +100,8 @@ void AudioEngine::StartAudio(
     _triangleMinFreq = triangleMinFreq;
     _triangleMaxFreq = triangleMaxFreq;
     _triangleFreqStep = (int)((_triangleMaxFreq - _triangleMinFreq) / WAVETABLE_FREQUENCY_STEPS);
+    _phaseDivider = _sampleRate / WAVETABLE_SAMPLES;
+    _cyclesPerSample = (double)_cpuFreq / _sampleRate;
 
     // We can't synthesize any frequency above the Nyquist frequency.
     // Clip the max frequencies at the Nyquist frequency.
@@ -110,6 +111,8 @@ void AudioEngine::StartAudio(
         _triangleMaxFreq = _nyquistFreq;
 
     InitializeTables();
+    InitializeChannels();
+
     UnpauseAudio();
 }
 
@@ -136,33 +139,76 @@ void AudioEngine::UnpauseAudio()
     SDL_PauseAudioDevice(_deviceId, 0);
 }
 
+void AudioEngine::QueueAudioEvent(int cycleCount, int setting, u32 newValue)
+{
+    AudioEvent event;
+    event.cpuCycleCount = cycleCount;
+    event.audioSetting = setting;
+    event.newValue = newValue;
+
+    // TODO: Currently we drop events if the queue is full.
+    // We need to figure out a better way to handle this.
+    bool queued = _eventQueue.EnqueueEvent(event);
+    if (!queued)
+        __debugbreak();
+
+    if (event.audioSetting == NESAUDIO_FRAME_RESET)
+        InterlockedIncrement(&_pendingFrameResetCount);
+}
+
+#define INIT_WAVETABLE_PTR(WT) _wavetables[WT] = _wavetableMemory + WAVETABLE_SIZE * (WT)
+#define UNINIT_WAVETABLE_PTR(WT) _wavetables[WT] = nullptr
+
 void AudioEngine::InitializeTables()
 {
-    _triangleWavetable = new u8[WAVETABLE_SIZE];
-    _pulseWavetableMemory = new u8[WAVETABLE_SIZE * 4];
-    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_12_5] = _pulseWavetableMemory;
-    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25] = _pulseWavetableMemory + WAVETABLE_SIZE;
-    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_50] = _pulseWavetableMemory + WAVETABLE_SIZE * 2;
-    _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25N] = _pulseWavetableMemory + WAVETABLE_SIZE * 3;
+    _wavetableMemory = new u8[WAVETABLE_SIZE * NESAUDIO_NUM_WAVETABLES];
+    INIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_12_5);
+    INIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_25);
+    INIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_25N);
+    INIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_50);
+    INIT_WAVETABLE_PTR(NESAUDIO_TRIANGE);
 
-    GenerateTable(_pulseMinFreq, _pulseMaxFreq, PulseFourierFunction50, _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_50]);
-    GenerateTable(_triangleMinFreq, _triangleMaxFreq, TriangleFourierFunction, _triangleWavetable);
+    GenerateTable(_pulseMinFreq, _pulseMaxFreq, PulseFourierFunction50, _wavetables[NESAUDIO_PULSE_DUTYCYCLE_50]);
+    GenerateTable(_triangleMinFreq, _triangleMaxFreq, TriangleFourierFunction, _wavetables[NESAUDIO_TRIANGE]);
     GenarateOtherPulseTables();
 }
 
 void AudioEngine::ReleaseTables()
 {
-    if (_pulseWavetableMemory != nullptr)
-    {
-        delete[] _pulseWavetableMemory;
-        _pulseWavetableMemory = nullptr;
-    }
+    UNINIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_12_5);
+    UNINIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_25);
+    UNINIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_25N);
+    UNINIT_WAVETABLE_PTR(NESAUDIO_PULSE_DUTYCYCLE_50);
+    UNINIT_WAVETABLE_PTR(NESAUDIO_TRIANGE);
 
-    if (_triangleWavetable != nullptr)
+    if (_wavetableMemory != nullptr)
     {
-        delete[] _triangleWavetable;
-        _triangleWavetable = nullptr;
+        delete[] _wavetableMemory;
+        _wavetableMemory = nullptr;
     }
+}
+
+#undef INIT_WAVETABLE
+#undef UNINIT_WAVETABLE_PTR
+
+void AudioEngine::InitializeChannels()
+{
+    _pulseChannel1.wavetable = NESAUDIO_PULSE_DUTYCYCLE_50;
+    _pulseChannel1.freqStep = _pulseFreqStep;
+    _pulseChannel2.wavetable = NESAUDIO_PULSE_DUTYCYCLE_50;
+    _pulseChannel2.freqStep = _pulseFreqStep;
+
+    _triangleChannel.wavetable = NESAUDIO_TRIANGE;
+    _triangleChannel.freqStep = _triangleFreqStep;
+    _triangleChannel.volume = 0x0F;
+
+    _dmcAmplitude = 0;
+
+    _noiseShiftRegister = 1;
+    _noiseVolume = 0;
+    _noiseMode1 = false;
+    _noisePeriodSamples = 0.0;
+    _noiseCounter = 0.0;
 }
 
 void AudioEngine::GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic), u8* wavetable)
@@ -228,10 +274,10 @@ void AudioEngine::GenarateOtherPulseTables()
 
     for (int row = 0; row < WAVETABLE_FREQUENCY_STEPS; row++)
     {
-        u8* tableRow12_5 = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_12_5] + row * WAVETABLE_SAMPLES;
-        u8* tableRow25 = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25] + row * WAVETABLE_SAMPLES;
-        u8* tableRow50 = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_50] + row * WAVETABLE_SAMPLES;
-        u8* tableRow25N = _pulseWavetables[NESAUDIO_PULSE_DUTYCYCLE_25N] + row * WAVETABLE_SAMPLES;
+        u8* tableRow12_5 = _wavetables[NESAUDIO_PULSE_DUTYCYCLE_12_5] + row * WAVETABLE_SAMPLES;
+        u8* tableRow25 = _wavetables[NESAUDIO_PULSE_DUTYCYCLE_25] + row * WAVETABLE_SAMPLES;
+        u8* tableRow50 = _wavetables[NESAUDIO_PULSE_DUTYCYCLE_50] + row * WAVETABLE_SAMPLES;
+        u8* tableRow25N = _wavetables[NESAUDIO_PULSE_DUTYCYCLE_25N] + row * WAVETABLE_SAMPLES;
         int square12phase = 0;
         int square25phase = 0;
         int square50phase = 0;
@@ -298,115 +344,298 @@ void AudioEngine::AudioError(const char* error)
 
 void AudioEngine::ExecuteCallback(u8 *stream, int len)
 {
-    int phaseDivider = _sampleRate / WAVETABLE_SAMPLES;
-    for (int i = 0; i < len; i++)
+    for (;;)
     {
-        u32 value = 0;
-        // TODO: Balance channel volumes correctly
-        value += SamplePulse(_pulse1, _pulse1Phase, phaseDivider);
-        value += SamplePulse(_pulse2, _pulse2Phase, phaseDivider);
-        value += SampleTriangle(phaseDivider);
-        value += SampleNoise();
-
-        stream[i] = (u8)(value / 4);
-    }
-}
-
-u32 AudioEngine::SampleWaveform(int freq, int freqStep, int volume, int& phase, int phaseDivider, u8* wavetable)
-{
-    int rowIndex = freq / freqStep;
-    int phaseIndex = phase / phaseDivider;
-    u8 sample = (wavetable + (rowIndex * WAVETABLE_FREQUENCY_STEPS))[phaseIndex];
-
-    phase += freq;
-    if (phase >= _sampleRate)
-        phase -= _sampleRate;
-
-    sample = _silenceValue + ((u32)sample * volume) >> 4;
-
-    return sample;
-}
-
-u32 AudioEngine::SamplePulse(NesAudioPulseCtrl* pulseChannel, int& phase, int phaseDivider)
-{
-    int freq = pulseChannel->frequency;
-    if (pulseChannel->lengthCounter > 0 && freq > 0)
-    {
-        if (pulseChannel->phaseReset)
+        // Generate samples
+        if (_samplesRemaining > 0)
         {
-            pulseChannel->phaseReset = false;
-            phase = 0;
+            int sampleCount = _samplesRemaining;
+            if (sampleCount >= len)
+            {
+                sampleCount = len;
+                GenerateSamples(stream, sampleCount);
+
+                // Buffer has been filled completely.
+                // Update samples remaining and return.
+                _samplesRemaining -= sampleCount;
+                return;
+            }
+            else
+            {
+                GenerateSamples(stream, sampleCount);
+
+                stream += sampleCount;
+                len -= sampleCount;
+                _samplesRemaining = 0;
+            }
         }
 
-        return SampleWaveform(
-            freq,
-            _pulseFreqStep,
-            pulseChannel->volume,
-            phase,
-            phaseDivider,
-            _pulseWavetables[pulseChannel->dutyCycle]);
-    }
-    else
-    {
-        return _silenceValue;
-    }
-}
-
-u32 AudioEngine::SampleTriangle(int phaseDivider)
-{
-    int freq = _triangle->frequency;
-    if (_triangle->lengthCounter > 0 && _triangle->linearCounter > 0 && freq > 0)
-    {
-        return SampleWaveform(
-            freq,
-            _triangleFreqStep,
-            15 /* volume - triangle volume can't be changed */,
-            _trianglePhase,
-            phaseDivider,
-            _triangleWavetable);
-    }
-    else
-    {
-        return _silenceValue;
-    }
-}
-
-u32 AudioEngine::SampleNoise()
-{
-    u32 sample = _silenceValue;
-    if (_noise->lengthCounter > 0 && _noise->period != 0)
-    {
-        if (_noisePeriodCounter == 0)
+        // Process audio events from the emulator
+        ProcessAudioEvents();
+        if (!_eventPending)
         {
-            StepNoiseRegister();
-            double newPeriod = (double)_sampleRate / ((double)CPU_FREQ_NTSC / 2 / _noise->period);
-            _noisePeriodCounter = (int)newPeriod;
+            // Event queue is empty.
+            //
+            // Do a few more samples with the current channel settings or finish the buffer if it
+            // is almost full.
+            _samplesRemaining = WAIT_NUM_SAMPLES;
+            if (_samplesRemaining > len)
+                _samplesRemaining = len;
+        }
+    }
+}
+
+void AudioEngine::GenerateSamples(u8* stream, int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        i32 pulseSample;
+        i32 triangleSample;
+        i32 noiseSample;
+
+        pulseSample = SampleWavetableChannel(_pulseChannel1) + SampleWavetableChannel(_pulseChannel2);
+        triangleSample = SampleWavetableChannel(_triangleChannel);
+        noiseSample = SampleNoise();
+
+        double output = 2.95e-5 * pulseSample +
+            3.34e-5 * triangleSample +
+            0.00494 * noiseSample +
+            0.00335 * _dmcAmplitude;
+
+        *stream++ = (u8)(output * _silenceValue + _silenceValue);
+    }
+
+    // Update the cycle counter
+    _cycleCounter += _cyclesPerSample * count;
+}
+
+void AudioEngine::ProcessAudioEvents()
+{
+    if (_eventPending)
+    {
+        // There's already an event pending.
+        ProcessAudioEvent(_nextEvent);
+        _eventPending = false;
+    }
+
+    // Drain event queue of any past events and grab the next future event if there is one
+DrainNextEvent:
+    _eventPending = _eventQueue.DequeueEvent(_nextEvent);
+    if (_eventPending)
+    {
+        if (_nextEvent.cpuCycleCount <= _cycleCounter || _pendingFrameResetCount > 1)
+        {
+            ProcessAudioEvent(_nextEvent);
+            goto DrainNextEvent;
         }
         else
         {
-            _noisePeriodCounter--;
+            // Determine how long we need to wait (in samples) before processing the next event.
+            _samplesRemaining = CycleCountToSampleCount(_nextEvent.cpuCycleCount - _cycleCounter);
+            if (_samplesRemaining == 0)
+            {
+                ProcessAudioEvent(_nextEvent);
+                goto DrainNextEvent;
+            }
+        }
+    }
+}
+
+void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
+{
+    u32 setting = event.newValue;
+    switch (event.audioSetting)
+    {
+    case NESAUDIO_FRAME_RESET:
+        // The APU frame counter has reset.  Reset our cycle counter.
+        InterlockedDecrement(&_pendingFrameResetCount);
+        _cycleCounter = 0;
+        break;
+    case NESAUDIO_PULSE1_DUTYCYCLE:
+        _pulseChannel1.wavetable = setting & 3;
+        UpdateWavetableRow(_pulseChannel1);
+        break;
+    case NESAUDIO_PULSE1_FREQUENCY:
+        BoundFrequency(setting, _pulseMinFreq, _pulseMaxFreq);
+        _pulseChannel1.frequency = setting;
+        UpdateWavetableRow(_pulseChannel1);
+        break;
+    case NESAUDIO_PULSE1_VOLUME:
+        _pulseChannel1.volume = setting;
+        break;
+    case NESAUDIO_PULSE1_PHASE_RESET:
+        _pulseChannel1.phase = 0;
+        break;
+    case NESAUDIO_PULSE2_DUTYCYCLE:
+        _pulseChannel2.wavetable = setting & 3;
+        UpdateWavetableRow(_pulseChannel2);
+        break;
+    case NESAUDIO_PULSE2_FREQUENCY:
+        BoundFrequency(setting, _pulseMinFreq, _pulseMaxFreq);
+        _pulseChannel2.frequency = setting;
+        UpdateWavetableRow(_pulseChannel2);
+        break;
+    case NESAUDIO_PULSE2_VOLUME:
+        _pulseChannel2.volume = setting;
+        break;
+    case NESAUDIO_PULSE2_PHASE_RESET:
+        _pulseChannel2.phase = 0;
+        break;
+    case NESAUDIO_TRIANGLE_FREQUENCY:
+        UpdateTriangleFrequency(setting);
+        break;
+    case NESAUDIO_NOISE_PERIOD:
+        if (setting == 0)
+            _noisePeriodSamples = 0.0;
+        else
+            _noisePeriodSamples = (double)_sampleRate / ((double)_cpuFreq / 2.0 / setting);
+        break;
+    case NESAUDIO_NOISE_MODE:
+        _noiseMode1 = setting != 0;
+        break;
+    case NESAUDIO_NOISE_VOLUME:
+        _noiseVolume = setting;
+        break;
+    case NESAUDIO_DMC_VALUE:
+        _dmcAmplitude = setting;
+        break;
+    }
+}
+
+void AudioEngine::UpdateTriangleFrequency(u32 newFreq)
+{
+    u32 oldFreq = _triangleChannel.frequency;
+    BoundFrequency(newFreq, _triangleMinFreq, _triangleMaxFreq);
+    _triangleChannel.newFreq = newFreq;
+
+    // Ramp volume up/down for large changes in triangle frequency to avoid annoying
+    // audio pops.
+    if (oldFreq == 0 && newFreq != 0)
+    {
+        _triangleChannel.rampUp = true;
+        _triangleChannel.rampDown = false;
+
+        _triangleChannel.frequency = newFreq;
+        UpdateWavetableRow(_triangleChannel);
+    }
+    else if (oldFreq != 0 && newFreq == 0)
+    {
+        _triangleChannel.rampUp = false;
+        _triangleChannel.rampDown = true;
+    }
+    else
+    {
+        u32 diff = 0;
+        if (oldFreq > newFreq)
+            diff = oldFreq - newFreq;
+        else
+            diff = newFreq - oldFreq;
+
+        _triangleChannel.rampUp = false;
+        _triangleChannel.rampDown = true;
+    }
+}
+
+void AudioEngine::UpdateWavetableRow(WavetableChannel& channel)
+{
+    int rowIndex = channel.frequency / channel.freqStep;
+    channel.wavetableRow = _wavetables[channel.wavetable] + rowIndex * WAVETABLE_FREQUENCY_STEPS;
+}
+
+i32 AudioEngine::SampleWavetableChannel(WavetableChannel& channel)
+{
+    if (channel.frequency != 0)
+    {
+        int phase = channel.phase;
+        int phaseIndex = phase / _phaseDivider;
+        u8 sample = channel.wavetableRow[phaseIndex];
+
+        phase += channel.frequency;
+        if (phase >= _sampleRate)
+            phase -= _sampleRate;
+
+        channel.phase = phase;
+
+        i32 result = (i32)sample * channel.volume;
+
+        if (channel.rampDown)
+        {
+            if (channel.volume == 0)
+            {
+                channel.rampUp = true;
+                channel.rampDown = false;
+            }
+            else if (--channel.volume == 0)
+            {
+                channel.rampDown = false;
+                channel.frequency = channel.newFreq;
+                if (channel.newFreq != 0)
+                {
+                    UpdateWavetableRow(channel);
+                    channel.rampUp = true;
+                }
+            }
+        }
+        else if (channel.rampUp)
+        {
+            if (channel.volume == 0x0F)
+                channel.rampUp = false;
+            else if (++channel.volume == 0x0F)
+                channel.rampUp = false;
         }
 
-        sample += _noiseAmplitude;
+        return result;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+i32 AudioEngine::SampleNoise()
+{
+    u32 sample = _silenceValue;
+    if (_noisePeriodSamples != 0.0)
+    {
+        if (_noiseCounter <= 0.0)
+        {
+            StepNoiseRegister();
+            _noiseCounter += _noisePeriodSamples;
+        }
+        else
+        {
+            _noiseCounter -= 1.0;
+        }
+
+        return _noiseOn ? _noiseVolume : 0;
     }
 
-    return sample;
+    return 0;
 }
 
 void AudioEngine::StepNoiseRegister()
 {
     u16 feedback = _noiseShiftRegister & 1;
 
-    if (_noise->mode1)
+    if (_noiseMode1)
         feedback ^= (_noiseShiftRegister & 0x0040) >> 6;
     else
         feedback ^= (_noiseShiftRegister & 0x0002) >> 1;
 
     _noiseShiftRegister >>= 1;
     _noiseShiftRegister |= feedback << 15;
+    _noiseOn = (_noiseShiftRegister & 1) != 0;
+}
 
-    if (!(_noiseShiftRegister & 1))
-        _noiseAmplitude = _noise->volume * 3;
-    else
-        _noiseAmplitude = 0;
+int AudioEngine::CycleCountToSampleCount(double cycleCount)
+{
+    return (int)(cycleCount / _cyclesPerSample);
+}
+
+void AudioEngine::BoundFrequency(u32& frequency, u32 minFreq, u32 maxFreq)
+{
+    if (frequency < minFreq)
+        frequency = 0;
+    if (frequency > maxFreq)
+        frequency = 0;
 }

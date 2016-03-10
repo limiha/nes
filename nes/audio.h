@@ -1,53 +1,81 @@
 #pragma once
 
-#define NESAUDIO_PULSE_DUTYCYCLE_12_5 0 // Pulse channel 12.5% duty cycle
-#define NESAUDIO_PULSE_DUTYCYCLE_25 1 // Pulse channel 25% duty cycle
-#define NESAUDIO_PULSE_DUTYCYCLE_50 2 // Pulse channel 50% duty cycle
-#define NESAUDIO_PULSE_DUTYCYCLE_25N 3 // Pulse channel 25% negated duty cycle
+#include "eventqueue.h"
 
-struct NesAudioPulseCtrl
+enum WavetableIndex
 {
-    volatile int lengthCounter;
-    volatile int dutyCycle;
-    volatile int frequency;
-    volatile u8 volume;
-    volatile bool phaseReset;
+    NESAUDIO_PULSE_DUTYCYCLE_12_5 = 0, // Pulse channel 12.5% duty cycle
+    NESAUDIO_PULSE_DUTYCYCLE_25 = 1, // Pulse channel 25% duty cycle
+    NESAUDIO_PULSE_DUTYCYCLE_50 = 2, // Pulse channel 50% duty cycle
+    NESAUDIO_PULSE_DUTYCYCLE_25N = 3, // Pulse channel 25% negated duty cycle
+    NESAUDIO_TRIANGE = 4,
+
+    NESAUDIO_NUM_WAVETABLES
 };
 
-struct NesAudioTriangeCtrl
+enum AudioChannelSetting
 {
-    volatile int lengthCounter;
-    volatile int linearCounter;
-    volatile int frequency;
+    NESAUDIO_CHANNEL_SETTING_NONE,
+
+    NESAUDIO_FRAME_RESET,
+    NESAUDIO_PULSE1_DUTYCYCLE,
+    NESAUDIO_PULSE1_FREQUENCY,
+    NESAUDIO_PULSE1_VOLUME,
+    NESAUDIO_PULSE1_PHASE_RESET,
+    NESAUDIO_PULSE2_DUTYCYCLE,
+    NESAUDIO_PULSE2_FREQUENCY,
+    NESAUDIO_PULSE2_VOLUME,
+    NESAUDIO_PULSE2_PHASE_RESET,
+    NESAUDIO_TRIANGLE_FREQUENCY,
+    NESAUDIO_NOISE_PERIOD,
+    NESAUDIO_NOISE_MODE,
+    NESAUDIO_NOISE_VOLUME,
+    NESAUDIO_DMC_VALUE,
+
+    NESAUDIO_CHANNEL_NUM_SETTINGS
 };
 
-struct NesAudioNoiseCtrl
+struct AudioEvent
 {
-    volatile int lengthCounter;
-    volatile int period;
-    volatile u8 volume;
-    volatile bool mode1;
+    u16 cpuCycleCount;
+    u16 audioSetting;
+    u32 newValue;
 };
 
-struct NesAudioDmcCtrl
+struct WavetableChannel
 {
-    volatile u8 directLoad;
-    volatile u8 sampleBuffer;
+    u32 frequency;
+    u32 freqStep;
+    u32 phase;
+    u32 volume;
+    u32 wavetable;
+    u32 newFreq; // New frequency is applied after ramp-down
+    bool rampUp;
+    bool rampDown;
+    u8* wavetableRow;
+
+    WavetableChannel()
+        : frequency(0)
+        , phase(0)
+        , volume(0)
+        , wavetable(0)
+        , newFreq(0)
+        , rampUp(false)
+        , rampDown(false)
+        , wavetableRow(0)
+    {
+    }
 };
 
 class AudioEngine
 {
 public:
-    AudioEngine(
-        NesAudioPulseCtrl* pulse1,
-        NesAudioPulseCtrl* pulse2,
-        NesAudioTriangeCtrl* triangle,
-        NesAudioNoiseCtrl* noise,
-        NesAudioDmcCtrl* dmc);
+    AudioEngine();
     virtual ~AudioEngine();
 
     void StartAudio(
         int preferredSampleRate,
+        int cpuFreq,
         int pulseMinFreq,
         int pulseMaxFreq,
         int triangleMinFreq,
@@ -56,8 +84,11 @@ public:
     void PauseAudio();
     void UnpauseAudio();
 
+    void QueueAudioEvent(int cycleCount, int setting, u32 newValue);
+
 private:
     void InitializeTables();
+    void InitializeChannels();
     void ReleaseTables();
 
     void GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic), u8* wavetable);
@@ -65,45 +96,61 @@ private:
 
     void AudioError(const char* error);
 
-    void ExecuteCallback(u8 *stream, int len);
-    u32 SampleWaveform(int freq, int freqStep, int volume, int& phase, int phaseDivider, u8* wavetable);
-    u32 SamplePulse(NesAudioPulseCtrl* pulseChannel, int& phase, int phaseDivider);
-    u32 SampleTriangle(int phaseDivider);
-    u32 SampleNoise();
+    void ExecuteCallback(u8* stream, int len);
+    void GenerateSamples(u8* stream, int count);
+    void ProcessAudioEvents();
+    void ProcessAudioEvent(const AudioEvent& event);
+    void UpdateTriangleFrequency(u32 newFreq);
+    void UpdateWavetableRow(WavetableChannel& channel);
+
+    i32 SampleWavetableChannel(WavetableChannel& channel);
+    i32 SampleNoise();
+
     void StepNoiseRegister();
+    int CycleCountToSampleCount(double cycleCount);
+    static void BoundFrequency(u32& frequency, u32 minFreq, u32 maxFreq);
 
 private:
+    // Audio device info
     SDL_AudioDeviceID _deviceId;
     int _sampleRate;
     u8 _silenceValue;
 
-    int _nyquistFreq;
-    int _pulseMinFreq;
-    int _pulseMaxFreq;
-    int _pulseFreqStep;
-    int _triangleMinFreq;
-    int _triangleMaxFreq;
-    int _triangleFreqStep;
-
-    int _pulse1Phase;
-    int _pulse2Phase;
-    int _trianglePhase;
-    int _noisePeriodCounter;
-    u8 _noiseAmplitude;
-    u16 _noiseShiftRegister;
+    // Constants based on CPU frequency and sample rate
+    u32 _cpuFreq;
+    u32 _nyquistFreq;
+    u32 _pulseMinFreq;
+    u32 _pulseMaxFreq;
+    u32 _pulseFreqStep;
+    u32 _triangleMinFreq;
+    u32 _triangleMaxFreq;
+    u32 _triangleFreqStep;
+    u32 _phaseDivider;
+    double _cyclesPerSample;
 
     // Wavetables
-    u8* _pulseWavetableMemory;
-    u8* _pulseWavetables[4];
-    u8* _triangleWavetable;
+    u8* _wavetableMemory;
+    u8* _wavetables[NESAUDIO_NUM_WAVETABLES];
 
-    // These structures are updated by the APU on the emulator thread.  The audio engine generates
-    // audio in real time based on the values in these structures.
-    NesAudioPulseCtrl* _pulse1;
-    NesAudioPulseCtrl* _pulse2;
-    NesAudioTriangeCtrl* _triangle;
-    NesAudioNoiseCtrl* _noise;
-    NesAudioDmcCtrl* _dmc;
+    // Audio engine state information
+    EventQueue<AudioEvent> _eventQueue;
+    volatile u32 _pendingFrameResetCount;
+    AudioEvent _nextEvent;
+    int _samplesRemaining;
+    bool _eventPending;
+    double _cycleCounter;
+
+    // Channels (except for initialization, these should only be read/modified on the callback thread)
+    WavetableChannel _pulseChannel1;
+    WavetableChannel _pulseChannel2;
+    WavetableChannel _triangleChannel;
+    i32 _dmcAmplitude;
+    u16 _noiseShiftRegister;
+    u32 _noiseVolume;
+    bool _noiseMode1;
+    bool _noiseOn;
+    double _noisePeriodSamples;
+    double _noiseCounter;
 
     friend void AudioGenerateCallback(void *userdata, u8 *stream, int len);
 };
