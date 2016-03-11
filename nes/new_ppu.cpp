@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "new_ppu.h"
-#include "gfx.h"
+#include "sdlGfx.h"
 #include "rom.h"
 
-Ppu::Ppu(std::shared_ptr<IMapper> mapper, Gfx& gfx)
+Ppu::Ppu(std::shared_ptr<IMapper> mapper, std::shared_ptr<IGfx> gfx)
     : _gfx(gfx)
     , _mapper(mapper)
     , _vram(_mapper)
@@ -488,7 +488,7 @@ void Ppu::DrawFrame()
     for (int i = 0; i < 4; i++)
     {
         RenderNameTable(nt_screen, i);
-        _gfx.BlitNameTable(nt_screen, i);
+        _gfx->BlitNameTable(nt_screen, i);
     }
 #endif
 #if defined(RENDER_PATTERNTABLE)
@@ -496,11 +496,11 @@ void Ppu::DrawFrame()
     u8 pt_right[8 * 8 * 32 * 8 * 3];
     RenderPatternTable(0x0000, pt_left);
     RenderPatternTable(0x1000, pt_right);
-    _gfx.BlitPatternTable(pt_left, pt_right);
+    _gfx->BlitPatternTable(pt_left, pt_right);
 
 #endif
 
-    _gfx.Blit(_screen);
+    _gfx->Blit(_screen);
 }
 
 void Ppu::DrawScanline(u8 x)

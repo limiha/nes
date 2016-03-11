@@ -11,7 +11,7 @@
 #include "input.h"
 #include "rom.h"
 #include "apu.h"
-#include "gfx.h"
+#include "sdlGfx.h"
 #include "mapper.h"
 
 Nes::Nes(std::shared_ptr<Rom> rom)
@@ -39,7 +39,7 @@ std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom)
 
 void Nes::Run()
 {
-    Gfx gfx(3);
+    std::shared_ptr<SdlGfx> gfx = std::make_shared<SdlGfx>(3);
 
     std::shared_ptr<IMapper> mapper = IMapper::CreateMapper(_rom);
     if (mapper == nullptr)
@@ -47,7 +47,7 @@ void Nes::Run()
         return;
     }
 
-    Ppu ppu(mapper, gfx);
+    Ppu ppu(mapper, std::dynamic_pointer_cast<IGfx>(gfx));
     Apu apu(false /* isPal */);
     Input input;
     MemoryMap mem(ppu, apu, input, mapper);

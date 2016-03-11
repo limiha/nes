@@ -202,7 +202,7 @@
     <ClInclude Include="cpu.h" />
     <ClInclude Include="decode.h" />
     <ClInclude Include="diassembler.h" />
-    <ClInclude Include="gfx.h" />
+    <ClInclude Include="sdlGfx.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="interfaces.h" />
     <ClInclude Include="mapper.h" />
@@ -221,7 +221,7 @@
     <ClCompile Include="audio.cpp" />
     <ClCompile Include="cpu.cpp" />
     <ClCompile Include="disassembler.cpp" />
-    <ClCompile Include="gfx.cpp" />
+    <ClCompile Include="sdlGfx.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mapper.cpp" />

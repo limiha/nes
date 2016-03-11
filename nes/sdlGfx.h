@@ -4,11 +4,11 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 
-class Gfx
+class SdlGfx : public IGfx
 {
 public:
-    Gfx(u32 scale);
-    ~Gfx();
+    SdlGfx(u32 scale);
+    ~SdlGfx();
 
     void Blit(u8 screen[]);
 private:
@@ -23,7 +23,7 @@ private:
 
 #if defined(RENDER_NAMETABLE)
 public:
-    void BlitNameTable(u8 screens[], int i);
+    void BlitNameTable(u8 screen[], int i);
 
 private:
     SDL_Window* _nt_window[4];
