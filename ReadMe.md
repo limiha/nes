@@ -7,19 +7,24 @@
 
 ## Controls
 ```
-Nes     ->  Keyboard
-A       ->  Left Alt
-B       ->  Left Ctrl
-Select  ->  Right Shift
-Start   ->  Enter (Return)
-Up      ->  Up
-Down    ->  Down
-Left    ->  Left
-Right   ->  Right
+Joypad 1
+A           ->  Left Alt or S
+B           ->  Left Ctrl or A
+Select      ->  Right Shift or Backslash
+Start       ->  Enter (Return)
+Up          ->  Up
+Down        ->  Down
+Left        ->  Left
+Right       ->  Right
+
+Save State  -> F1
+Load State  -> F2
+
+Quit        -> Esc
 ```
 
 ## Acknowledgements
- - This is heavily borrowed from https://github.com/pcwalton/sprocketnes which was in turn based on FCEU (http://www.fceux.com/web/home.html). I have tried to write an emulator several times in the past, the most recent of which is https://github.com/chuckries/rustnes/
+ - This was originally based on https://github.com/pcwalton/sprocketnes which was based on FCEU (http://www.fceux.com/web/home.html).
  - Nintendulator (http://www.qmtpro.com/~nes/nintendulator/) has been incredibly helpful both because of it's source and the debug tools built into it's emulator
  - NesDev (http://nesdev.com) and the NesDev Wiki (http://wiki.nesdev.com/w/index.php/Nesdev_Wiki)
  - SDL (https://www.libsdl.org/license.php)
