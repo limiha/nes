@@ -10,6 +10,6 @@ int main(int argc, char* argv[])
     }
 
     std::unique_ptr<Nes> nes = Nes::Create(argv[1]);
-    nes->Run();
-
+    if (nes != nullptr)
+        nes->Run();
 }
