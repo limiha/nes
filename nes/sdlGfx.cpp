@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "gfx.h"
+#include "sdlGfx.h"
 
 #include <SDL.h>
 
@@ -16,7 +16,7 @@ u8 grid_color = 0xff;
 #endif
 
 
-Gfx::Gfx(u32 scale)
+SdlGfx::SdlGfx(u32 scale)
     : _frameCounter(0)
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
@@ -117,7 +117,7 @@ Gfx::Gfx(u32 scale)
     _lastFpsTime = std::chrono::high_resolution_clock::now();
 }
 
-Gfx::~Gfx()
+SdlGfx::~SdlGfx()
 {
     SDL_DestroyTexture(_texture);
     SDL_DestroyRenderer(_renderer);
@@ -159,7 +159,7 @@ void render_grid(u8 screen[])
 }
 #endif
 
-void Gfx::Blit(u8 screen[])
+void SdlGfx::Blit(u8 screen[])
 {
     void* screen_to_render = (void*)screen;
 #if defined(RENDER_GRID)
@@ -192,7 +192,7 @@ void Gfx::Blit(u8 screen[])
 }
 
 #if defined(RENDER_NAMETABLE)
-void Gfx::BlitNameTable(u8 screen[], int i)
+void SdlGfx::BlitNameTable(u8 screen[], int i)
 {
     SDL_UpdateTexture(_nt_texture[i], NULL, (void*)screen, SCREEN_WIDTH * 3);
     SDL_RenderClear(_nt_renderer[i]);
@@ -202,7 +202,7 @@ void Gfx::BlitNameTable(u8 screen[], int i)
 #endif
 
 #if defined(RENDER_PATTERNTABLE)
-void Gfx::BlitPatternTable(u8 left[], u8 right[])
+void SdlGfx::BlitPatternTable(u8 left[], u8 right[])
 {
     SDL_UpdateTexture(_pt_texture[0], NULL, (void*)left, 8 * 8 * 3);
     SDL_UpdateTexture(_pt_texture[1], NULL, (void*)right, 8 * 8 * 3);

@@ -3,8 +3,6 @@
 #include "mem.h"
 #include "mapper.h"
 
-class Gfx;
-
 const u32 SCREEN_HEIGHT = 240;
 const u32 SCREEN_WIDTH = 256;
 const u32 VBLANK_SCANLINE = 241;
@@ -175,7 +173,7 @@ struct PpuStatus
 class Ppu : public IMem
 {
 public:
-    Ppu(std::shared_ptr<IMapper> mapper, Gfx& gfx);
+    Ppu(std::shared_ptr<IMapper> mapper, std::shared_ptr<IGfx> gfx);
     ~Ppu();
 
 public:
@@ -227,7 +225,7 @@ private:
     void PutPixel(u16 x, u16 y, rgb& pixel);
 
 private:
-    Gfx& _gfx;
+    std::shared_ptr<IGfx> _gfx;
     std::shared_ptr<IMapper> _mapper;
     VRam _vram;
 
