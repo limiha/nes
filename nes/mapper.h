@@ -133,3 +133,17 @@ private:
     bool _irqEnable;
     bool _irqPending;
 };
+
+// AxRom, #7
+class AxRom : public NRom 
+{
+public:
+    AxRom(std::shared_ptr<Rom> rom);
+    ~AxRom();
+
+    u8 prg_loadb(u16 addr);
+    void prg_storeb(u16 addr, u8 val);
+
+private:
+    u8 _prgReg;
+};
