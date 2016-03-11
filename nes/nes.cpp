@@ -27,10 +27,7 @@ std::unique_ptr<Nes> Nes::Create(const char* romPath)
 {
     auto rom = std::make_shared<Rom>();
     if (!rom->Load(romPath))
-    {
-        printf("Incompatible ROM\n");
         return nullptr;
-    }
 
     return std::make_unique<Nes>(rom);
 }

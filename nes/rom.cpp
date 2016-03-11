@@ -30,7 +30,7 @@ bool Rom::Load(std::string romPath)
 
     if (!fs::exists(romPath))
     {
-        printf("File does not exsit\n");
+        printf("File does not exist\n");
         return false;
     }
 
@@ -42,12 +42,14 @@ bool Rom::Load(std::string romPath)
 
         if (!Header.ValidateHeader())
         {
+            printf("Invalid nes header\n");
             return false;
         }
 
         //TODO: Figure out how to handle a trainer
         if (Header.HasTrainer())
         {
+            printf("ROMs with trainers are not supported\n");
             return false;
         }
 
@@ -83,6 +85,7 @@ bool Rom::Load(std::string romPath)
     }
     else 
     {
+        printf("Unable to open file\n");
         return false;
     }
 }
