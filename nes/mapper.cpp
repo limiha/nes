@@ -26,6 +26,8 @@ std::shared_ptr<IMapper> IMapper::CreateMapper(std::shared_ptr<Rom> rom)
         return std::make_shared<CNRom>(rom);
     case 4:
         return std::make_shared<TxRom>(rom);
+    case 7:
+        return std::make_shared<AxRom>(rom);
     default:
         printf("Unsupported mapper: %d\n", rom->Header.MapperNumber());
         return nullptr;
@@ -583,5 +585,41 @@ bool TxRom::Scanline()
             return true;
         }
         return false;
+    }
+}
+
+// AxRom, Mapper #7
+AxRom::AxRom(std::shared_ptr<Rom> rom)
+    : NRom(rom)
+    , _prgReg(0)
+{
+}
+
+AxRom::~AxRom()
+{
+}
+
+u8 AxRom::prg_loadb(u16 addr)
+{
+    if (addr < 0x8000)
+    {
+        return NRom::prg_loadb(addr);
+    }
+    else
+    {
+        return _rom->PrgRom[((_prgReg * 0x8000) + (addr & 0x7fff))];
+    }
+}
+
+void AxRom::prg_storeb(u16 addr, u8 val)
+{
+    if (addr < 0x8000)
+    {
+        NRom::prg_storeb(addr, val);
+    }
+    else
+    {
+        Mirroring = (val & (1 << 4)) == 0 ? NameTableMirroring::SingleScreenLower : NameTableMirroring::SingleScreenUpper;
+        _prgReg = val & 0b111;
     }
 }
