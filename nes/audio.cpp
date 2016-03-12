@@ -399,7 +399,8 @@ void AudioEngine::GenerateSamples(u8* stream, int count)
         triangleSample = SampleWavetableChannel(_triangleChannel);
         noiseSample = SampleNoise();
 
-        double output = 2.95e-5 * pulseSample +
+        double output =
+            2.95e-5 * pulseSample +
             3.34e-5 * triangleSample +
             0.00247 * noiseSample +
             0.00335 * _dmcAmplitude;
@@ -511,9 +512,9 @@ void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
             _pulseChannel1.wavetable,
             _pulseChannel1.frequency,
             _pulseChannel1.volume,
-            _pulseChannel1.wavetable,
-            _pulseChannel1.frequency,
-            _pulseChannel1.volume,
+            _pulseChannel2.wavetable,
+            _pulseChannel2.frequency,
+            _pulseChannel2.volume,
             _triangleChannel.frequency,
             _noiseMode1 ? 1 : 0,
             (int)_noisePeriodSamples,
