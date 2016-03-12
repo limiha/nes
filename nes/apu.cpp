@@ -424,7 +424,7 @@ void Apu::WriteApuPulse1(u8 val, ApuPulseState* state)
 {
     state->sweepEnabled = (val & 0x80) != 0;
     state->negate = (val & 0x08) != 0;
-    state->sweepPeriod = (val >> 4) & 0x07;
+    state->sweepPeriod = ((val >> 4) & 0x07) + 1;
     state->shiftAmount = val & 0x07;
     state->sweepReset = true;
 }
@@ -765,7 +765,7 @@ void Apu::StepSweep(ApuPulseState* state)
     {
         if (state->sweepReset)
         {
-            state->sweepCounter = 0;
+            state->sweepCounter = state->sweepPeriod;
             state->sweepReset = false;
         }
         else if (state->sweepCounter != 0)
