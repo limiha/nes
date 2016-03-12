@@ -26,7 +26,7 @@ public:
     ~Apu();
 
     // Audio control
-    void StartAudio(int preferredSampleRate);
+    void StartAudio(MemoryMap* cpuMemMap, int preferredSampleRate);
     void StopAudio();
     void PauseAudio();
     void UnpauseAudio();
@@ -83,6 +83,7 @@ private:
     u32 WavelengthToFrequency(bool isTriangle, int wavelength);
 
     // APU state information:
+    MemoryMap* _cpuMemMap;
     AudioEngine* _audioEngine;
     bool _frameCounterMode1;
     bool _frameInterrupt;

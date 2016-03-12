@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "audio.h"
 
+//#define SOUND_EVENT_TRACE
+
 // Values tweaked for performance/audio quality
 #define SAMPLE_BUFFER_SIZE 1024
 #define WAIT_NUM_SAMPLES 32 // number of samples to play with current setting when no events are available
@@ -500,6 +502,24 @@ void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
         _dmcAmplitude = setting;
         break;
     }
+
+#ifdef SOUND_EVENT_TRACE
+    if (event.audioSetting != NESAUDIO_FRAME_RESET)
+    {
+        printf("E:%02d P1 DC=%d F=%05d V=%02d   P2 DC=%d F=%05d V=%02d   T F=%05d   N M=%d P=%03d V=%02d\n",
+            event.audioSetting,
+            _pulseChannel1.wavetable,
+            _pulseChannel1.frequency,
+            _pulseChannel1.volume,
+            _pulseChannel1.wavetable,
+            _pulseChannel1.frequency,
+            _pulseChannel1.volume,
+            _triangleChannel.frequency,
+            _noiseMode1 ? 1 : 0,
+            (int)_noisePeriodSamples,
+            _noiseVolume);
+    }
+#endif
 }
 
 void AudioEngine::UpdateTriangleFrequency(u32 newFreq)
