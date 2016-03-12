@@ -55,7 +55,7 @@ void Nes::Run()
 
     _cpu->Reset();
     
-    apu.StartAudio(44100);
+    apu.StartAudio(&mem, 44100);
 
     InputResult inputResult;
     ApuStepResult apuResult;

@@ -96,6 +96,7 @@ struct ApuDmcState
     bool interrupt;
     bool interruptEnabled;
     bool loop;
+    bool bufferEmpty;
     u16 sampleAddress;
     u16 readAddress;
     int sampleSize;
@@ -103,6 +104,9 @@ struct ApuDmcState
     int bitsRemaining;
     u32 cycleCount;
     u32 sampleRate;
+    u8 sampleBuffer;
+    u8 shiftRegister;
+    u8 outputLevel;
 };
 
 struct ApuEnvelop
@@ -156,6 +160,7 @@ Apu::Apu(bool isPal)
     _pulseState2->volumeSetting = NESAUDIO_PULSE2_VOLUME;
     _pulseState1->phaseResetSetting = NESAUDIO_PULSE1_PHASE_RESET;
     _pulseState2->phaseResetSetting = NESAUDIO_PULSE2_PHASE_RESET;
+    _dmcState->bufferEmpty = true;
 }
 
 Apu::~Apu()
@@ -170,7 +175,7 @@ Apu::~Apu()
     _noiseState = nullptr;
 }
 
-void Apu::StartAudio(int preferredSampleRate)
+void Apu::StartAudio(MemoryMap* cpuMemMap, int preferredSampleRate)
 {
     int pulseMinFreq = WavelengthToFrequency(false, 0x07FF);
     int pulseMaxFreq = WavelengthToFrequency(false, 0x0008);
@@ -184,6 +189,8 @@ void Apu::StartAudio(int preferredSampleRate)
         pulseMaxFreq,
         triangleMinFreq,
         triangleMaxFreq);
+
+    _cpuMemMap = cpuMemMap;
 }
 
 void Apu::StopAudio()
@@ -364,7 +371,6 @@ void Apu::WriteApuStatus(u8 newStatus)
         {
             _dmcState->readAddress = _dmcState->sampleAddress;
             _dmcState->bytesRemaining = _dmcState->sampleSize;
-            _dmcState->bitsRemaining = 8;
             _dmcState->enabled = _dmcState->sampleRate > 0 && _dmcState->bytesRemaining > 0;
         }
         else
@@ -529,7 +535,8 @@ void Apu::WriteApuDmc0(u8 val)
 
 void Apu::WriteApuDmc1(u8 val)
 {
-    QueueAudioEvent(NESAUDIO_DMC_VALUE, val & 0x7F);
+    _dmcState->outputLevel = val & 0x7F;
+    QueueAudioEvent(NESAUDIO_DMC_VALUE, _dmcState->outputLevel);
 }
 
 void Apu::WriteApuDmc2(u8 val)
@@ -683,7 +690,7 @@ void Apu::StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
 
     _dmcState->cycleCount -= _dmcState->sampleRate;
 
-    if (_dmcState->bitsRemaining == 0)
+    if (_dmcState->bufferEmpty)
     {
         if (_dmcState->bytesRemaining == 0)
         {
@@ -698,29 +705,57 @@ void Apu::StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
                 // Looping disabled.  Set IRQ flag.
                 _dmcState->interrupt = true;
                 result.Irq = true;
-
-                return;
             }
         }
+        
+        if (_dmcState->bytesRemaining != 0)
+        {
+            // Read the next sample into the buffer.
+            _dmcState->sampleBuffer = _cpuMemMap->loadb(_dmcState->readAddress);
 
-        // Read the next sample into the buffer.
-        // TODO: Actual memory read
+            _dmcState->readAddress++;
+            if (_dmcState->readAddress == 0)
+                _dmcState->readAddress = 0x8000; // Read address wraps from $FFFF to $8000
 
-        _dmcState->readAddress++;
-        _dmcState->bytesRemaining--;
-        _dmcState->bitsRemaining = 8;
+            _dmcState->bytesRemaining--;
+            _dmcState->bufferEmpty = false;
 
-        // The CPU is paused while the DMC reads memory.
-        // We need to account for the time taken by incrementing the cycle count
-        // TODO: Accurate cycle counting when CPU is executing a write instruction
-        if (isDmaRunning)
-            cycles += 2; // Read takes 2 clock cycles if DMA is running
-        else
-            cycles += 4; // Read takes 4 clock cycles unless CPU is doing a write instruction - then 3 (TODO)
+            // The CPU is paused while the DMC reads memory.
+            // We need to account for the time taken by incrementing the cycle count
+            // TODO: Accurate cycle counting when CPU is executing a write instruction
+            if (isDmaRunning)
+                cycles += 2; // Read takes 2 clock cycles if DMA is running
+            else
+                cycles += 4; // Read takes 4 clock cycles unless CPU is doing a write instruction - then 3 (TODO)
+        }
     }
-    else
+
+    if (_dmcState->bitsRemaining == 0 && !_dmcState->bufferEmpty)
+    {
+        _dmcState->shiftRegister = _dmcState->sampleBuffer;
+        _dmcState->bufferEmpty = true;
+        _dmcState->bitsRemaining = 8;
+    }
+    
+    if (_dmcState->bitsRemaining != 0)
     {
         _dmcState->bitsRemaining--;
+
+        u8 bit0 = _dmcState->shiftRegister & 1;
+        _dmcState->shiftRegister >>= 1;
+
+        u8 outputLevel = _dmcState->outputLevel;
+        if (bit0)
+            outputLevel += 2;
+        else
+            outputLevel -= 2;
+
+        // Only change output level if it doesn't underflow/overflow the 0-127 range
+        if ((outputLevel & 0x80) == 0)
+        {
+            _dmcState->outputLevel = outputLevel;
+            QueueAudioEvent(NESAUDIO_DMC_VALUE, outputLevel);
+        }
     }
 }
 
