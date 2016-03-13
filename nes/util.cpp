@@ -17,6 +17,16 @@ void Util::WriteBytes(u16 val, std::ofstream& ofs)
     ofs.write((char*)&val, sizeof(val));
 }
 
+void Util::WriteBytes(u32 val, std::ofstream& ofs)
+{
+    ofs.write((char*)&val, sizeof(val));
+}
+
+void Util::WriteBytes(i32 val, std::ofstream& ofs)
+{
+    ofs.write((char*)&val, sizeof(val));
+}
+
 void Util::ReadBytes(bool& val, std::ifstream& ifs)
 {
     u8 buf;
@@ -30,6 +40,16 @@ void Util::ReadBytes(u8& val, std::ifstream& ifs)
 }
 
 void Util::ReadBytes(u16& val, std::ifstream& ifs)
+{
+    ifs.read((char*)&val, sizeof(val));
+}
+
+void Util::ReadBytes(u32& val, std::ifstream& ifs)
+{
+    ifs.read((char*)&val, sizeof(val));
+}
+
+void Util::ReadBytes(i32& val, std::ifstream& ifs)
 {
     ifs.read((char*)&val, sizeof(val));
 }
