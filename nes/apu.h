@@ -36,6 +36,10 @@ public:
     virtual void storeb(u16 addr, u8 val);
 
     void Step(u32 &cycles, bool isDmaRunning, ApuStepResult& result);
+
+    // SaveState / LoadState
+    void SaveState(std::ofstream& ofs);
+    void LoadState(std::ifstream& ifs);
 private:
 
     // Registers

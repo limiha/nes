@@ -57,6 +57,7 @@ struct ApuPulseState
     u32 volume;
 
     // Last states written to audio engine
+    // We don't save/load these because we don't directly save the audio engine state
     u32 lastFrequency;
     u32 lastVolume;
 
@@ -65,6 +66,34 @@ struct ApuPulseState
     int volumeSetting;
     int dutyCycleSetting;
     int phaseResetSetting;
+
+    void SaveState(std::ofstream& ofs)
+    {
+        Util::WriteBytes(lengthCounter, ofs);
+        Util::WriteBytes(wavelength, ofs);
+        Util::WriteBytes(sweepPeriod, ofs);
+        Util::WriteBytes(sweepCounter, ofs);
+        Util::WriteBytes(shiftAmount, ofs);
+        Util::WriteBytes(lengthDisabled, ofs);
+        Util::WriteBytes(sweepEnabled, ofs);
+        Util::WriteBytes(sweepReset, ofs);
+        Util::WriteBytes(negate, ofs);
+        Util::WriteBytes(volume, ofs);
+    }
+
+    void LoadState(std::ifstream& ifs)
+    {
+        Util::ReadBytes(lengthCounter, ifs);
+        Util::ReadBytes(wavelength, ifs);
+        Util::ReadBytes(sweepPeriod, ifs);
+        Util::ReadBytes(sweepCounter, ifs);
+        Util::ReadBytes(shiftAmount, ifs);
+        Util::ReadBytes(lengthDisabled, ifs);
+        Util::ReadBytes(sweepEnabled, ifs);
+        Util::ReadBytes(sweepReset, ifs);
+        Util::ReadBytes(negate, ifs);
+        Util::ReadBytes(volume, ifs);
+    }
 };
 
 struct ApuTriangleState
@@ -76,6 +105,28 @@ struct ApuTriangleState
     bool lengthDisabled;
     bool haltCounter;
     bool reloadCounter;
+
+    void SaveState(std::ofstream& ofs)
+    {
+        Util::WriteBytes(lengthCounter, ofs);
+        Util::WriteBytes(linearCounter, ofs);
+        Util::WriteBytes(wavelength, ofs);
+        Util::WriteBytes(counterReloadValue, ofs);
+        Util::WriteBytes(lengthDisabled, ofs);
+        Util::WriteBytes(haltCounter, ofs);
+        Util::WriteBytes(reloadCounter, ofs);
+    }
+
+    void LoadState(std::ifstream& ifs)
+    {
+        Util::ReadBytes(lengthCounter, ifs);
+        Util::ReadBytes(linearCounter, ifs);
+        Util::ReadBytes(wavelength, ifs);
+        Util::ReadBytes(counterReloadValue, ifs);
+        Util::ReadBytes(lengthDisabled, ifs);
+        Util::ReadBytes(haltCounter, ifs);
+        Util::ReadBytes(reloadCounter, ifs);
+    }
 };
 
 struct ApuNoiseState
@@ -88,6 +139,22 @@ struct ApuNoiseState
     // Last states written to audio engine
     u32 lastPeriod;
     u32 lastVolume;
+
+    void SaveState(std::ofstream& ofs)
+    {
+        Util::WriteBytes(lengthCounter, ofs);
+        Util::WriteBytes(lengthDisabled, ofs);
+        Util::WriteBytes(period, ofs);
+        Util::WriteBytes(volume, ofs);
+    }
+
+    void LoadState(std::ifstream& ifs)
+    {
+        Util::ReadBytes(lengthCounter, ifs);
+        Util::ReadBytes(lengthDisabled, ifs);
+        Util::ReadBytes(period, ifs);
+        Util::ReadBytes(volume, ifs);
+    }
 };
 
 struct ApuDmcState
@@ -107,6 +174,44 @@ struct ApuDmcState
     u8 sampleBuffer;
     u8 shiftRegister;
     u8 outputLevel;
+
+    void SaveState(std::ofstream& ofs)
+    {
+        Util::WriteBytes(enabled, ofs);
+        Util::WriteBytes(interrupt, ofs);
+        Util::WriteBytes(interruptEnabled, ofs);
+        Util::WriteBytes(loop, ofs);
+        Util::WriteBytes(bufferEmpty, ofs);
+        Util::WriteBytes(sampleAddress, ofs);
+        Util::WriteBytes(readAddress, ofs);
+        Util::WriteBytes(sampleSize, ofs);
+        Util::WriteBytes(bytesRemaining, ofs);
+        Util::WriteBytes(bitsRemaining, ofs);
+        Util::WriteBytes(cycleCount, ofs);
+        Util::WriteBytes(sampleRate, ofs);
+        Util::WriteBytes(sampleBuffer, ofs);
+        Util::WriteBytes(shiftRegister, ofs);
+        Util::WriteBytes(outputLevel, ofs);
+    }
+
+    void LoadState(std::ifstream& ifs)
+    {
+        Util::ReadBytes(enabled, ifs);
+        Util::ReadBytes(interrupt, ifs);
+        Util::ReadBytes(interruptEnabled, ifs);
+        Util::ReadBytes(loop, ifs);
+        Util::ReadBytes(bufferEmpty, ifs);
+        Util::ReadBytes(sampleAddress, ifs);
+        Util::ReadBytes(readAddress, ifs);
+        Util::ReadBytes(sampleSize, ifs);
+        Util::ReadBytes(bytesRemaining, ifs);
+        Util::ReadBytes(bitsRemaining, ifs);
+        Util::ReadBytes(cycleCount, ifs);
+        Util::ReadBytes(sampleRate, ifs);
+        Util::ReadBytes(sampleBuffer, ifs);
+        Util::ReadBytes(shiftRegister, ifs);
+        Util::ReadBytes(outputLevel, ifs);
+    }
 };
 
 struct ApuEnvelop
@@ -118,6 +223,28 @@ struct ApuEnvelop
     bool start;
     bool haltCounter;
     bool constantVolume;
+
+    void SaveState(std::ofstream& ofs)
+    {
+        Util::WriteBytes(envelopDivider, ofs);
+        Util::WriteBytes(dividerCounter, ofs);
+        Util::WriteBytes(setVolume, ofs);
+        Util::WriteBytes(envelopVolume, ofs);
+        Util::WriteBytes(start, ofs);
+        Util::WriteBytes(haltCounter, ofs);
+        Util::WriteBytes(constantVolume, ofs);
+    }
+
+    void LoadState(std::ifstream& ifs)
+    {
+        Util::ReadBytes(envelopDivider, ifs);
+        Util::ReadBytes(dividerCounter, ifs);
+        Util::ReadBytes(setVolume, ifs);
+        Util::ReadBytes(envelopVolume, ifs);
+        Util::ReadBytes(start, ifs);
+        Util::ReadBytes(haltCounter, ifs);
+        Util::ReadBytes(constantVolume, ifs);
+    }
 };
 
 // APU implementation
@@ -330,6 +457,62 @@ void Apu::Step(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
 
     // Advance to the next frame
     AdvanceFrameCounter(result);
+}
+
+void Apu::SaveState(std::ofstream& ofs)
+{
+    PauseAudio();
+
+    Util::WriteBytes(_frameCounterMode1, ofs);
+    Util::WriteBytes(_frameInterrupt, ofs);
+    Util::WriteBytes(_frameInterruptInhibit, ofs);
+    Util::WriteBytes(_frameCycleCount, ofs);
+    Util::WriteBytes(_frameCycleResetCounter, ofs);
+    Util::WriteBytes(_subframeCount, ofs);
+    Util::WriteBytes(_nextSubframeCycleCount, ofs);
+    Util::WriteBytes(_lastTriangleFreq, ofs);
+
+    _pulseState1->SaveState(ofs);
+    _pulseState2->SaveState(ofs);
+    _triangleState->SaveState(ofs);
+    _dmcState->SaveState(ofs);
+    _pulseEnvelop1->SaveState(ofs);
+    _pulseEnvelop2->SaveState(ofs);
+
+    UnpauseAudio();
+}
+
+void Apu::LoadState(std::ifstream& ifs)
+{
+    PauseAudio();
+
+    Util::ReadBytes(_frameCounterMode1, ifs);
+    Util::ReadBytes(_frameInterrupt, ifs);
+    Util::ReadBytes(_frameInterruptInhibit, ifs);
+    Util::ReadBytes(_frameCycleCount, ifs);
+    Util::ReadBytes(_frameCycleResetCounter, ifs);
+    Util::ReadBytes(_subframeCount, ifs);
+    Util::ReadBytes(_nextSubframeCycleCount, ifs);
+    Util::ReadBytes(_lastTriangleFreq, ifs);
+
+    _pulseState1->LoadState(ifs);
+    _pulseState2->LoadState(ifs);
+    _triangleState->LoadState(ifs);
+    _dmcState->LoadState(ifs);
+    _pulseEnvelop1->LoadState(ifs);
+    _pulseEnvelop2->LoadState(ifs);
+
+    // Force frame reset and Send loaded settings to audio engine
+    QueueAudioEvent(NESAUDIO_FRAME_RESET, 0);
+    QueueAudioEvent(NESAUDIO_DMC_VALUE, _dmcState->outputLevel);
+    QueueAudioEvent(NESAUDIO_PULSE1_DUTYCYCLE, _pulseState1->dutyCycleSetting);
+    QueueAudioEvent(NESAUDIO_PULSE2_DUTYCYCLE, _pulseState2->dutyCycleSetting);
+    UpdatePulse(_pulseState1);
+    UpdatePulse(_pulseState2);
+    UpdateTriangle();
+    UpdateNoise();
+
+    UnpauseAudio();
 }
 
 u8 Apu::ReadApuStatus()

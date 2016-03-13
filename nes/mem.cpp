@@ -91,7 +91,7 @@ void MemoryMap::SaveState(std::ofstream& ofs)
 {
     ofs.write((char*)_ram, sizeof(_ram));
     _ppu.SaveState(ofs);
-    //_apu.Save();
+    _apu.SaveState(ofs);
     _mapper->SaveState(ofs);
 }
 
@@ -99,6 +99,6 @@ void MemoryMap::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)_ram, sizeof(_ram));
     _ppu.LoadState(ifs);
-    //_apu.Load();
+    _apu.LoadState(ifs);
     _mapper->LoadState(ifs);
 }
