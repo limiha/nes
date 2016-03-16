@@ -85,7 +85,7 @@ struct CpuRegs
 class Cpu : public IMem
 {
 public:
-    Cpu(IMem& mem);
+    Cpu(std::shared_ptr<IMem>);
     ~Cpu();
 
     // IMem
@@ -111,7 +111,7 @@ public:
 
 private:
     CpuRegs _regs;
-    IMem& _mem;
+    std::shared_ptr<IMem> _mem;
 
     u8 _op;
     u32 _dmaBytesRemaining;

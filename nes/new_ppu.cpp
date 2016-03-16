@@ -3,9 +3,8 @@
 #include "sdlGfx.h"
 #include "rom.h"
 
-Ppu::Ppu(std::shared_ptr<IMapper> mapper, std::shared_ptr<IGfx> gfx)
-    : _gfx(gfx)
-    , _mapper(mapper)
+Ppu::Ppu(std::shared_ptr<IMapper> mapper)
+    : _mapper(mapper)
     , _vram(_mapper)
     , _cycle(0)
     , _scanline(241)
@@ -25,7 +24,6 @@ Ppu::Ppu(std::shared_ptr<IMapper> mapper, std::shared_ptr<IGfx> gfx)
     , _showBackground(false)
     , _showSprites(false)
 {
-    ZeroMemory(_screen, sizeof(_screen));
 }
 
 Ppu::~Ppu()
@@ -361,7 +359,7 @@ u8 Ppu::ScrollY()
     return y;// +offset;
 }
 
-void Ppu::Step(PpuStepResult& result)
+void Ppu::Step(PpuStepResult& result, u8 screen[])
 {
     if (_scanline >= 0 && _scanline <= 239)
     {
@@ -378,7 +376,7 @@ void Ppu::Step(PpuStepResult& result)
         }
         if (_cycle >=1 && _cycle <= 256)
         {
-            DrawScanline(_cycle - 1);
+            DrawScanline(_cycle - 1, screen);
             if (_cycle == 256 && IsRendering())
             {
                 IncVertV();
@@ -407,10 +405,11 @@ void Ppu::Step(PpuStepResult& result)
         if (_scanline == 241 && _cycle == 1)
         {
             _ppuStatus.SetInVBlank(true);
+            result.VBlank = true;
 
             if (_doVBlankNmi)
             {
-                result.VBlankNmi = true;
+                result.WantNmi = true;
             }
         }
 
@@ -466,44 +465,21 @@ void Ppu::Step(PpuStepResult& result)
         if (_scanline == 262)
         {
             DrawFrame();
-            ZeroMemory(_screen, sizeof(_screen));
             _scanline = 0;
             _frameOdd ^= true;
         }
     }
 }
 
-void Ppu::Step(u8 cycles, PpuStepResult& result)
+void Ppu::Step(u8 cycles, u8 screen[], PpuStepResult& result)
 {
     for (u8 i = 0; i < cycles; i++)
     {
-        Step(result);
+        Step(result, screen);
     }
 }
 
-void Ppu::DrawFrame()
-{
-#if defined(RENDER_NAMETABLE)
-    u8 nt_screen[256 * 240 * 3];
-    for (int i = 0; i < 4; i++)
-    {
-        RenderNameTable(nt_screen, i);
-        _gfx->BlitNameTable(nt_screen, i);
-    }
-#endif
-#if defined(RENDER_PATTERNTABLE)
-    u8 pt_left[8 * 8 * 32 * 8 * 3];
-    u8 pt_right[8 * 8 * 32 * 8 * 3];
-    RenderPatternTable(0x0000, pt_left);
-    RenderPatternTable(0x1000, pt_right);
-    _gfx->BlitPatternTable(pt_left, pt_right);
-
-#endif
-
-    _gfx->Blit(_screen);
-}
-
-void Ppu::DrawScanline(u8 x)
+void Ppu::DrawScanline(u8 x, u8 screen[])
 {
     SpritePriority spritePriority = SpritePriority::Below;
     rgb pixel;
@@ -547,7 +523,9 @@ void Ppu::DrawScanline(u8 x)
         pixel.SetColor(backgroundPaletteIndex);
     }
 
-    PutPixel(x, _scanline, pixel);
+    screen[(_scanline * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
+    screen[(_scanline * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
+    screen[(_scanline * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
 void Ppu::ProcessSprites()
@@ -785,13 +763,6 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, Sp
     }
 
     return 0;
-}
-
-void Ppu::PutPixel(u16 x, u16 y, rgb& pixel)
-{
-    _screen[(y * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
-    _screen[(y * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
-    _screen[(y * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
 }
 
 ///

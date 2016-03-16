@@ -10,7 +10,7 @@
 /*
     MemoryMap
 */
-MemoryMap::MemoryMap(Ppu& ppu, Apu& apu, Input& input, std::shared_ptr<IMapper> mapper)
+MemoryMap::MemoryMap(std::shared_ptr<Ppu> ppu, std::shared_ptr<Apu> apu, std::shared_ptr<Input> input, std::shared_ptr<IMapper> mapper)
     : _ppu(ppu)
     , _apu(apu)
     , _input(input)
@@ -33,15 +33,15 @@ u8 MemoryMap::loadb(u16 addr)
     }
     else if (addr < 0x4000)
     {
-        return _ppu.loadb(addr);
+        return _ppu->loadb(addr);
     }
     else if (addr < 0x4016)
     {
-        return _apu.loadb(addr);
+        return _apu->loadb(addr);
     }
     else if (addr < 0x4020)
     {
-        return _input.loadb(addr);
+        return _input->loadb(addr);
     }
     else if (addr < 0x6000)
     {
@@ -63,18 +63,18 @@ void MemoryMap::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x4000)
     {
-        _ppu.storeb(addr, val);
+        _ppu->storeb(addr, val);
     }
     else if (addr < 0x4016)
     {
-        _apu.storeb(addr, val);
+        _apu->storeb(addr, val);
     }
     else if (addr < 0x4020)
     {
         if (addr == 0x4017)
-            _apu.storeb(addr, val);
+            _apu->storeb(addr, val);
         else
-            _input.storeb(addr, val);
+            _input->storeb(addr, val);
     }
     else if (addr < 0x6000)
     {
@@ -90,15 +90,15 @@ void MemoryMap::storeb(u16 addr, u8 val)
 void MemoryMap::SaveState(std::ofstream& ofs)
 {
     ofs.write((char*)_ram, sizeof(_ram));
-    _ppu.SaveState(ofs);
-    _apu.SaveState(ofs);
+    _ppu->SaveState(ofs);
+    _apu->SaveState(ofs);
     _mapper->SaveState(ofs);
 }
 
 void MemoryMap::LoadState(std::ifstream& ifs)
 {
     ifs.read((char*)_ram, sizeof(_ram));
-    _ppu.LoadState(ifs);
-    _apu.LoadState(ifs);
+    _ppu->LoadState(ifs);
+    _apu->LoadState(ifs);
     _mapper->LoadState(ifs);
 }

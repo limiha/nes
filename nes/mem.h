@@ -9,7 +9,7 @@ class Rom;
 class MemoryMap : public IMem
 {
 public:
-    MemoryMap(Ppu& ppu, Apu& apu, Input& input, std::shared_ptr<IMapper>);
+    MemoryMap(std::shared_ptr<Ppu>, std::shared_ptr<Apu>, std::shared_ptr<Input>, std::shared_ptr<IMapper>);
     ~MemoryMap();
 
     u8 loadb(u16 addr);
@@ -19,8 +19,8 @@ public:
     void LoadState(std::ifstream& ifs);
 private:
     u8 _ram[0x800];
-    Ppu& _ppu;
-    Apu& _apu;
-    Input& _input;
+    std::shared_ptr<Ppu> _ppu;
+    std::shared_ptr<Apu> _apu;
+    std::shared_ptr<Input> _input;
     std::shared_ptr<IMapper> _mapper;
 };

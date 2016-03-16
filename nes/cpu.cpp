@@ -8,7 +8,7 @@
 using namespace std;
 
 Cpu::Cpu(
-    IMem& mem
+    std::shared_ptr<IMem> mem
     )
     : _mem(mem)
     , Cycles(0)
@@ -23,7 +23,7 @@ Cpu::~Cpu()
 // IMem
 u8 Cpu::loadb(u16 addr)
 {
-    return _mem.loadb(addr);
+    return _mem->loadb(addr);
 }
 
 void Cpu::storeb(u16 addr, u8 val)
@@ -34,7 +34,7 @@ void Cpu::storeb(u16 addr, u8 val)
     }
     else
     {
-        _mem.storeb(addr, val);
+        _mem->storeb(addr, val);
     }
 }
 
@@ -47,7 +47,7 @@ void Cpu::SaveState(std::ofstream& ofs)
     Util::WriteBytes(_regs.P, ofs);
     Util::WriteBytes(_regs.S, ofs);
     Util::WriteBytes(_regs.PC, ofs);
-    _mem.SaveState(ofs);
+    _mem->SaveState(ofs);
 }
 
 void Cpu::LoadState(std::ifstream& ifs)
@@ -58,7 +58,7 @@ void Cpu::LoadState(std::ifstream& ifs)
     Util::ReadBytes(_regs.P, ifs);
     Util::ReadBytes(_regs.S, ifs);
     Util::ReadBytes(_regs.PC, ifs);
-    _mem.LoadState(ifs);
+    _mem->LoadState(ifs);
 }
 
 void Cpu::Dma(u8 val)
