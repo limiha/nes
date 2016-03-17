@@ -8,17 +8,15 @@
 #define TRIANGLE_WAVEFORM_STEPS 32
 
 // The number of CPU cycles per sub-frame in frame counter Mode 0
-const int SubFrameCountMode0 = 5;
-const int SubFrameCpuCycles_Mode0[SubFrameCountMode0] =
+const int SubFrameCpuCycles_Mode0[] =
 {
-    7457, 14912, 22371, 29828, 29829,
+    7459, 7455, 7457, 7456, 0, 0, 7456
 };
 
 // The number of CPU cycles per sub-frame in frame counter Mode 1
-const int SubFrameCountMode1 = 4;
-const int SubFrameCpuCycles_Mode1[SubFrameCountMode1] =
+const int SubFrameCpuCycles_Mode1[] =
 {
-    7457, 14912, 22371, 37281
+    1, 7457, 7455, 14913, 7453
 };
 
 const int LengthCounterSetValues[32] =
@@ -254,9 +252,8 @@ Apu::Apu(bool isPal)
     , _frameInterruptInhibit(false)
     , _frameCounterMode1(false)
     , _frameCycleCount(0)
-    , _frameCycleResetCounter(0)
     , _subframeCount(0)
-    , _nextSubframeCycleCount(0)
+    , _nextSubframeTimer(0)
     , _isPal(isPal)
     , _lastTriangleFreq(0)
 {
@@ -287,7 +284,6 @@ Apu::Apu(bool isPal)
     _pulseState2->volumeSetting = NESAUDIO_PULSE2_VOLUME;
     _pulseState1->phaseResetSetting = NESAUDIO_PULSE1_PHASE_RESET;
     _pulseState2->phaseResetSetting = NESAUDIO_PULSE2_PHASE_RESET;
-    _dmcState->bufferEmpty = true;
 }
 
 Apu::~Apu()
@@ -425,38 +421,27 @@ void Apu::storeb(u16 addr, u8 val)
 
 void Apu::Step(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
 {
+    u32 totalStealCycles = 0;
+    for (u32 count = 0; count < cycles; count++)
+    {
+        u32 stealCycles = 0;
+        Step(isDmaRunning, result, stealCycles);
+        totalStealCycles += stealCycles;
+    }
+
+    cycles += totalStealCycles;
+}
+
+void Apu::Step(bool isDmaRunning, ApuStepResult& result, u32 &stealCycleCount)
+{
     if (_dmcState->enabled)
-        StepDmc(cycles, isDmaRunning, result);
+        StepDmc(isDmaRunning, result, stealCycleCount);
 
-    if (_frameCycleResetCounter != 0)
-    {
-        // Frame cycle counter reset is pending
-        _frameCycleResetCounter -= cycles;
-        if (_frameCycleResetCounter <= 0)
-        {
-            ResetFrameCounter();
-
-            _frameCycleCount = -_frameCycleResetCounter;
-            _frameCycleResetCounter = 0;
-        }
-        else
-        {
-            _frameCycleCount += cycles;
-        }
-    }
+    _frameCycleCount++;
+    if (_nextSubframeTimer == 0)
+        AdvanceFrameCounter(result);
     else
-    {
-        _frameCycleCount += cycles;
-    }
-    
-    if (_frameCycleCount < _nextSubframeCycleCount)
-    {
-        // Don't need to move to the next internal step yet
-        return;
-    }
-
-    // Advance to the next frame
-    AdvanceFrameCounter(result);
+        _nextSubframeTimer--;
 }
 
 void Apu::SaveState(std::ofstream& ofs)
@@ -467,9 +452,8 @@ void Apu::SaveState(std::ofstream& ofs)
     Util::WriteBytes(_frameInterrupt, ofs);
     Util::WriteBytes(_frameInterruptInhibit, ofs);
     Util::WriteBytes(_frameCycleCount, ofs);
-    Util::WriteBytes(_frameCycleResetCounter, ofs);
     Util::WriteBytes(_subframeCount, ofs);
-    Util::WriteBytes(_nextSubframeCycleCount, ofs);
+    Util::WriteBytes(_nextSubframeTimer, ofs);
     Util::WriteBytes(_lastTriangleFreq, ofs);
 
     _pulseState1->SaveState(ofs);
@@ -490,9 +474,8 @@ void Apu::LoadState(std::ifstream& ifs)
     Util::ReadBytes(_frameInterrupt, ifs);
     Util::ReadBytes(_frameInterruptInhibit, ifs);
     Util::ReadBytes(_frameCycleCount, ifs);
-    Util::ReadBytes(_frameCycleResetCounter, ifs);
     Util::ReadBytes(_subframeCount, ifs);
-    Util::ReadBytes(_nextSubframeCycleCount, ifs);
+    Util::ReadBytes(_nextSubframeTimer, ifs);
     Util::ReadBytes(_lastTriangleFreq, ifs);
 
     _pulseState1->LoadState(ifs);
@@ -548,20 +531,25 @@ void Apu::WriteApuStatus(u8 newStatus)
     _noiseState->lengthDisabled = (newStatus & 0x08) == 0;
     bool enableDmc = (newStatus & 0x10) != 0;
 
-    if (enableDmc != _dmcState->enabled)
+    // We are enabling or disabling the DMC
+    if (enableDmc)
     {
-        if (enableDmc)
+        if (_dmcState->bytesRemaining == 0)
         {
             _dmcState->readAddress = _dmcState->sampleAddress;
             _dmcState->bytesRemaining = _dmcState->sampleSize;
-            _dmcState->enabled = _dmcState->sampleRate > 0 && _dmcState->bytesRemaining > 0;
+            _dmcState->bufferEmpty = true;
         }
-        else
-        {
-            _dmcState->enabled = false;
-            _dmcState->bytesRemaining = 0;
-        }
+
+        _dmcState->enabled = _dmcState->sampleRate > 0 && _dmcState->bytesRemaining > 0;
     }
+    else
+    {
+        _dmcState->enabled = false;
+        _dmcState->bytesRemaining = 0;
+    }
+
+    _dmcState->interrupt = false;
 
     if (_pulseState1->lengthDisabled)
     {
@@ -746,30 +734,23 @@ void Apu::WriteApuFrameCounter(u8 val)
     }
 
     _frameCounterMode1 = (val & 0x80) != 0;
-    if (_frameCounterMode1)
-    {
-        // Setting the frame counter mode 1 bit immediately clocks the half frame units
-        DoHalfFrameStep();
-    }
+    _subframeCount = 0;
+    _nextSubframeTimer = _frameCounterMode1 ? SubFrameCpuCycles_Mode1[0] : SubFrameCpuCycles_Mode0[0];
 
-    // We need to reset the frame counter, but it doesn't take effect immediately so set
-    // a count-down timer for reseting the frame counter.
-    // Count-down time is set to:
-    //     3 clock cycles if the write occured on an even clock cycle
-    //     4 clock cycles if the write occured on an odd clock cycle
-    _frameCycleResetCounter = 3 + (_frameCycleCount & 1);
+    // Add one clock cycle to time if cycle count is odd
+    if ((_frameCycleCount & 1) == 0)
+        _nextSubframeTimer++;
+
+    ResetFrameCounter();
 }
 
 void Apu::ResetFrameCounter()
 {
     // Tell the audio engine
     QueueAudioEvent(NESAUDIO_FRAME_RESET, 0);
-
-    _subframeCount = 0;
-
-    // Get the next cycle number to advance on.
-    // Doesn't matter which mode we use because the first 3 indices are the same.
-    _nextSubframeCycleCount = SubFrameCpuCycles_Mode0[0];
+    
+    // Reset our CPU cycle counter, but remember even/odd cycle number
+    _frameCycleCount &= 1;
 }
 
 void Apu::AdvanceFrameCounter(ApuStepResult& result)
@@ -778,50 +759,67 @@ void Apu::AdvanceFrameCounter(ApuStepResult& result)
 
     // Determine when we need to advance to the next frame
     if (_frameCounterMode1)
-        _nextSubframeCycleCount = SubFrameCpuCycles_Mode1[_subframeCount];
+        _nextSubframeTimer = SubFrameCpuCycles_Mode1[_subframeCount];
     else
-        _nextSubframeCycleCount = SubFrameCpuCycles_Mode0[_subframeCount];
+        _nextSubframeTimer = SubFrameCpuCycles_Mode0[_subframeCount];
 
     // The first 3 frames are the same for both mode 0 and 1
-    switch (_subframeCount)
-    {
-    case 1:
-        DoQuarterFrameStep();
-        return;
-    case 2:
-        DoHalfFrameStep();
-        return;
-    case 3:
-        DoQuarterFrameStep();
-        return;
-    }
 
     if (!_frameCounterMode1)
     {
         // Mode 0
-
-        if (!_frameInterruptInhibit)
+        switch (_subframeCount)
         {
-            // Generate IRQ
-            if (!_frameInterrupt)
-                result.Irq = true;
+        case 1:
+            DoQuarterFrameStep();
+            break;
+        case 2:
+            DoHalfFrameStep();
+            break;
+        case 3:
+            DoQuarterFrameStep();
+            break;
+        case 5:
+            DoHalfFrameStep();
+            // Intentional fall through
+        case 4:
+        case 6:
+            if (!_frameInterruptInhibit)
+            {
+                // Generate IRQ
+                if (!_frameInterrupt)
+                    result.Irq = true;
 
-            _frameInterrupt = true;
+                _frameInterrupt = true;
+            }
+
+            if (_subframeCount == 6)
+            {
+                _subframeCount = 0;
+                ResetFrameCounter();
+            }
+            break;
         }
-
-        DoHalfFrameStep();
-
-        ResetFrameCounter();
-        _frameCycleCount -= SubFrameCpuCycles_Mode0[SubFrameCountMode0 - 2];
     }
     else
     {
         // Mode 1
-
-        DoHalfFrameStep();
-
-        ResetFrameCounter();
-        _frameCycleCount -= SubFrameCpuCycles_Mode1[SubFrameCountMode1 - 1];
+        switch (_subframeCount)
+        {
+        case 1:
+            DoHalfFrameStep();
+        case 2:
+            DoQuarterFrameStep();
+            break;
+        case 3:
+            DoHalfFrameStep();
+            break;
+        case 4:
+            DoQuarterFrameStep();
+            _subframeCount = 0;
+            ResetFrameCounter();
+            break;
+        }
     }
 }
 
@@ -862,55 +860,19 @@ void Apu::DoHalfFrameStep()
     StepSweep(_pulseState2);
 }
 
-void Apu::StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
+void Apu::StepDmc(bool isDmaRunning, ApuStepResult& result, u32& stealCycleCount)
 {
-    _dmcState->cycleCount += cycles;
+    _dmcState->cycleCount++;
     if (_dmcState->cycleCount < _dmcState->sampleRate)
     {
         // DMC doesn't have any work to do yet.
         return;
     }
 
-    _dmcState->cycleCount -= _dmcState->sampleRate;
-
+    _dmcState->cycleCount = 0;
     if (_dmcState->bufferEmpty)
     {
-        if (_dmcState->bytesRemaining == 0)
-        {
-            if (_dmcState->loop)
-            {
-                // Loop back around again
-                _dmcState->readAddress = _dmcState->sampleAddress;
-                _dmcState->bytesRemaining = _dmcState->sampleSize;
-            }
-            else if (_dmcState->interruptEnabled)
-            {
-                // Looping disabled.  Set IRQ flag.
-                _dmcState->interrupt = true;
-                result.Irq = true;
-            }
-        }
-        
-        if (_dmcState->bytesRemaining != 0)
-        {
-            // Read the next sample into the buffer.
-            _dmcState->sampleBuffer = _cpuMemMap->loadb(_dmcState->readAddress);
-
-            _dmcState->readAddress++;
-            if (_dmcState->readAddress == 0)
-                _dmcState->readAddress = 0x8000; // Read address wraps from $FFFF to $8000
-
-            _dmcState->bytesRemaining--;
-            _dmcState->bufferEmpty = false;
-
-            // The CPU is paused while the DMC reads memory.
-            // We need to account for the time taken by incrementing the cycle count
-            // TODO: Accurate cycle counting when CPU is executing a write instruction
-            if (isDmaRunning)
-                cycles += 2; // Read takes 2 clock cycles if DMA is running
-            else
-                cycles += 4; // Read takes 4 clock cycles unless CPU is doing a write instruction - then 3 (TODO)
-        }
+        LoadDmcSampleBuffer(isDmaRunning, result, stealCycleCount);
     }
 
     if (_dmcState->bitsRemaining == 0 && !_dmcState->bufferEmpty)
@@ -918,6 +880,8 @@ void Apu::StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
         _dmcState->shiftRegister = _dmcState->sampleBuffer;
         _dmcState->bufferEmpty = true;
         _dmcState->bitsRemaining = 8;
+
+        LoadDmcSampleBuffer(isDmaRunning, result, stealCycleCount);
     }
     
     if (_dmcState->bitsRemaining != 0)
@@ -939,6 +903,45 @@ void Apu::StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result)
             _dmcState->outputLevel = outputLevel;
             QueueAudioEvent(NESAUDIO_DMC_VALUE, outputLevel);
         }
+    }
+}
+
+void Apu::LoadDmcSampleBuffer(bool isDmaRunning, ApuStepResult& result, u32 &stealCycleCount)
+{
+    if (_dmcState->bytesRemaining != 0)
+    {
+        // Read the next sample into the buffer.
+        _dmcState->sampleBuffer = _cpuMemMap->loadb(_dmcState->readAddress);
+        _dmcState->readAddress++;
+        if (_dmcState->readAddress == 0)
+            _dmcState->readAddress = 0x8000; // Read address wraps from $FFFF to $8000
+
+        _dmcState->bytesRemaining--;
+        if (_dmcState->bytesRemaining == 0)
+        {
+            if (_dmcState->loop)
+            {
+                // Loop back around again
+                _dmcState->readAddress = _dmcState->sampleAddress;
+                _dmcState->bytesRemaining = _dmcState->sampleSize;
+            }
+            else if (_dmcState->interruptEnabled)
+            {
+                // Looping disabled.  Set IRQ flag.
+                _dmcState->interrupt = true;
+                result.Irq = true;
+            }
+        }
+
+        _dmcState->bufferEmpty = false;
+
+        // The CPU is paused while the DMC reads memory.
+        // We need to account for the time taken by incrementing the cycle count
+        // TODO: Accurate cycle counting when CPU is executing a write instruction
+        if (isDmaRunning)
+            stealCycleCount = 2; // Read takes 2 clock cycles if DMA is running
+        else
+            stealCycleCount = 4; // Read takes 4 clock cycles unless CPU is doing a write instruction - then 3 (TODO)
     }
 }
 

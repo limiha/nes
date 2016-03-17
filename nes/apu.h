@@ -36,6 +36,7 @@ public:
     virtual void storeb(u16 addr, u8 val);
 
     void Step(u32 &cycles, bool isDmaRunning, ApuStepResult& result);
+    void Step(bool isDmaRunning, ApuStepResult& result, u32 &stealCycleCount);
 
     // SaveState / LoadState
     void SaveState(std::ofstream& ofs);
@@ -72,7 +73,8 @@ private:
     void DoQuarterFrameStep();
     void DoHalfFrameStep();
     
-    void StepDmc(u32 &cycles, bool isDmaRunning, ApuStepResult& result);
+    void StepDmc(bool isDmaRunning, ApuStepResult& result, u32 &stealCycleCount);
+    void LoadDmcSampleBuffer(bool isDmaRunning, ApuStepResult& result, u32 &stealCycleCount);
     void StepSweep(ApuPulseState* state);
     void StepPulseLengthCounter(ApuEnvelop* envelop, ApuPulseState* state);
     void StepTriangleLengthCounter();
@@ -93,9 +95,8 @@ private:
     bool _frameInterrupt;
     bool _frameInterruptInhibit;
     int _frameCycleCount;
-    int _frameCycleResetCounter;
     int _subframeCount;
-    int _nextSubframeCycleCount;
+    int _nextSubframeTimer;
     ApuPulseState* _pulseState1;
     ApuPulseState* _pulseState2;
     ApuTriangleState* _triangleState;
