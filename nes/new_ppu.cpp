@@ -464,7 +464,6 @@ void Ppu::Step(PpuStepResult& result, u8 screen[])
         _scanline++;
         if (_scanline == 262)
         {
-            DrawFrame();
             _scanline = 0;
             _frameOdd ^= true;
         }
