@@ -763,8 +763,6 @@ void Apu::AdvanceFrameCounter(ApuStepResult& result)
     else
         _nextSubframeTimer = SubFrameCpuCycles_Mode0[_subframeCount];
 
-    // The first 3 frames are the same for both mode 0 and 1
-
     if (!_frameCounterMode1)
     {
         // Mode 0
