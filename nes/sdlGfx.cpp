@@ -19,7 +19,7 @@ u8 grid_color = 0xff;
 SdlGfx::SdlGfx(u32 scale)
     : _frameCounter(0)
 {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
+    SDL_InitSubSystem(SDL_INIT_VIDEO);
 
 #if defined(RENDER_NAMETABLE)
     for (int i = 0; i < 4; i++)
@@ -123,7 +123,7 @@ SdlGfx::~SdlGfx()
     SDL_DestroyRenderer(_renderer);
     SDL_DestroyWindow(_window);
 
-    SDL_Quit();
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 #if defined(RENDER_GRID)

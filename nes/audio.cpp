@@ -48,11 +48,14 @@ AudioEngine::AudioEngine()
     memset(&_pulseChannel2, 0, sizeof(WavetableChannel));
     memset(&_triangleChannel, 0, sizeof(WavetableChannel));
     memset(&_wavetables, 0, sizeof(_wavetables));
+
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
 }
 
 AudioEngine::~AudioEngine()
 {
     StopAudio();
+    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 void AudioEngine::StartAudio(

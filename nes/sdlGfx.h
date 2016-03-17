@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IGfx.h"
+
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;

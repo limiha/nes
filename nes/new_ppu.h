@@ -128,7 +128,8 @@ private:
 
 struct PpuStepResult
 {
-    bool VBlankNmi;
+    bool VBlank;
+    bool WantNmi;
     bool WantIrq;
 
     PpuStepResult()
@@ -138,7 +139,8 @@ struct PpuStepResult
 
     void Reset()
     {
-        VBlankNmi = false;
+        VBlank = false;
+        WantNmi = false;
         WantIrq = false;
     }
 };
@@ -173,7 +175,7 @@ struct PpuStatus
 class Ppu : public IMem
 {
 public:
-    Ppu(std::shared_ptr<IMapper> mapper, std::shared_ptr<IGfx> gfx);
+    Ppu(std::shared_ptr<IMapper> mapper);
     ~Ppu();
 
 public:
@@ -186,7 +188,8 @@ public:
     void LoadState(std::ifstream& ifs);
 
 public:
-    void Step(u8 cycles, PpuStepResult& result);
+    void Step(PpuStepResult& result, u8 screen[]);
+    void Step(u8 cycles, u8 screen[], PpuStepResult& result);
 
 #if defined(RENDER_NAMETABLE)
     void RenderNameTable(u8 screen[], int i);
@@ -196,9 +199,6 @@ public:
 #endif
 
 private:
-    void DrawFrame();
-    void Step(PpuStepResult& resutl);
-
     u8 Read2002();
     u8 Read2007();
 
@@ -218,18 +218,15 @@ private:
     u8 ScrollX();
     u8 ScrollY();
 
-    void DrawScanline(u8 x);
+    // Rendering
+    void DrawScanline(u8 x, u8 screen[]);
     bool GetBackgroundColor(u8& paletteIndex);
     bool GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, SpritePriority& priority);
     void ProcessSprites();
-    void PutPixel(u16 x, u16 y, rgb& pixel);
 
 private:
-    std::shared_ptr<IGfx> _gfx;
     std::shared_ptr<IMapper> _mapper;
     VRam _vram;
-
-    u8 _screen[256 * 240 * 3];
 
     // Sprites
     Oam _oam;

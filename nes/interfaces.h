@@ -75,18 +75,3 @@ public:
 protected:
     std::shared_ptr<Rom> _rom;
 };
-
-// Graphics interface
-class IGfx
-{
-public: 
-    virtual void Blit(u8 screen[]) = 0;
-
-    //Optional
-#if defined(RENDER_NAMETABLE)
-    virtual void BlitNameTable(u8 screen[], int i) = 0;
-#endif
-#if defined(RENDER_PATTERNTABLE)
-    virtual void BlitPatternTable(u8 left[], u8 right[]) = 0;
-#endif
-};

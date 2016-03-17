@@ -11,12 +11,23 @@
 #include "input.h"
 #include "rom.h"
 #include "apu.h"
-#include "sdlGfx.h"
 #include "mapper.h"
+#include "IGfx.h"
+#include "IInput.h"
 
-Nes::Nes(std::shared_ptr<Rom> rom)
+Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper)
     : _rom(rom)
+    , _mapper(mapper)
 {
+    _ppu = std::make_shared<Ppu>(_mapper);
+    _apu = std::make_shared<Apu>(false);
+    _input = std::make_shared<Input>();
+    _mem = std::make_shared<MemoryMap>(_ppu, _apu, _input, _mapper);
+    _cpu = std::make_unique<Cpu>(_mem);
+
+    // TODO: Move these to an init method
+    _cpu->Reset();
+    _apu->StartAudio(_mem.get(), 44100); 
 }
 
 Nes::~Nes()
@@ -29,85 +40,76 @@ std::unique_ptr<Nes> Nes::Create(const char* romPath)
     if (!rom->Load(romPath))
         return nullptr;
 
-    return std::make_unique<Nes>(rom);
+    return Nes::Create(rom);
 }
 
 std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom)
 {
-    return std::make_unique<Nes>(rom);
-}
-
-void Nes::Run()
-{
-    std::shared_ptr<SdlGfx> gfx = std::make_shared<SdlGfx>(3);
-
-    std::shared_ptr<IMapper> mapper = IMapper::CreateMapper(_rom);
+    auto mapper = IMapper::CreateMapper(rom);
     if (mapper == nullptr)
     {
-        return;
+        return nullptr;
     }
 
-    Ppu ppu(mapper, std::dynamic_pointer_cast<IGfx>(gfx));
-    Apu apu(false /* isPal */);
-    Input input;
-    MemoryMap mem(ppu, apu, input, mapper);
-    _cpu = std::make_unique<Cpu>(mem);
+    return std::make_unique<Nes>(rom, mapper);
+}
 
-    _cpu->Reset();
-    
-    apu.StartAudio(&mem, 44100);
+void Nes::DoFrame(const JoypadState& joypadState, u8 screen[])
+{
+    _input->State.Set(joypadState);
 
-    InputResult inputResult;
-    ApuStepResult apuResult;
     PpuStepResult ppuResult;
-    bool wantSaveState = false;
-    bool wantLoadState = false;
-    for (;;)
+    ApuStepResult apuResult;
+    do
     {
-        apuResult.Reset();
         ppuResult.Reset();
-
-         inputResult = input.CheckInput();
-         if (inputResult == InputResult::SaveState)
-         {
-             wantSaveState = true;
-         }
-         else if (inputResult == InputResult::LoadState)
-         {
-             wantLoadState = true;
-         }
-         else if (inputResult == InputResult::Quit)
-         {
-             break;
-         }
+        apuResult.Reset();
 
         _cpu->Step();
-        apu.Step(_cpu->Cycles, _cpu->IsDmaRunning(), apuResult);
-        ppu.Step(_cpu->Cycles * 3, ppuResult);
-
+        _apu->Step(_cpu->Cycles, _cpu->IsDmaRunning(), apuResult);
+        _ppu->Step(_cpu->Cycles * 3, screen, ppuResult);
+        
         _cpu->Cycles = 0;
-
-        if (ppuResult.VBlankNmi)
+        
+        if (ppuResult.WantNmi)
         {
             _cpu->Nmi();
-            if (wantSaveState)
-            {
-                SaveState();
-                wantSaveState = false;
-            }
-            if (wantLoadState)
-            {
-                LoadState();
-                wantLoadState = false;
-            }
         }
         else if (apuResult.Irq || ppuResult.WantIrq)
         {
             _cpu->Irq();
         }
+    } while (!ppuResult.VBlank);
+}
+
+void Nes::Run(IGfx* gfx, IInput* input)
+{
+    u8 screen[256 * 240 * 3];
+    for (;;)
+    {
+        ZeroMemory(screen, sizeof(screen));
+
+        // TODO: get joypadState
+        InputResult result = input->CheckInput(_input->State);
+
+        if (result == InputResult::SaveState)
+        {
+            SaveState();
+        }
+        else if (result == InputResult::LoadState)
+        {
+            LoadState();
+        }
+        else if (result == InputResult::Quit)
+        {
+            break;
+        }
+
+        DoFrame(_input->State, screen);
+        gfx->Blit(screen);
     }
 
-    apu.StopAudio();
+    _apu->StopAudio();
 }
 
 void Nes::SaveState()
