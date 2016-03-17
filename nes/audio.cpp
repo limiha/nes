@@ -555,8 +555,18 @@ void AudioEngine::UpdateTriangleFrequency(u32 newFreq)
         else
             diff = newFreq - oldFreq;
 
-        _triangleChannel.rampUp = false;
-        _triangleChannel.rampDown = true;
+        if (diff > WAVETABLE_SAMPLES)
+        {
+            // Lange frequency change - do the ramp down/up
+            _triangleChannel.rampUp = false;
+            _triangleChannel.rampDown = true;
+        }
+        else if (!_triangleChannel.rampDown)
+        {
+            // Small change and we are not already ramping down - set new frequency now
+            _triangleChannel.frequency = newFreq;
+            UpdateWavetableRow(_triangleChannel);
+        }
     }
 }
 
