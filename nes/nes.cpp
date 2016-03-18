@@ -87,7 +87,7 @@ void Nes::Run(IGfx* gfx, IInput* input)
     u8 screen[256 * 240 * 3];
     for (;;)
     {
-        ZeroMemory(screen, sizeof(screen));
+        memset(screen, 0, sizeof(screen));
 
         // TODO: get joypadState
         InputResult result = input->CheckInput(_input->State);

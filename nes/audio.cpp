@@ -12,7 +12,7 @@
 
 #define MAX_FRAME_CYCLE_COUNT 38000 // Larger than max frame clock cycle count, but can't exceed max unsigned 16-bit integer
 
-static volatile unsigned int g_engineCount;
+static std::atomic<unsigned int> g_engineCount;
 
 static void AudioGenerateCallback(void *userdata, u8 *stream, int len)
 {
@@ -66,7 +66,8 @@ void AudioEngine::StartAudio(
     int triangleMinFreq,
     int triangleMaxFreq)
 {
-    unsigned int lastCount = InterlockedCompareExchange(&g_engineCount, 1, 0);
+    unsigned int lastCount = 0;
+    g_engineCount.compare_exchange_strong(lastCount, 1);
     if (lastCount != 0)
     {
         AudioError("Cannot start more than one audio engine at the same time");
@@ -158,7 +159,7 @@ void AudioEngine::QueueAudioEvent(int cycleCount, int setting, u32 newValue)
         __debugbreak();
 
     if (event.audioSetting == NESAUDIO_FRAME_RESET)
-        InterlockedIncrement(&_pendingFrameResetCount);
+        _pendingFrameResetCount++;
 }
 
 #define INIT_WAVETABLE_PTR(WT) _wavetables[WT] = _wavetableMemory + WAVETABLE_SIZE * (WT)
@@ -263,7 +264,7 @@ void AudioEngine::GenerateTable(int minFreq, int maxFreq, double (fourierSeriesF
         u8* normalizedRow = wavetable + row * WAVETABLE_SAMPLES;
         for (int column = 0; column < WAVETABLE_SAMPLES; column++)
         {
-            normalizedRow[column] = (byte)((rawRow[column] - minSample) * 255.0 / range);
+            normalizedRow[column] = (u8)((rawRow[column] - minSample) * 255.0 / range);
         }
     }
 
@@ -454,7 +455,7 @@ void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
     {
     case NESAUDIO_FRAME_RESET:
         // The APU frame counter has reset.  Reset our cycle counter.
-        InterlockedDecrement(&_pendingFrameResetCount);
+        _pendingFrameResetCount--;
         _cycleCounter = 0;
         break;
     case NESAUDIO_PULSE1_DUTYCYCLE:

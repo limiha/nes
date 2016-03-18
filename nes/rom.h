@@ -44,7 +44,7 @@ struct INesHeader
             PrgRamSize = 0;
             flags9 = 0;
             flags10 = 0;
-            ZeroMemory(zero, sizeof(zero));
+            memset(zero, 0, sizeof(zero));
         }
 
         return true;

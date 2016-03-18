@@ -10,9 +10,9 @@ template <class T>
 class EventQueue
 {
 private:
-    volatile u32 _readIndex;
-    volatile u32 _writeIndex;
-    volatile u32 _lockHeld;
+    std::atomic<u32> _readIndex;
+    std::atomic<u32> _writeIndex;
+    std::atomic_flag _lock;
 
     std::vector<T> _entries;
     u32 _size;
@@ -21,10 +21,10 @@ public:
     EventQueue(u32 size)
         : _readIndex(0)
         , _writeIndex(0)
-        , _lockHeld(0)
         , _size(size)
     {
         _entries.resize(size);
+        _lock.clear();
     }
 
 
@@ -37,7 +37,7 @@ public:
             return false; // Queue is full
 
         memcpy(&_entries[_writeIndex], &event, sizeof(T));
-        InterlockedExchange(&_writeIndex, nextIndex);
+        _writeIndex.exchange(nextIndex);
 
         return true;
     }
@@ -56,7 +56,7 @@ public:
             return false;
 
         memcpy(&event, &_entries[_readIndex], sizeof(T));
-        InterlockedExchange(&_readIndex, NextIndex(_readIndex));
+        _readIndex.exchange(NextIndex(_readIndex));
 
         return true;
     }
@@ -86,18 +86,13 @@ private:
         SpinLockHolder(EventQueue<T>* queue)
             : _queue(queue)
         {
-            // Acquire lock
-            int wasHeld;
-            do
-            {
-                wasHeld = InterlockedCompareExchange(&_queue->_lockHeld, 1, 0);
-            } while (wasHeld);
+            while (_queue->_lock.test_and_set(std::memory_order_acquire));
         }
 
         ~SpinLockHolder()
         {
             // Release lock
-            InterlockedExchange(&_queue->_lockHeld, 0);
+            _queue->_lock.clear(std::memory_order_release);
         }
     private:
         EventQueue<T>* _queue;

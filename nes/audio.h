@@ -134,7 +134,7 @@ private:
 
     // Audio engine state information
     EventQueue<AudioEvent> _eventQueue;
-    volatile u32 _pendingFrameResetCount;
+    std::atomic<u32> _pendingFrameResetCount;
     AudioEvent _nextEvent;
     int _samplesRemaining;
     bool _eventPending;
