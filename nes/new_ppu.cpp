@@ -771,8 +771,8 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, Sp
 VRam::VRam(std::shared_ptr<IMapper> mapper)
     : _mapper(mapper)
 {
-    ZeroMemory(_nametables, sizeof(_nametables));
-    ZeroMemory(_palette, sizeof(_palette));
+    memset(_nametables, 0, sizeof(_nametables));
+    memset(_palette, 0, sizeof(_palette));
 }
 
 VRam::~VRam()
@@ -883,7 +883,7 @@ void VRam::LoadState(std::ifstream& ifs)
 
 Oam::Oam()
 {
-    ZeroMemory(_ram, sizeof(_ram));
+    memset(_ram, 0, sizeof(_ram));
 }
 
 Oam::~Oam()

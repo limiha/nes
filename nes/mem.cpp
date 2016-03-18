@@ -16,7 +16,7 @@ MemoryMap::MemoryMap(std::shared_ptr<Ppu> ppu, std::shared_ptr<Apu> apu, std::sh
     , _input(input)
     , _mapper(mapper)
 {
-    ZeroMemory(_ram, sizeof(_ram));
+    memset(_ram, 0, sizeof(_ram));
 }
 
 MemoryMap::~MemoryMap()

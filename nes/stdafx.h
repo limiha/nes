@@ -5,12 +5,7 @@
 
 #pragma once
 
-#include <math.h>
-#include <stdio.h>
-#include <tchar.h>
-
-#include <atlbase.h>
-
+// std C++ includes
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -19,6 +14,7 @@
 #include <memory>
 #include <vector>
 #include <chrono>
+#include <atomic>
 
 // for Rom and save state paths
 #include <experimental/filesystem>
