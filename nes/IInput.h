@@ -10,44 +10,30 @@ enum class InputResult
     Quit
 };
 
-struct JoypadState
-{
-    bool A;
-    bool B;
-    bool Select;
-    bool Start;
-    bool Up;
-    bool Down;
-    bool Left;
-    bool Right;
-
-    JoypadState()
-        : A(false)
-        , B(false)
-        , Select(false)
-        , Start(false)
-        , Up(false)
-        , Down(false)
-        , Left(false)
-        , Right(false)
-    {
-    }
-
-    void Set(const JoypadState& state)
-    {
-        A = state.A;
-        B = state.B;
-        Select = state.Select;
-        Start = state.Start;
-        Up = state.Up;
-        Down = state.Down;
-        Left = state.Left;
-        Right = state.Right;
-    }
-};
-
-class IInput
+class IHostInput
 {
 public:
-    virtual InputResult CheckInput(JoypadState& state) = 0;
+    virtual InputResult CheckInput() = 0;
+};
+
+// Controller Port Device Interface
+class IControllerPortDevice
+{
+public:
+    virtual void Strobe(bool strobe) = 0;
+    virtual u8 Read() = 0;
+};
+
+// Standard Controller Interface
+class IStandardController
+{
+public:
+    virtual void A(bool state) = 0;
+    virtual void B(bool state) = 0;
+    virtual void Select(bool state) = 0;
+    virtual void Start(bool state) = 0;
+    virtual void Up(bool state) = 0;
+    virtual void Down(bool state) = 0;
+    virtual void Left(bool state) = 0;
+    virtual void Right(bool state) = 0;
 };
