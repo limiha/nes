@@ -30,7 +30,11 @@ public:
     // screen is the pixel data buffer that the ppu will write to
     void DoFrame(u8 screen[]);
 
-    IStandardController* GetController0();
+    // Gets a standard Nes controller on the specified port
+    // Port can only be 0 or 1
+    // If there is an existing device on the port,
+    // it will be disconnected and it's memory will be freed.
+    IStandardController* GetStandardController(u8 port);
 
 private:
     void SaveState();
@@ -45,8 +49,4 @@ private:
     std::shared_ptr<Input> _input;
     std::shared_ptr<MemoryMap> _mem;
     std::unique_ptr<Cpu> _cpu;
-
-    // The Nes owns the pointer but will give bare pointers to input and hand out bare
-    // pointers through the api (Maybe).
-    std::unique_ptr<StandardController> _controller0;
 };

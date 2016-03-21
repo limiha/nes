@@ -3,6 +3,18 @@
 #include "mem.h"
 #include "IInput.h"
 
+class EmptyPort : public IControllerPortDevice
+{
+public:
+    EmptyPort() { }
+    ~EmptyPort() { }
+
+    // IControllerPortDevice
+public:
+    void Strobe(bool strobe) { }
+    u8 Read() { return 0; }
+};
+
 class Input : public IMem
 {
 public:
@@ -20,9 +32,11 @@ public:
     void Load() {}
 
 public:
-    // This class is not an responsible for deleting whatever these pointers point to.
-    IControllerPortDevice* Port0;
-    IControllerPortDevice* Port1;
+    IStandardController* GetStandardController(u8 port);
+
+private:
+    std::unique_ptr<IControllerPortDevice> _port0;
+    std::unique_ptr<IControllerPortDevice> _port1;
 };
 
 class StandardController : public IControllerPortDevice, public IStandardController

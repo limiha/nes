@@ -13,9 +13,7 @@ int main(int argc, char* argv[])
     }
 
     std::unique_ptr<Nes> nes = Nes::Create(argv[1]);
-    IStandardController* controller0 = nes->GetController0();
-
-    controller0->A(false);
+    IStandardController* controller0 = nes->GetStandardController(0);
 
     SdlGfx gfx(3);
     SdlInput input(controller0);

@@ -4,8 +4,8 @@
 #include "input.h"
 
 Input::Input()
-    : Port0(nullptr)
-    , Port1(nullptr)
+    : _port0(std::make_unique<EmptyPort>())
+    , _port1(std::make_unique<EmptyPort>())
 {
 }
 
@@ -17,13 +17,13 @@ u8 Input::loadb(u16 addr)
 {
     if (addr == 0x4016)
     {
-        return (Port0 != nullptr) ? Port0->Read() : false;
+        return (_port0 != nullptr) ? _port0->Read() : false;
     }
     else if (addr == 0x4017)
     {
-        return (Port1 != nullptr) ? Port1->Read() : false;
+        return (_port1 != nullptr) ? _port1->Read() : false;
     }
-    return 0; // can't happen
+    return 0;
 }
 
 void Input::storeb(u16 addr, u8 val)
@@ -32,16 +32,37 @@ void Input::storeb(u16 addr, u8 val)
     {
         bool strobeVal = (val & 1) == 1;
 
-        if (Port0 != nullptr)
+        if (_port0 != nullptr)
         {
-            Port0->Strobe(strobeVal);
+            _port0->Strobe(strobeVal);
         }
 
-        if (Port1 != nullptr)
+        if (_port1 != nullptr)
         {
-            Port1->Strobe(strobeVal);
+            _port1->Strobe(strobeVal);
         }
     }
+}
+
+IStandardController* Input::GetStandardController(u8 port)
+{
+    if (port >= 2)
+    {
+        return nullptr;
+    }
+
+    std::unique_ptr<StandardController> controller = std::make_unique<StandardController>();
+    IStandardController* ptr = static_cast<IStandardController*>(controller.get());
+    if (port == 0)
+    {
+        _port0 = std::move(controller);
+    }
+    else if (port == 1)
+    {
+        _port1 = std::move(controller);
+    }
+
+    return ptr;
 }
 
 // Standard Controller Implementation

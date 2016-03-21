@@ -20,6 +20,8 @@ public:
 class IControllerPortDevice
 {
 public:
+    virtual ~IControllerPortDevice() { }
+public:
     virtual void Strobe(bool strobe) = 0;
     virtual u8 Read() = 0;
 };

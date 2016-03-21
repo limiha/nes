@@ -28,10 +28,6 @@ Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper)
     // TODO: Move these to an init method
     _cpu->Reset();
     _apu->StartAudio(_mem.get(), 44100); 
-
-    // TODO: Figure out controller creation/lifetime/port management
-    _controller0 = std::make_unique<StandardController>();
-    _input->Port0 = (IControllerPortDevice*) _controller0.get();
 }
 
 Nes::~Nes()
@@ -114,9 +110,9 @@ void Nes::Run(IGfx* gfx, IHostInput* input)
     _apu->StopAudio();
 }
 
-IStandardController* Nes::GetController0()
+IStandardController* Nes::GetStandardController(u8 port)
 {
-    return static_cast<IStandardController*>(_controller0.get());
+    return _input->GetStandardController(port);
 }
 
 void Nes::SaveState()
