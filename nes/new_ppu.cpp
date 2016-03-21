@@ -23,6 +23,9 @@ Ppu::Ppu(std::shared_ptr<IMapper> mapper)
     , _clipSprites(false)
     , _showBackground(false)
     , _showSprites(false)
+    , _oamAddr(0)
+    , _lineSprites(0)
+    , _spriteZeroOnLine(false)
 {
 }
 
