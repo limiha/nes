@@ -489,7 +489,9 @@ void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
         _pulseChannel2.phase = 0;
         break;
     case NESAUDIO_TRIANGLE_FREQUENCY:
-        UpdateTriangleFrequency(setting);
+        BoundFrequency(setting, _triangleMinFreq, _triangleMaxFreq);
+        _triangleChannel.frequency = setting;
+        UpdateWavetableRow(_triangleChannel);
         break;
     case NESAUDIO_NOISE_PERIOD:
         if (setting == 0)
@@ -527,50 +529,6 @@ void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
 #endif
 }
 
-void AudioEngine::UpdateTriangleFrequency(u32 newFreq)
-{
-    u32 oldFreq = _triangleChannel.frequency;
-    BoundFrequency(newFreq, _triangleMinFreq, _triangleMaxFreq);
-    _triangleChannel.newFreq = newFreq;
-
-    // Ramp volume up/down for large changes in triangle frequency to avoid annoying
-    // audio pops.
-    if (oldFreq == 0 && newFreq != 0)
-    {
-        _triangleChannel.rampUp = true;
-        _triangleChannel.rampDown = false;
-
-        _triangleChannel.frequency = newFreq;
-        UpdateWavetableRow(_triangleChannel);
-    }
-    else if (oldFreq != 0 && newFreq == 0)
-    {
-        _triangleChannel.rampUp = false;
-        _triangleChannel.rampDown = true;
-    }
-    else
-    {
-        u32 diff = 0;
-        if (oldFreq > newFreq)
-            diff = oldFreq - newFreq;
-        else
-            diff = newFreq - oldFreq;
-
-        if (diff > WAVETABLE_SAMPLES)
-        {
-            // Lange frequency change - do the ramp down/up
-            _triangleChannel.rampUp = false;
-            _triangleChannel.rampDown = true;
-        }
-        else if (!_triangleChannel.rampDown)
-        {
-            // Small change and we are not already ramping down - set new frequency now
-            _triangleChannel.frequency = newFreq;
-            UpdateWavetableRow(_triangleChannel);
-        }
-    }
-}
-
 void AudioEngine::UpdateWavetableRow(WavetableChannel& channel)
 {
     int rowIndex = channel.frequency / channel.freqStep;
@@ -583,48 +541,16 @@ i32 AudioEngine::SampleWavetableChannel(WavetableChannel& channel)
     {
         int phase = channel.phase;
         int phaseIndex = phase / _phaseDivider;
-        u8 sample = channel.wavetableRow[phaseIndex];
+        channel.lastSample = channel.wavetableRow[phaseIndex];
 
         phase += channel.frequency;
         if (phase >= _sampleRate)
             phase -= _sampleRate;
 
         channel.phase = phase;
-
-        i32 result = (i32)sample * channel.volume;
-
-        if (channel.rampDown)
-        {
-            if (channel.volume == 0)
-            {
-                channel.rampUp = true;
-                channel.rampDown = false;
-            }
-            else if (--channel.volume == 0)
-            {
-                channel.rampDown = false;
-                channel.frequency = channel.newFreq;
-                if (channel.newFreq != 0)
-                {
-                    UpdateWavetableRow(channel);
-                    channel.rampUp = true;
-                }
-            }
-        }
-        else if (channel.rampUp)
-        {
-            if (channel.volume == 0x0F)
-                channel.rampUp = false;
-            else if (++channel.volume == 0x0F)
-                channel.rampUp = false;
-        }
-
-        return result;
     }
-    else
-    {
-        return 0;
-    }
+    
+    return (i32)channel.lastSample * channel.volume;
 }
 
 i32 AudioEngine::SampleNoise()
