@@ -146,20 +146,36 @@ void StandardController::Start(bool state)
 
 void StandardController::Up(bool state)
 {
+    if (state)
+    {
+        _Down = false;
+    }
     _Up = state;
 }
 
 void StandardController::Down(bool state)
 {
+    if (state)
+    {
+        _Up = false;
+    }
     _Down = state;
 }
 
 void StandardController::Left(bool state)
 {
+    if (state)
+    {
+        _Right = false;
+    }
     _Left = state;
 }
 
 void StandardController::Right(bool state)
 {
+    if (state)
+    {
+        _Left = false;
+    }
     _Right = state;
 }
