@@ -49,20 +49,16 @@ struct WavetableChannel
     u32 phase;
     u32 volume;
     u32 wavetable;
-    u32 newFreq; // New frequency is applied after ramp-down
-    bool rampUp;
-    bool rampDown;
     u8* wavetableRow;
+    u8 lastSample;
 
     WavetableChannel()
         : frequency(0)
         , phase(0)
         , volume(0)
         , wavetable(0)
-        , newFreq(0)
-        , rampUp(false)
-        , rampDown(false)
         , wavetableRow(0)
+        , lastSample(0)
     {
     }
 };
@@ -100,7 +96,6 @@ private:
     void GenerateSamples(u8* stream, int count);
     void ProcessAudioEvents();
     void ProcessAudioEvent(const AudioEvent& event);
-    void UpdateTriangleFrequency(u32 newFreq);
     void UpdateWavetableRow(WavetableChannel& channel);
 
     i32 SampleWavetableChannel(WavetableChannel& channel);
