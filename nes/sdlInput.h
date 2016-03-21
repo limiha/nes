@@ -3,14 +3,17 @@
 #include "IInput.h"
 #include <SDL_events.h>
 
-class SdlInput : public IInput
+class SdlInput : public IHostInput
 {
 public:
-    SdlInput();
+    SdlInput(IStandardController* controller0);
     ~SdlInput();
 
-    InputResult CheckInput(JoypadState& state);
+    InputResult CheckInput();
 
 private:
-    void HandleKey(SDL_Keycode key, JoypadState& state, bool pressed);
+    void HandleKey(SDL_Keycode key, bool pressed);
+
+private:
+    IStandardController* _controller0;
 };

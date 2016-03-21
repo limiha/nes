@@ -8,8 +8,10 @@ class Apu;
 class Input;
 
 class IGfx;
-class IInput;
-struct JoypadState;
+class IHostInput;
+
+class IStandardController;
+class StandardController;
 
 class Nes
 {
@@ -20,13 +22,19 @@ public:
     static std::unique_ptr<Nes> Create(const char* romPath);
     static std::unique_ptr<Nes> Create(std::shared_ptr<Rom> rom);
 
-    void Run(IGfx* gfx, IInput* input);
+    void Run(IGfx* gfx, IHostInput* input);
 
     // DoFrame runs all nes components until the ppu hits VBlank
     // This means that one call to DoFrame will render scanlines 241 - 261 then 0 - 240
     // The joypad state provided will be used for the entirety of the frame
     // screen is the pixel data buffer that the ppu will write to
-    void DoFrame(const JoypadState& joypadState, u8 screen[]);
+    void DoFrame(u8 screen[]);
+
+    // Gets a standard Nes controller on the specified port
+    // Port can only be 0 or 1
+    // If there is an existing device on the port,
+    // it will be disconnected and it's memory will be freed.
+    IStandardController* GetStandardController(u8 port);
 
 private:
     void SaveState();

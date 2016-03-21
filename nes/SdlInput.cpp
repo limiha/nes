@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "sdlInput.h"
 
-SdlInput::SdlInput()
+SdlInput::SdlInput(IStandardController* controller0)
 {
+    _controller0 = controller0;
     SDL_InitSubSystem(SDL_INIT_EVENTS);
 }
 
@@ -11,7 +12,7 @@ SdlInput::~SdlInput()
     SDL_QuitSubSystem(SDL_INIT_EVENTS);
 }
 
-InputResult SdlInput::CheckInput(JoypadState& state)
+InputResult SdlInput::CheckInput()
 {
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -25,11 +26,11 @@ InputResult SdlInput::CheckInput(JoypadState& state)
             case SDLK_F2: return InputResult::LoadState;
             case SDLK_ESCAPE: return InputResult::Quit;
             default:
-                HandleKey(event.key.keysym.sym, state, true);
+                HandleKey(event.key.keysym.sym, true);
             }
             break;
         case SDL_KEYUP:
-            HandleKey(event.key.keysym.sym, state, false);
+            HandleKey(event.key.keysym.sym, false);
             break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_CLOSE)
@@ -41,37 +42,40 @@ InputResult SdlInput::CheckInput(JoypadState& state)
     return InputResult::Continue;
 }
 
-void SdlInput::HandleKey(SDL_Keycode key, JoypadState& state, bool pressed)
+void SdlInput::HandleKey(SDL_Keycode key, bool pressed)
 {
-    switch (key)
+    if (_controller0 != nullptr)
     {
-    case SDLK_LALT:
-    case SDLK_s:
-        state.A = pressed;
-        break;
-    case SDLK_LCTRL:
-    case SDLK_a:
-        state.B = pressed;
-        break;
-    case SDLK_RSHIFT:
-    case SDLK_LSHIFT:
-    case SDLK_BACKSLASH:
-        state.Select = pressed;
-        break;
-    case SDLK_RETURN:
-        state.Start = pressed;
-        break;
-    case SDLK_UP:
-        state.Up = pressed;
-        break;
-    case SDLK_DOWN:
-        state.Down = pressed;
-        break;
-    case SDLK_LEFT:
-        state.Left = pressed;
-        break;
-    case SDLK_RIGHT:
-        state.Right = pressed;
-        break;
+        switch (key)
+        {
+        case SDLK_LALT:
+        case SDLK_s:
+            _controller0->A(pressed);
+            break;
+        case SDLK_LCTRL:
+        case SDLK_a:
+            _controller0->B(pressed);
+            break;
+        case SDLK_RSHIFT:
+        case SDLK_LSHIFT:
+        case SDLK_BACKSLASH:
+            _controller0->Select(pressed);
+            break;
+        case SDLK_RETURN:
+            _controller0->Start(pressed);
+            break;
+        case SDLK_UP:
+            _controller0->Up(pressed);
+            break;
+        case SDLK_DOWN:
+            _controller0->Down(pressed);
+            break;
+        case SDLK_LEFT:
+            _controller0->Left(pressed);
+            break;
+        case SDLK_RIGHT:
+            _controller0->Right(pressed);
+            break;
+        }
     }
 }

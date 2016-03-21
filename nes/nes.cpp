@@ -54,10 +54,8 @@ std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom)
     return std::make_unique<Nes>(rom, mapper);
 }
 
-void Nes::DoFrame(const JoypadState& joypadState, u8 screen[])
+void Nes::DoFrame(u8 screen[])
 {
-    _input->State.Set(joypadState);
-
     PpuStepResult ppuResult;
     ApuStepResult apuResult;
     do
@@ -82,7 +80,7 @@ void Nes::DoFrame(const JoypadState& joypadState, u8 screen[])
     } while (!ppuResult.VBlank);
 }
 
-void Nes::Run(IGfx* gfx, IInput* input)
+void Nes::Run(IGfx* gfx, IHostInput* input)
 {
     u8 screen[256 * 240 * 3];
     for (;;)
@@ -90,7 +88,7 @@ void Nes::Run(IGfx* gfx, IInput* input)
         memset(screen, 0, sizeof(screen));
 
         // TODO: get joypadState
-        InputResult result = input->CheckInput(_input->State);
+        InputResult result = input->CheckInput();
 
         if (result == InputResult::SaveState)
         {
@@ -105,11 +103,16 @@ void Nes::Run(IGfx* gfx, IInput* input)
             break;
         }
 
-        DoFrame(_input->State, screen);
+        DoFrame(screen);
         gfx->Blit(screen);
     }
 
     _apu->StopAudio();
+}
+
+IStandardController* Nes::GetStandardController(u8 port)
+{
+    return _input->GetStandardController(port);
 }
 
 void Nes::SaveState()
