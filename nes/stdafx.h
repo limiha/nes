@@ -15,6 +15,7 @@
 #include <vector>
 #include <chrono>
 #include <atomic>
+#include <mutex>
 
 // for Rom and save state paths
 #include <experimental/filesystem>

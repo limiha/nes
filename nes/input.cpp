@@ -76,6 +76,10 @@ StandardController::StandardController()
     , _Down(false)
     , _Left(false)
     , _Right(false)
+    , _Up_actual(false)
+    , _Down_actual(false)
+    , _Left_actual(false)
+    , _Right_actual(false)
     , _strobe(false)
     , _nextReadIndex(0)
 {
@@ -146,36 +150,61 @@ void StandardController::Start(bool state)
 
 void StandardController::Up(bool state)
 {
-    if (state)
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_Down_actual)
     {
-        _Down = false;
+        _Up = false;
+        _Down = !state;
     }
-    _Up = state;
+    else
+    {
+        _Up = state;
+    }
+
+    _Up_actual = state;
 }
 
 void StandardController::Down(bool state)
 {
-    if (state)
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_Up_actual)
     {
-        _Up = false;
+        _Down = false;
+        _Up = !state;
     }
-    _Down = state;
+    else
+    {
+        _Down = state;
+    }
+    _Down_actual = state;
 }
 
 void StandardController::Left(bool state)
 {
-    if (state)
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_Right_actual)
     {
-        _Right = false;
+        _Left = false;
+        _Right = !state;
     }
-    _Left = state;
+    else
+    {
+        _Left = state;
+    }
+    _Left_actual = state;
 }
 
 void StandardController::Right(bool state)
 {
-    if (state)
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_Left_actual)
     {
-        _Left = false;
+        _Right = false;
+        _Left = !state;
     }
-    _Right = state;
+    else
+    {
+        _Right = state;
+    }
+    _Right_actual = state;
 }
