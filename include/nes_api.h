@@ -10,12 +10,21 @@
   #define NES_API
 #endif
 
-class Nes;
+// Forward Declaratiosn
+struct INes;
+struct IStandardController;
+
+struct INes
+{
+    virtual void DoFrame(unsigned char screen[]) = 0;
+    virtual IStandardController* GetStandardController(unsigned int port) = 0;
+    virtual void SaveState() = 0;
+    virtual void LoadState() = 0;
+};
 
 // Standard Controller Interface
-class IStandardController
+struct IStandardController
 {
-public:
     virtual void A(bool state) = 0;
     virtual void B(bool state) = 0;
     virtual void Select(bool state) = 0;
@@ -26,12 +35,7 @@ public:
     virtual void Right(bool state) = 0;
 };
 
-
 extern "C"
 {
-    NES_API Nes* Nes_Create(const char* romPath);
-    NES_API void Nes_DoFrame(Nes* nes, unsigned char screen[]);
-    NES_API IStandardController* Nes_GetStandardController(Nes* nes, unsigned int port);
-    NES_API void Nes_SaveState(Nes* nes);
-    NES_API void Nes_LoadState(Nes* nes);
+    NES_API INes* Nes_Create(const char* romPath);
 }
