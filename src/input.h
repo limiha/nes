@@ -1,7 +1,17 @@
 #pragma once
 
+#include "..\include\nes_api.h"
 #include "mem.h"
-#include "IInput.h"
+
+// Controller Port Device Interface
+class IControllerPortDevice
+{
+public:
+    virtual ~IControllerPortDevice() { }
+public:
+    virtual void Strobe(bool strobe) = 0;
+    virtual u8 Read() = 0;
+};
 
 class EmptyPort : public IControllerPortDevice
 {
@@ -32,7 +42,7 @@ public:
     void Load() {}
 
 public:
-    IStandardController* GetStandardController(u8 port);
+    IStandardController* GetStandardController(unsigned int port);
 
 private:
     std::unique_ptr<IControllerPortDevice> _port0;

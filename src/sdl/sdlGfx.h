@@ -1,18 +1,22 @@
 #pragma once
 
-#include "IGfx.h"
-
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
 
-class SdlGfx : public IGfx
+#include <chrono>
+
+//#define RENDER_GRID
+//#define RENDER_NAMETABLE
+//#define RENDER_PATTERNTABLE
+
+class SdlGfx
 {
 public:
-    SdlGfx(u32 scale);
+    SdlGfx(unsigned int scale);
     ~SdlGfx();
 
-    void Blit(u8 screen[]);
+    void Blit(unsigned char screen[]);
 private:
     SDL_Window* _window;
     SDL_Renderer* _renderer;
@@ -21,7 +25,7 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> _lastDrawTime;
     std::chrono::time_point<std::chrono::steady_clock> _lastFpsTime;
 
-    u8 _frameCounter;
+    unsigned char _frameCounter;
 
 #if defined(RENDER_NAMETABLE)
 public:

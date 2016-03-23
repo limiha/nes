@@ -44,7 +44,7 @@ void Input::storeb(u16 addr, u8 val)
     }
 }
 
-IStandardController* Input::GetStandardController(u8 port)
+IStandardController* Input::GetStandardController(unsigned int port)
 {
     if (port >= 2)
     {

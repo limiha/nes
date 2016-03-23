@@ -12,8 +12,6 @@
 #include "rom.h"
 #include "apu.h"
 #include "mapper.h"
-#include "IGfx.h"
-#include "IInput.h"
 
 Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper)
     : _rom(rom)
@@ -32,6 +30,7 @@ Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper)
 
 Nes::~Nes()
 {
+    _apu->StopAudio();
 }
 
 std::unique_ptr<Nes> Nes::Create(const char* romPath)
@@ -78,36 +77,6 @@ void Nes::DoFrame(u8 screen[])
             _cpu->Irq();
         }
     } while (!ppuResult.VBlank);
-}
-
-void Nes::Run(IGfx* gfx, IHostInput* input)
-{
-    u8 screen[256 * 240 * 3];
-    for (;;)
-    {
-        memset(screen, 0, sizeof(screen));
-
-        // TODO: get joypadState
-        InputResult result = input->CheckInput();
-
-        if (result == InputResult::SaveState)
-        {
-            SaveState();
-        }
-        else if (result == InputResult::LoadState)
-        {
-            LoadState();
-        }
-        else if (result == InputResult::Quit)
-        {
-            break;
-        }
-
-        DoFrame(screen);
-        gfx->Blit(screen);
-    }
-
-    _apu->StopAudio();
 }
 
 IStandardController* Nes::GetStandardController(u8 port)
