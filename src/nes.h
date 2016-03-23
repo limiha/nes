@@ -36,9 +36,10 @@ public:
     // it will be disconnected and it's memory will be freed.
     IStandardController* GetStandardController(u8 port);
 
-private:
     void SaveState();
     void LoadState();
+
+private:
     std::unique_ptr<fs::path> GetSavePath();
 
 private:

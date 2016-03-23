@@ -1,11 +1,9 @@
-#include "stdafx.h"
 #include "sdlGfx.h"
-
 #include <SDL.h>
 
 #if !defined(RENDER_GRID)
-const u32 SCREEN_WIDTH = 256;
-const u32 SCREEN_HEIGHT = 240;
+const unsigned int SCREEN_WIDTH = 256;
+const unsigned int SCREEN_HEIGHT = 240;
 #else
 const u32 SCREEN_WIDTH = 256 +32;
 const u32 SCREEN_HEIGHT = 240 +30;
@@ -16,7 +14,7 @@ u8 grid_color = 0xff;
 #endif
 
 
-SdlGfx::SdlGfx(u32 scale)
+SdlGfx::SdlGfx(unsigned int scale)
     : _frameCounter(0)
 {
     SDL_InitSubSystem(SDL_INIT_VIDEO);
@@ -159,7 +157,7 @@ void render_grid(u8 screen[])
 }
 #endif
 
-void SdlGfx::Blit(u8 screen[])
+void SdlGfx::Blit(unsigned char screen[])
 {
     void* screen_to_render = (void*)screen;
 #if defined(RENDER_GRID)

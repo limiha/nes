@@ -1,9 +1,18 @@
 #pragma once
 
-#include "IInput.h"
 #include <SDL_events.h>
 
-class SdlInput : public IHostInput
+class IStandardController;
+
+enum class InputResult
+{
+    Continue,
+    SaveState,
+    LoadState,
+    Quit
+};
+
+class SdlInput 
 {
 public:
     SdlInput(IStandardController* controller0);

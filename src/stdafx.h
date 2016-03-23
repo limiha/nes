@@ -21,9 +21,6 @@
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 
-#define SDL_MAIN_HANDLED
-#include <SDL.h>
-
 #include "types.h"
 #include "interfaces.h"
 #include "util.h"
@@ -32,6 +29,6 @@ namespace fs = std::experimental::filesystem;
 #define CPU_FREQ_NTSC 1789773
 #define CPU_FREQ_PAL 1662607
 
-//#define RENDER_GRID
-//#define RENDER_NAMETABLE
-//#define RENDER_PATTERNTABLE
+// Still required for APU
+#define SDL_MAIN_HANDLED
+#include <SDL.h>

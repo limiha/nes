@@ -13,118 +13,105 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="API Headers">
+      <UniqueIdentifier>{cf1c6db8-790a-4547-ad33-f807cd5d834b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
+    <ClInclude Include="..\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mem.h">
+    <ClInclude Include="..\apu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cpu.h">
+    <ClInclude Include="..\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="types.h">
+    <ClInclude Include="..\cpu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="input.h">
+    <ClInclude Include="..\decode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="decode.h">
+    <ClInclude Include="..\diassembler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rom.h">
+    <ClInclude Include="..\eventqueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="diassembler.h">
+    <ClInclude Include="..\input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="apu.h">
+    <ClInclude Include="..\interfaces.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mapper.h">
+    <ClInclude Include="..\mapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="audio.h">
+    <ClInclude Include="..\mem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="new_ppu.h">
+    <ClInclude Include="..\nes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="interfaces.h">
+    <ClInclude Include="..\new_ppu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="nes.h">
+    <ClInclude Include="..\rom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="eventqueue.h">
+    <ClInclude Include="..\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
+    <ClInclude Include="..\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sdlGfx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IInput.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdlInput.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IGfx.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\nes_api.h">
+      <Filter>API Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="..\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="nes.cpp">
+    <ClCompile Include="..\apu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cpu.cpp">
+    <ClCompile Include="..\audio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mem.cpp">
+    <ClCompile Include="..\cpu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input.cpp">
+    <ClCompile Include="..\disassembler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rom.cpp">
+    <ClCompile Include="..\input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="disassembler.cpp">
+    <ClCompile Include="..\mapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="apu.cpp">
+    <ClCompile Include="..\mem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mapper.cpp">
+    <ClCompile Include="..\nes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="audio.cpp">
+    <ClCompile Include="..\new_ppu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="new_ppu.cpp">
+    <ClCompile Include="..\rom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="..\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sdlGfx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sdlInput.cpp">
+    <ClCompile Include="..\nes_api.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="..\ReadMe.md" />
   </ItemGroup>
 </Project>
