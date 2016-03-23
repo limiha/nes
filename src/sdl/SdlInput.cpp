@@ -21,17 +21,23 @@ InputResult SdlInput::CheckInput()
         switch (event.type)
         {
         case SDL_KEYDOWN:
-            switch (event.key.keysym.sym)
+            if (event.key.repeat == 0)
             {
-            case SDLK_F1: return InputResult::SaveState;
-            case SDLK_F2: return InputResult::LoadState;
-            case SDLK_ESCAPE: return InputResult::Quit;
-            default:
-                HandleKey(event.key.keysym.sym, true);
+                switch (event.key.keysym.sym)
+                {
+                case SDLK_F1: return InputResult::SaveState;
+                case SDLK_F2: return InputResult::LoadState;
+                case SDLK_ESCAPE: return InputResult::Quit;
+                default:
+                    HandleKey(event.key.keysym.sym, true);
+                }
             }
             break;
         case SDL_KEYUP:
-            HandleKey(event.key.keysym.sym, false);
+            if (event.key.repeat == 0)
+            {
+                HandleKey(event.key.keysym.sym, false);
+            }
             break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_CLOSE)
