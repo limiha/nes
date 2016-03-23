@@ -7,13 +7,9 @@ class Ppu;
 class Apu;
 class Input;
 
-class IGfx;
-class IHostInput;
+#include "..\include\nes_api.h"
 
-class IStandardController;
-class StandardController;
-
-class Nes
+class Nes : public INes
 {
 public:
     Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper);
@@ -21,8 +17,6 @@ public:
 
     static std::unique_ptr<Nes> Create(const char* romPath);
     static std::unique_ptr<Nes> Create(std::shared_ptr<Rom> rom);
-
-    void Run(IGfx* gfx, IHostInput* input);
 
     // DoFrame runs all nes components until the ppu hits VBlank
     // This means that one call to DoFrame will render scanlines 241 - 261 then 0 - 240
@@ -34,7 +28,7 @@ public:
     // Port can only be 0 or 1
     // If there is an existing device on the port,
     // it will be disconnected and it's memory will be freed.
-    IStandardController* GetStandardController(u8 port);
+    IStandardController* GetStandardController(unsigned int port);
 
     void SaveState();
     void LoadState();

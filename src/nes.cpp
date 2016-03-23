@@ -79,7 +79,7 @@ void Nes::DoFrame(u8 screen[])
     } while (!ppuResult.VBlank);
 }
 
-IStandardController* Nes::GetStandardController(u8 port)
+IStandardController* Nes::GetStandardController(unsigned int port)
 {
     return _input->GetStandardController(port);
 }

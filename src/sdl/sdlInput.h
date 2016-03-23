@@ -1,8 +1,8 @@
 #pragma once
 
-#include <SDL_events.h>
+struct IStandardController;
 
-class IStandardController;
+#include <SDL_events.h>
 
 enum class InputResult
 {

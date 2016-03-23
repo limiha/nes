@@ -19,13 +19,13 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    Nes* nes = Nes_Create(argv[1]);
+    INes* nes = Nes_Create(argv[1]);
     if (nes == nullptr)
     {
         return 1;
     }
 
-    IStandardController* controller0 = Nes_GetStandardController(nes, 0);
+    IStandardController* controller0 = nes->GetStandardController(0);
     SdlInput input(controller0);
 
     SdlGfx gfx(3);
@@ -40,18 +40,18 @@ int main(int argc, char* argv[])
 
         if (result == InputResult::SaveState)
         {
-            Nes_SaveState(nes);
+            nes->SaveState();
         }
         else if (result == InputResult::LoadState)
         {
-            Nes_LoadState(nes);
+            nes->LoadState();
         }
         else if (result == InputResult::Quit)
         {
             break;
         }
 
-        Nes_DoFrame(nes, screen);
+        nes->DoFrame(screen);
         gfx.Blit(screen);
     }
 }
