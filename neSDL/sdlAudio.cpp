@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "sdlAudio.h"
 
-#include <SDL.h>
-
 #define SAMPLE_BUFFER_SIZE 1024
 
 SdlAudioProvider::SdlAudioProvider(int sampleRate)

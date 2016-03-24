@@ -1,7 +1,5 @@
 #pragma once
 
-#include <SDL_audio.h>
-
 class SdlAudioProvider : public IAudioProvider
 {
 public:
