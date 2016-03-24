@@ -1,13 +1,4 @@
-//#include "nes.h"
-//#include "IInput.h"
-//#include "sdlGfx.h"
-//#include "sdlInput.h"
-
-#include <stdio.h>
-#include <memory>
-
-#include <nes_api.h>
-
+#include "stdafx.h"
 #include "sdlAudio.h"
 #include "sdlGfx.h"
 #include "sdlInput.h"

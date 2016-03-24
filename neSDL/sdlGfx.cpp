@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "sdlGfx.h"
-#include <SDL.h>
 
 #if !defined(RENDER_GRID)
 const unsigned int SCREEN_WIDTH = 256;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <nes_api.h>
 #include <SDL_audio.h>
 
 class SdlAudioProvider : public IAudioProvider
