@@ -12,11 +12,11 @@ class Input;
 class Nes : public INes
 {
 public:
-    Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper, std::shared_ptr<IAudioProvider> audioProvider);
+    Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper, IAudioProvider* audioProvider);
     ~Nes();
 
-    static std::unique_ptr<Nes> Create(const char* romPath, std::shared_ptr<IAudioProvider> audioProvider);
-    static std::unique_ptr<Nes> Create(std::shared_ptr<Rom> rom, std::shared_ptr<IAudioProvider> audioProvider);
+    static std::unique_ptr<Nes> Create(const char* romPath, IAudioProvider* audioProvider);
+    static std::unique_ptr<Nes> Create(std::shared_ptr<Rom> rom, IAudioProvider* audioProvider);
 
     // DoFrame runs all nes components until the ppu hits VBlank
     // This means that one call to DoFrame will render scanlines 241 - 261 then 0 - 240

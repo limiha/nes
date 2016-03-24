@@ -11,7 +11,7 @@
 #include "apu.h"
 #include "mapper.h"
 
-Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper, std::shared_ptr<IAudioProvider> audioProvider)
+Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper, IAudioProvider* audioProvider)
     : _rom(rom)
     , _mapper(mapper)
 {
@@ -31,7 +31,7 @@ Nes::~Nes()
     _apu->StopAudio();
 }
 
-std::unique_ptr<Nes> Nes::Create(const char* romPath, std::shared_ptr<IAudioProvider> audioProvider)
+std::unique_ptr<Nes> Nes::Create(const char* romPath, IAudioProvider* audioProvider)
 {
     auto rom = std::make_shared<Rom>();
     if (!rom->Load(romPath))
@@ -40,7 +40,7 @@ std::unique_ptr<Nes> Nes::Create(const char* romPath, std::shared_ptr<IAudioProv
     return Nes::Create(rom, audioProvider);
 }
 
-std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom, std::shared_ptr<IAudioProvider> audioProvider)
+std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom, IAudioProvider* audioProvider)
 {
     auto mapper = IMapper::CreateMapper(rom);
     if (mapper == nullptr)

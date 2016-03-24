@@ -1,7 +1,6 @@
 #include "stdafx.h"
+#include "..\include\nes_api.h"
 #include "audio.h"
-
-#include <nes_api.h>
 
 //#define SOUND_EVENT_TRACE
 
@@ -31,7 +30,7 @@ static double TriangleFourierFunction(int phase, int harmonic)
     return pow(-1.0, (harmonic - 1) / 2) * (1.0 / (harmonic * harmonic)) * sin(harmonic * M_PI * 2.0 * ((double)phase / WAVETABLE_SAMPLES));
 }
 
-AudioEngine::AudioEngine(std::shared_ptr<IAudioProvider> audioProvider)
+AudioEngine::AudioEngine(IAudioProvider* audioProvider)
     : _audioProvider(audioProvider)
     , _audioStarted(false)
     , _sampleRate(0)

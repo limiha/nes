@@ -247,7 +247,7 @@ struct ApuEnvelop
 
 // APU implementation
 
-Apu::Apu(bool isPal, std::shared_ptr<IAudioProvider> audioProvider)
+Apu::Apu(bool isPal, IAudioProvider* audioProvider)
     : _frameInterrupt(false)
     , _frameInterruptInhibit(false)
     , _frameCounterMode1(false)

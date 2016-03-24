@@ -23,7 +23,7 @@ struct ApuStepResult
 class Apu : public IMem
 {
 public:
-    Apu(bool isPal, std::shared_ptr<IAudioProvider> audioProvider);
+    Apu(bool isPal, IAudioProvider* audioProvider);
     ~Apu();
 
     // Audio control

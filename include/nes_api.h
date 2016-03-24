@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #if defined(_WIN32)
   #if defined(NES_EXPORTS)
     #define NES_API __declspec(dllexport)
@@ -54,5 +52,6 @@ struct IStandardController
 
 extern "C"
 {
-    NES_API INes* Nes_Create(const char* romPath, std::shared_ptr<IAudioProvider> audioProvider);
+    NES_API INes* Nes_Create(const char* romPath, IAudioProvider* audioProvider);
+    NES_API void Nes_Destroy(INes* nes);
 }
