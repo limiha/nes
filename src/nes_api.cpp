@@ -4,7 +4,7 @@
 
 std::unique_ptr<Nes> _g_Nes = nullptr;
 
-INes* Nes_Create(const char* romPath)
+INes* Nes_Create(const char* romPath, std::shared_ptr<IAudioProvider> audioProvider)
 {
     // HACK
     // TOOD: fix.
@@ -14,7 +14,7 @@ INes* Nes_Create(const char* romPath)
     }
     else
     {
-        _g_Nes = Nes::Create(romPath);
+        _g_Nes = Nes::Create(romPath, audioProvider);
         return _g_Nes.get();
     }
 }

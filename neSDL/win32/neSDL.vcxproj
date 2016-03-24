@@ -84,10 +84,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\neSDL.cpp" />
+    <ClCompile Include="..\sdlAudio.cpp" />
     <ClCompile Include="..\sdlGfx.cpp" />
     <ClCompile Include="..\sdlInput.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\sdlAudio.h" />
     <ClInclude Include="..\sdlGfx.h" />
     <ClInclude Include="..\sdlInput.h" />
   </ItemGroup>

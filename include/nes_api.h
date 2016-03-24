@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #if defined(_WIN32)
   #if defined(NES_EXPORTS)
     #define NES_API __declspec(dllexport)
@@ -22,6 +24,21 @@ struct INes
     virtual void LoadState() = 0;
 };
 
+// Audio interface (implemented by host)
+typedef void AudioCallback(void *userdata, unsigned char *stream, int len);
+struct IAudioProvider
+{
+    // Called by nes with its callback when it's ready to begin audio rendering
+    virtual void Initialize(AudioCallback* callback, void* callbackData) = 0;
+
+    // The following calls will only be made after Initialize is called
+    virtual void PauseAudio() = 0;
+    virtual void UnpauseAudio() = 0;
+    virtual int GetSampleRate() = 0;
+    virtual int GetBitsPerSample() = 0;
+    virtual int GetSilenceValue() = 0;
+};
+
 // Standard Controller Interface
 struct IStandardController
 {
@@ -37,5 +54,5 @@ struct IStandardController
 
 extern "C"
 {
-    NES_API INes* Nes_Create(const char* romPath);
+    NES_API INes* Nes_Create(const char* romPath, std::shared_ptr<IAudioProvider> audioProvider);
 }

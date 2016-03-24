@@ -20,12 +20,18 @@
     <ClCompile Include="..\neSdl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\sdlAudio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\sdlGfx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\sdlInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sdlAudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
