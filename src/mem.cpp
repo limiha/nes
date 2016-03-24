@@ -1,5 +1,3 @@
-#pragma once
-
 #include "stdafx.h"
 #include "mem.h"
 //#include "ppu.h"
