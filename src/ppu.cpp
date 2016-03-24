@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "new_ppu.h"
+#include "ppu.h"
 #include "rom.h"
 
 Ppu::Ppu(std::shared_ptr<IMapper> mapper)

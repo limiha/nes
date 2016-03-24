@@ -1,5 +1,3 @@
-#pragma once
-
 #include "stdafx.h"
 #include "cpu.h"
 #include "decode.h"
