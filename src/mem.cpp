@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "mem.h"
-//#include "ppu.h"
-#include "new_ppu.h"
+#include "ppu.h"
 #include "apu.h"
 #include "input.h"
 

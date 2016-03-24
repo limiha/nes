@@ -54,9 +54,6 @@
     <ClInclude Include="..\nes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\new_ppu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\rom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -68,6 +65,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\nes_api.h">
       <Filter>API Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ppu.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -98,9 +98,6 @@
     <ClCompile Include="..\nes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\new_ppu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\rom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -108,6 +105,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\nes_api.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ppu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

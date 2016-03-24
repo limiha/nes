@@ -27,7 +27,7 @@
     <ClInclude Include="..\mapper.h" />
     <ClInclude Include="..\mem.h" />
     <ClInclude Include="..\nes.h" />
-    <ClInclude Include="..\new_ppu.h" />
+    <ClInclude Include="..\ppu.h" />
     <ClInclude Include="..\rom.h" />
     <ClInclude Include="..\stdafx.h" />
     <ClInclude Include="..\types.h" />
@@ -43,7 +43,7 @@
     <ClCompile Include="..\mem.cpp" />
     <ClCompile Include="..\nes.cpp" />
     <ClCompile Include="..\nes_api.cpp" />
-    <ClCompile Include="..\new_ppu.cpp" />
+    <ClCompile Include="..\ppu.cpp" />
     <ClCompile Include="..\rom.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
