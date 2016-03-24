@@ -5,6 +5,10 @@
 
 #pragma once
 
+// C includes
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 // std C++ includes
 #include <iostream>
 #include <fstream>
@@ -28,7 +32,3 @@ namespace fs = std::experimental::filesystem;
 // Emulator constants
 #define CPU_FREQ_NTSC 1789773
 #define CPU_FREQ_PAL 1662607
-
-// Still required for APU
-#define SDL_MAIN_HANDLED
-#include <SDL.h>

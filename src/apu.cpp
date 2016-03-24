@@ -247,7 +247,7 @@ struct ApuEnvelop
 
 // APU implementation
 
-Apu::Apu(bool isPal)
+Apu::Apu(bool isPal, std::shared_ptr<IAudioProvider> audioProvider)
     : _frameInterrupt(false)
     , _frameInterruptInhibit(false)
     , _frameCounterMode1(false)
@@ -275,7 +275,7 @@ Apu::Apu(bool isPal)
     memset(_pulseEnvelop2, 0, sizeof(ApuEnvelop));
     memset(_noiseEnvelop, 0, sizeof(ApuEnvelop));
 
-    _audioEngine = new AudioEngine();
+    _audioEngine = new AudioEngine(audioProvider);
     _pulseState1->frequencySetting = NESAUDIO_PULSE1_FREQUENCY;
     _pulseState2->frequencySetting = NESAUDIO_PULSE2_FREQUENCY;
     _pulseState1->dutyCycleSetting = NESAUDIO_PULSE1_DUTYCYCLE;

@@ -3,6 +3,7 @@
 #include "mem.h"
 
 class AudioEngine;
+struct IAudioProvider;
 struct ApuPulseState;
 struct ApuTriangleState;
 struct ApuNoiseState;
@@ -22,7 +23,7 @@ struct ApuStepResult
 class Apu : public IMem
 {
 public:
-    Apu(bool isPal);
+    Apu(bool isPal, std::shared_ptr<IAudioProvider> audioProvider);
     ~Apu();
 
     // Audio control

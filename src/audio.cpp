@@ -1,18 +1,17 @@
 #include "stdafx.h"
 #include "audio.h"
 
+#include <nes_api.h>
+
 //#define SOUND_EVENT_TRACE
 
 // Values tweaked for performance/audio quality
-#define SAMPLE_BUFFER_SIZE 1024
 #define WAIT_NUM_SAMPLES 32 // number of samples to play with current setting when no events are available
 #define WAVETABLE_FREQUENCY_STEPS 64
 #define WAVETABLE_SAMPLES 256
 #define WAVETABLE_SIZE WAVETABLE_FREQUENCY_STEPS * WAVETABLE_SAMPLES
 
 #define MAX_FRAME_CYCLE_COUNT 38000 // Larger than max frame clock cycle count, but can't exceed max unsigned 16-bit integer
-
-static std::atomic<unsigned int> g_engineCount;
 
 static void AudioGenerateCallback(void *userdata, u8 *stream, int len)
 {
@@ -32,8 +31,9 @@ static double TriangleFourierFunction(int phase, int harmonic)
     return pow(-1.0, (harmonic - 1) / 2) * (1.0 / (harmonic * harmonic)) * sin(harmonic * M_PI * 2.0 * ((double)phase / WAVETABLE_SAMPLES));
 }
 
-AudioEngine::AudioEngine()
-    : _deviceId(0)
+AudioEngine::AudioEngine(std::shared_ptr<IAudioProvider> audioProvider)
+    : _audioProvider(audioProvider)
+    , _audioStarted(false)
     , _sampleRate(0)
     , _silenceValue(0)
     , _eventQueue(MAX_FRAME_CYCLE_COUNT)
@@ -48,14 +48,11 @@ AudioEngine::AudioEngine()
     memset(&_pulseChannel2, 0, sizeof(WavetableChannel));
     memset(&_triangleChannel, 0, sizeof(WavetableChannel));
     memset(&_wavetables, 0, sizeof(_wavetables));
-
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
 }
 
 AudioEngine::~AudioEngine()
 {
     StopAudio();
-    SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
 void AudioEngine::StartAudio(
@@ -66,37 +63,9 @@ void AudioEngine::StartAudio(
     int triangleMinFreq,
     int triangleMaxFreq)
 {
-    unsigned int lastCount = 0;
-    g_engineCount.compare_exchange_strong(lastCount, 1);
-    if (lastCount != 0)
-    {
-        AudioError("Cannot start more than one audio engine at the same time");
-        return;
-    }
-
-    SDL_AudioSpec desired = { 0 };
-    SDL_AudioSpec obtained = { 0 };
-    desired.format = AUDIO_U8;
-    desired.channels = 1;
-    desired.freq = preferredSampleRate;
-    desired.samples = SAMPLE_BUFFER_SIZE;
-    desired.callback = AudioGenerateCallback;
-    desired.userdata = this;
-
-    _deviceId = SDL_OpenAudioDevice(
-        nullptr /* Choose reasonable default device */,
-        false /* Capture disabled */,
-        &desired,
-        &obtained,
-        SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
-    if (_deviceId == 0)
-    {
-        AudioError(SDL_GetError());
-        return;
-    }
-
-    _sampleRate = obtained.freq;
-    _silenceValue = obtained.silence;
+    _audioProvider->Initialize(AudioGenerateCallback, this);
+    _sampleRate = _audioProvider->GetSampleRate();
+    _silenceValue = _audioProvider->GetSilenceValue();
 
     _cpuFreq = cpuFreq;
     _nyquistFreq = _sampleRate / 2;
@@ -124,25 +93,21 @@ void AudioEngine::StartAudio(
 
 void AudioEngine::StopAudio()
 {
-    if (_deviceId != 0)
+    if (_audioStarted)
     {
-        SDL_CloseAudioDevice(_deviceId);
         ReleaseTables();
-
-        _deviceId = 0;
+        _audioStarted = false;
     }
-
-    g_engineCount = 0;
 }
 
 void AudioEngine::PauseAudio()
 {
-    SDL_PauseAudioDevice(_deviceId, 1);
+	_audioProvider->PauseAudio();
 }
 
 void AudioEngine::UnpauseAudio()
 {
-    SDL_PauseAudioDevice(_deviceId, 0);
+	_audioProvider->UnpauseAudio();
 }
 
 void AudioEngine::QueueAudioEvent(int cycleCount, int setting, u32 newValue)
@@ -340,12 +305,6 @@ void AudioEngine::GenarateOtherPulseTables()
         while (square12phase < WAVETABLE_SAMPLES)
             tableRow12_5[square12phase++] = tableRow50[square50phase++];
     }
-}
-
-void AudioEngine::AudioError(const char* error)
-{
-    // TODO: Do something different in the emulator?
-    printf_s("Audio Engine Error: %s", error);
 }
 
 void AudioEngine::ExecuteCallback(u8 *stream, int len)

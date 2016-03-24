@@ -2,6 +2,8 @@
 
 #include "eventqueue.h"
 
+struct IAudioProvider;
+
 enum WavetableIndex
 {
     NESAUDIO_PULSE_DUTYCYCLE_12_5 = 0, // Pulse channel 12.5% duty cycle
@@ -66,7 +68,7 @@ struct WavetableChannel
 class AudioEngine
 {
 public:
-    AudioEngine();
+    AudioEngine(std::shared_ptr<IAudioProvider> audioProvider);
     virtual ~AudioEngine();
 
     void StartAudio(
@@ -90,8 +92,6 @@ private:
     void GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic), u8* wavetable);
     void GenarateOtherPulseTables();
 
-    void AudioError(const char* error);
-
     void ExecuteCallback(u8* stream, int len);
     void GenerateSamples(u8* stream, int count);
     void ProcessAudioEvents();
@@ -107,7 +107,8 @@ private:
 
 private:
     // Audio device info
-    SDL_AudioDeviceID _deviceId;
+    std::shared_ptr<IAudioProvider> _audioProvider;
+    bool _audioStarted;
     int _sampleRate;
     u8 _silenceValue;
 

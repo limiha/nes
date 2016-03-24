@@ -11,12 +11,12 @@
 #include "apu.h"
 #include "mapper.h"
 
-Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper)
+Nes::Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper, std::shared_ptr<IAudioProvider> audioProvider)
     : _rom(rom)
     , _mapper(mapper)
 {
     _ppu = std::make_shared<Ppu>(_mapper);
-    _apu = std::make_shared<Apu>(false);
+    _apu = std::make_shared<Apu>(false, audioProvider);
     _input = std::make_shared<Input>();
     _mem = std::make_shared<MemoryMap>(_ppu, _apu, _input, _mapper);
     _cpu = std::make_unique<Cpu>(_mem);
@@ -31,16 +31,16 @@ Nes::~Nes()
     _apu->StopAudio();
 }
 
-std::unique_ptr<Nes> Nes::Create(const char* romPath)
+std::unique_ptr<Nes> Nes::Create(const char* romPath, std::shared_ptr<IAudioProvider> audioProvider)
 {
     auto rom = std::make_shared<Rom>();
     if (!rom->Load(romPath))
         return nullptr;
 
-    return Nes::Create(rom);
+    return Nes::Create(rom, audioProvider);
 }
 
-std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom)
+std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom, std::shared_ptr<IAudioProvider> audioProvider)
 {
     auto mapper = IMapper::CreateMapper(rom);
     if (mapper == nullptr)
@@ -48,7 +48,7 @@ std::unique_ptr<Nes> Nes::Create(std::shared_ptr<Rom> rom)
         return nullptr;
     }
 
-    return std::make_unique<Nes>(rom, mapper);
+    return std::make_unique<Nes>(rom, mapper, audioProvider);
 }
 
 void Nes::DoFrame(u8 screen[])

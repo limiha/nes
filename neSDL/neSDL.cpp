@@ -8,6 +8,7 @@
 
 #include <nes_api.h>
 
+#include "sdlAudio.h"
 #include "sdlGfx.h"
 #include "sdlInput.h"
 
@@ -19,7 +20,8 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    INes* nes = Nes_Create(argv[1]);
+    std::shared_ptr<SdlAudioProvider> audioProvider = std::make_shared<SdlAudioProvider>(44100);
+    INes* nes = Nes_Create(argv[1], audioProvider);
     if (nes == nullptr)
     {
         return 1;
