@@ -1,13 +1,4 @@
-//#include "nes.h"
-//#include "IInput.h"
-//#include "sdlGfx.h"
-//#include "sdlInput.h"
-
-#include <stdio.h>
-#include <memory>
-
-#include <nes_api.h>
-
+#include "stdafx.h"
 #include "sdlAudio.h"
 #include "sdlGfx.h"
 #include "sdlInput.h"
@@ -20,8 +11,8 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    std::shared_ptr<SdlAudioProvider> audioProvider = std::make_shared<SdlAudioProvider>(44100);
-    INes* nes = Nes_Create(argv[1], audioProvider);
+    SdlAudioProvider audioProvider(44100);
+    INes* nes = Nes_Create(argv[1], static_cast<IAudioProvider*>(&audioProvider));
     if (nes == nullptr)
     {
         return 1;
@@ -37,7 +28,6 @@ int main(int argc, char* argv[])
     {
         memset(screen, 0, sizeof(screen));
 
-        // TODO: get joypadState
         InputResult result = input.CheckInput();
 
         if (result == InputResult::SaveState)
@@ -56,4 +46,5 @@ int main(int argc, char* argv[])
         nes->DoFrame(screen);
         gfx.Blit(screen);
     }
+    Nes_Destroy(nes);
 }

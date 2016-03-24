@@ -1,7 +1,6 @@
-
+#include "stdafx.h"
 #include "sdlAudio.h"
 
-#include <stdio.h>
 #include <SDL.h>
 
 #define SAMPLE_BUFFER_SIZE 1024

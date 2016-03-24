@@ -87,11 +87,15 @@
     <ClCompile Include="..\sdlAudio.cpp" />
     <ClCompile Include="..\sdlGfx.cpp" />
     <ClCompile Include="..\sdlInput.cpp" />
+    <ClCompile Include="..\stdafx.cpp">
+	  <PrecompiledHeader>Create</PrecompiledHeader>
+	</ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\sdlAudio.h" />
     <ClInclude Include="..\sdlGfx.h" />
     <ClInclude Include="..\sdlInput.h" />
+    <ClInclude Include="..\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\win32\nes.vcxproj">

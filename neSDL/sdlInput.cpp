@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "sdlInput.h"
-#include <SDL.h>
-#include <nes_api.h>
 
 SdlInput::SdlInput(IStandardController* controller0)
 {

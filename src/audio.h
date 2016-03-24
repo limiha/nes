@@ -68,7 +68,7 @@ struct WavetableChannel
 class AudioEngine
 {
 public:
-    AudioEngine(std::shared_ptr<IAudioProvider> audioProvider);
+    AudioEngine(IAudioProvider* audioProvider);
     virtual ~AudioEngine();
 
     void StartAudio(
@@ -107,7 +107,7 @@ private:
 
 private:
     // Audio device info
-    std::shared_ptr<IAudioProvider> _audioProvider;
+    IAudioProvider* _audioProvider;
     bool _audioStarted;
     int _sampleRate;
     u8 _silenceValue;
