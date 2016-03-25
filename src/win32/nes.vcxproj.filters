@@ -65,6 +65,12 @@
     <ClInclude Include="..\ppu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\nptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\stdafx.cpp">
@@ -106,5 +112,8 @@
     <ClCompile Include="..\ppu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\nes.natvis" />
   </ItemGroup>
 </Project>

@@ -27,6 +27,8 @@
     <ClInclude Include="..\mapper.h" />
     <ClInclude Include="..\mem.h" />
     <ClInclude Include="..\nes.h" />
+    <ClInclude Include="..\nptr.h" />
+    <ClInclude Include="..\object.h" />
     <ClInclude Include="..\ppu.h" />
     <ClInclude Include="..\rom.h" />
     <ClInclude Include="..\stdafx.h" />
@@ -49,6 +51,9 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\nes.natvis" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6DAAE93F-341D-420B-92B0-34E769A28F93}</ProjectGuid>

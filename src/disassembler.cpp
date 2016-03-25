@@ -2,7 +2,7 @@
 #include "diassembler.h"
 #include "decode.h"
 
-Disassembler::Disassembler(u16 PC, std::shared_ptr<IMem> mem)
+Disassembler::Disassembler(u16 PC, IMem* mem)
     : _PC(PC)
     , _mem(mem)
 {

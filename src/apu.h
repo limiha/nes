@@ -20,11 +20,14 @@ struct ApuStepResult
     }
 };
 
-class Apu : public IMem
+class Apu : public IMem, public NesObject
 {
 public:
     Apu(bool isPal, IAudioProvider* audioProvider);
-    ~Apu();
+    virtual ~Apu();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     // Audio control
     void StartAudio(MemoryMap* cpuMemMap, int preferredSampleRate);
@@ -90,7 +93,7 @@ private:
     u32 WavelengthToFrequency(bool isTriangle, int wavelength);
 
     // APU state information:
-    MemoryMap* _cpuMemMap;
+    NPtr<MemoryMap> _cpuMemMap;
     AudioEngine* _audioEngine;
     bool _frameCounterMode1;
     bool _frameInterrupt;

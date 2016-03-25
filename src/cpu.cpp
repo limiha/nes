@@ -6,7 +6,7 @@
 using namespace std;
 
 Cpu::Cpu(
-    std::shared_ptr<IMem> mem
+    IMem* mem
     )
     : _mem(mem)
     , Cycles(0)

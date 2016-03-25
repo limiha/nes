@@ -13,11 +13,13 @@ public:
     virtual u8 Read() = 0;
 };
 
-class EmptyPort : public IControllerPortDevice
+class EmptyPort : public IControllerPortDevice, public NesObject
 {
 public:
     EmptyPort() { }
-    ~EmptyPort() { }
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     // IControllerPortDevice
 public:
@@ -25,11 +27,14 @@ public:
     u8 Read() { return 0; }
 };
 
-class Input : public IMem
+class Input : public IMem, public NesObject
 {
 public:
     Input();
-    ~Input();
+    virtual ~Input();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     // IMem
     u8 loadb(u16 addr);
@@ -49,11 +54,14 @@ private:
     std::unique_ptr<IControllerPortDevice> _port1;
 };
 
-class StandardController : public IControllerPortDevice, public IStandardController
+class StandardController : public IControllerPortDevice, public IStandardController, public NesObject
 {
 public:
     StandardController();
-    ~StandardController();
+    virtual ~StandardController();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     // IControllerPortDevice
 public:

@@ -5,12 +5,17 @@ class Apu;
 class Input;
 class Rom;
 
+#include "interfaces.h"
+
 // CPU Memory Map
-class MemoryMap : public IMem
+class MemoryMap : public IMem, public NesObject
 {
 public:
-    MemoryMap(std::shared_ptr<Ppu>, std::shared_ptr<Apu>, std::shared_ptr<Input>, std::shared_ptr<IMapper>);
-    ~MemoryMap();
+    MemoryMap(Ppu*, Apu*, Input*, IMapper*);
+    virtual ~MemoryMap();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
@@ -19,8 +24,8 @@ public:
     void LoadState(std::ifstream& ifs);
 private:
     u8 _ram[0x800];
-    std::shared_ptr<Ppu> _ppu;
-    std::shared_ptr<Apu> _apu;
-    std::shared_ptr<Input> _input;
-    std::shared_ptr<IMapper> _mapper;
+    NPtr<Ppu> _ppu;
+    NPtr<Apu> _apu;
+    NPtr<Input> _input;
+    NPtr<IMapper> _mapper;
 };

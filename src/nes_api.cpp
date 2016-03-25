@@ -2,7 +2,7 @@
 #include "..\include\nes_api.h"
 #include "nes.h"
 
-std::unique_ptr<Nes> _g_Nes = nullptr;
+static Nes* _g_Nes = nullptr;
 
 INes* Nes_Create(const char* romPath, IAudioProvider* audioProvider)
 {
@@ -14,12 +14,12 @@ INes* Nes_Create(const char* romPath, IAudioProvider* audioProvider)
     }
     else
     {
-        _g_Nes = Nes::Create(romPath, audioProvider);
-        return _g_Nes.get();
+        Nes::Create(romPath, audioProvider, &_g_Nes);
+        return _g_Nes;
     }
 }
 
 void Nes_Destroy(INes* nes)
 {
-    _g_Nes.release();
+    _g_Nes->Release();
 }

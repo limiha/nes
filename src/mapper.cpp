@@ -2,35 +2,37 @@
 #include "mapper.h"
 #include "rom.h"
 
-IMapper::IMapper(std::shared_ptr<Rom> rom)
+IMapper::IMapper(Rom* rom)
     : _rom(rom)
 {
     Mirroring = _rom->Header.Mirroring();
 }
 
-IMapper::~IMapper()
-{
-}
-
-std::shared_ptr<IMapper> IMapper::CreateMapper(std::shared_ptr<Rom> rom)
+bool IMapper::CreateMapper(Rom* rom, IMapper** mapper)
 {
     switch (rom->Header.MapperNumber())
     {
     case 0:
-        return std::make_shared<NRom>(rom);
+        *mapper = new NRom(rom);
+        return true;
     case 1:
-        return std::make_shared<SxRom>(rom);
+        *mapper = new SxRom(rom);
+        return true;
     case 2:
-        return std::make_shared<UxRom>(rom);
+        *mapper = new UxRom(rom);
+        return true;
     case 3:
-        return std::make_shared<CNRom>(rom);
+        *mapper = new CNRom(rom);
+        return true;
     case 4:
-        return std::make_shared<TxRom>(rom);
+        *mapper = new TxRom(rom);
+        return true;
     case 7:
-        return std::make_shared<AxRom>(rom);
+        *mapper = new AxRom(rom);
+        return true;
     default:
         printf("Unsupported mapper: %d\n", rom->Header.MapperNumber());
-        return nullptr;
+        return false;
     }
 }
 
@@ -53,7 +55,7 @@ void IMapper::LoadState(std::ifstream& ifs)
 
 /// NRom
 
-NRom::NRom(std::shared_ptr<Rom> rom)
+NRom::NRom(Rom* rom)
     : IMapper(rom)
 {
     if (_rom->Header.ChrRomSize > 0)
@@ -121,7 +123,7 @@ void NRom::LoadState(std::ifstream& ifs)
 
 /// SxRom (Mapper #1)
 
-SxRom::SxRom(std::shared_ptr<Rom> rom)
+SxRom::SxRom(Rom* rom)
     : IMapper(rom)
     , _prgSize(PrgSize::Size16k)
     , _chrMode(ChrMode::Mode8k)
@@ -304,15 +306,11 @@ void SxRom::LoadState(std::ifstream& ifs)
 
 /// UxRom (Mapper #2)
 
-UxRom::UxRom(std::shared_ptr<Rom> rom)
+UxRom::UxRom(Rom* rom)
     : NRom(rom)
     , _prgBank(0)
 {
     _lastBankOffset = (_rom->Header.PrgRomSize - 1) * PRG_ROM_BANK_SIZE;
-}
-
-UxRom::~UxRom()
-{
 }
 
 void UxRom::SaveState(std::ofstream& ofs)
@@ -350,13 +348,9 @@ u8 UxRom::prg_loadb(u16 addr)
 
 /// CNRom (Mapper #3)
 
-CNRom::CNRom(std::shared_ptr<Rom> rom)
+CNRom::CNRom(Rom* rom)
     : NRom(rom)
     , _chrBank(0)
-{
-}
-
-CNRom::~CNRom()
 {
 }
 
@@ -385,7 +379,7 @@ void CNRom::LoadState(std::ifstream& ifs)
 
 // TXRom (MMC3, mapper #4)
 
-TxRom::TxRom(std::shared_ptr<Rom> rom)
+TxRom::TxRom(Rom* rom)
     : IMapper(rom)
     , _prgMode(false)
     , _chrMode(false)
@@ -394,10 +388,6 @@ TxRom::TxRom(std::shared_ptr<Rom> rom)
 {
     _lastBankIndex = (_rom->Header.PrgRomSize * 2) - 1; // PrgRomSize is in 0x4000 units, TxRom has 0x2000 size banks
     _secondLastBankIndex = (_rom->Header.PrgRomSize * 2) - 2; // PrgRomSize is in 0x4000 units, TxRom has 0x2000 size banks
-}
-
-TxRom::~TxRom()
-{
 }
 
 u8 TxRom::prg_loadb(u16 addr)
@@ -589,13 +579,9 @@ bool TxRom::Scanline()
 }
 
 // AxRom, Mapper #7
-AxRom::AxRom(std::shared_ptr<Rom> rom)
+AxRom::AxRom(Rom* rom)
     : NRom(rom)
     , _prgReg(0)
-{
-}
-
-AxRom::~AxRom()
 {
 }
 

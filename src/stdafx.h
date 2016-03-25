@@ -26,7 +26,8 @@
 namespace fs = std::experimental::filesystem;
 
 #include "types.h"
-#include "interfaces.h"
+#include "nptr.h"
+#include "object.h"
 #include "util.h"
 
 // Emulator constants

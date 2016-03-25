@@ -1,8 +1,13 @@
 #pragma once
 
-class ISaveState
+struct IBaseInterface
 {
-public:
+    virtual void AddRef() = 0;
+    virtual void Release() = 0;
+};
+
+struct ISaveState : public IBaseInterface
+{
     virtual void SaveState(std::ofstream& ofs) = 0;
     virtual void LoadState(std::ifstream& ifs) = 0;
 };
@@ -51,11 +56,10 @@ enum class NameTableMirroring : u8;
 class IMapper : public ISaveState
 {
 protected:
-    IMapper(std::shared_ptr<Rom> rom);
-    ~IMapper();
+    IMapper(Rom* rom);
 
 public:
-    static std::shared_ptr<IMapper> CreateMapper(std::shared_ptr<Rom> rom);
+    static bool CreateMapper(Rom* rom, IMapper** mapper);
 
 public:
     virtual u8 prg_loadb(u16 addr) = 0;
@@ -73,5 +77,5 @@ public:
     NameTableMirroring Mirroring;
 
 protected:
-    std::shared_ptr<Rom> _rom;
+    NPtr<Rom> _rom;
 };

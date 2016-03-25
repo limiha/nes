@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mem.h"
+#include "interfaces.h"
 
 // Base Cycle Counts 
 static u8 CYCLE_TABLE[0x100] = {
@@ -82,11 +82,14 @@ struct CpuRegs
     }
 };
 
-class Cpu : public IMem
+class Cpu : public IMem, public NesObject
 {
 public:
-    Cpu(std::shared_ptr<IMem>);
-    ~Cpu();
+    Cpu(IMem*);
+    virtual ~Cpu();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     // IMem
     u8 loadb(u16 addr);
@@ -111,7 +114,7 @@ public:
 
 private:
     CpuRegs _regs;
-    std::shared_ptr<IMem> _mem;
+    NPtr<IMem> _mem;
 
     u8 _op;
     u32 _dmaBytesRemaining;

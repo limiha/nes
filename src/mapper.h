@@ -1,10 +1,15 @@
 #pragma once
 
-class NRom : public IMapper
+#include "interfaces.h"
+
+class NRom : public IMapper, public NesObject
 {
 public:
-    NRom(std::shared_ptr<Rom> rom);
+    NRom(Rom* rom);
     ~NRom();
+    
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
 public:
     virtual u8 prg_loadb(u16 addr);
@@ -22,11 +27,14 @@ private:
     u8 _chrRam[0x2000]; // If no ChrRom is provided we will give ChrRam
 };
 
-class SxRom : public IMapper
+class SxRom : public IMapper, public NesObject
 {
 public:
-    SxRom(std::shared_ptr<Rom> rom);
-    ~SxRom();
+    SxRom(Rom* rom);
+    virtual ~SxRom();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
 public:
     u8 prg_loadb(u16 addr);
@@ -71,8 +79,7 @@ private:
 class UxRom : public NRom
 {
 public:
-    UxRom(std::shared_ptr<Rom> rom);
-    ~UxRom();
+    UxRom(Rom* rom);
 
     void prg_storeb(u16 addr, u8 val);
     u8 prg_loadb(u16 addr);
@@ -88,8 +95,7 @@ private:
 class CNRom : public NRom
 {
 public:
-    CNRom(std::shared_ptr<Rom> rom);
-    ~CNRom();
+    CNRom(Rom* rom);
 
     void prg_storeb(u16 addr, u8 val);
     u8 chr_loadb(u16 addr);
@@ -102,11 +108,13 @@ private:
 };
 
 // MMC3
-class TxRom : public IMapper
+class TxRom : public IMapper, public NesObject
 {
 public:
-    TxRom(std::shared_ptr<Rom> rom);
-    ~TxRom();
+    TxRom(Rom* rom);
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     u8 prg_loadb(u16 addr);
     void prg_storeb(u16 addr, u8 val);
@@ -138,8 +146,7 @@ private:
 class AxRom : public NRom 
 {
 public:
-    AxRom(std::shared_ptr<Rom> rom);
-    ~AxRom();
+    AxRom(Rom* rom);
 
     u8 prg_loadb(u16 addr);
     void prg_storeb(u16 addr, u8 val);
