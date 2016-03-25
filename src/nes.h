@@ -20,7 +20,7 @@ public:
     DELEGATE_NESOBJECT_REFCOUNTING();
 
     static bool Create(const char* romPath, IAudioProvider* audioProvider, Nes** nes);
-    static bool Create(Rom* rom, IAudioProvider* audioProvider, Nes** nes);
+    static bool Create(IRomFile* rom, IAudioProvider* audioProvider, Nes** nes);
 
     // DoFrame runs all nes components until the ppu hits VBlank
     // This means that one call to DoFrame will render scanlines 241 - 261 then 0 - 240
@@ -38,7 +38,7 @@ public:
     void LoadState();
 
 private:
-    std::unique_ptr<fs::path> GetSavePath();
+    //std::unique_ptr<fs::path> GetSavePath();
 
 private:
     NPtr<Rom> _rom;

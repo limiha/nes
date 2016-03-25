@@ -33,23 +33,23 @@ Nes::~Nes()
 
 bool Nes::Create(const char* romPath, IAudioProvider* audioProvider, Nes** nes)
 {
-    NPtr<Rom> rom(new Rom());
-    if (!rom->Load(romPath))
-        return false;
-
-    return Nes::Create(rom, audioProvider, nes);
+    NPtr<StdStreamRomFile> rom(new StdStreamRomFile(romPath));
+    return Nes::Create(static_cast<IRomFile*>(rom), audioProvider, nes);
 }
 
-bool Nes::Create(Rom* rom, IAudioProvider* audioProvider, Nes** nes)
+bool Nes::Create(IRomFile* romFile, IAudioProvider* audioProvider, Nes** nes)
 {
-    NPtr<IMapper> mapper;
-    if (!IMapper::CreateMapper(rom, &mapper))
+    NPtr<Rom> rom;
+    if (Rom::Create(romFile, &rom))
     {
-        return nullptr;
+        NPtr<IMapper> mapper;
+        if (IMapper::CreateMapper(rom, &mapper))
+        {
+            *nes = new Nes(rom, mapper, audioProvider);
+            return true;
+        }
     }
-
-    *nes = new Nes(rom, mapper, audioProvider);
-    return true;
+    return false;
 }
 
 void Nes::DoFrame(u8 screen[])
@@ -85,32 +85,32 @@ IStandardController* Nes::GetStandardController(unsigned int port)
 
 void Nes::SaveState()
 {
-    std::ofstream ofs(GetSavePath()->c_str(), std::fstream::binary | std::fstream::trunc);
-    _cpu->SaveState(ofs);
-    ofs.close();
+    //std::ofstream ofs(GetSavePath()->c_str(), std::fstream::binary | std::fstream::trunc);
+    //_cpu->SaveState(ofs);
+    //ofs.close();
 
-    printf("State Saved!\n");
+    //printf("State Saved!\n");
 }
 
 void Nes::LoadState()
 {
-    auto savePath = GetSavePath();
+    //auto savePath = GetSavePath();
 
-    if (!fs::exists(*savePath))
-    {
-        printf("No save state for this ROM.\n");
-        return;
-    }
+    //if (!fs::exists(*savePath))
+    //{
+    //    printf("No save state for this ROM.\n");
+    //    return;
+    //}
 
-    std::ifstream ifs(GetSavePath()->c_str(), std::fstream::binary);
-    _cpu->LoadState(ifs);
-    ifs.close();
+    //std::ifstream ifs(GetSavePath()->c_str(), std::fstream::binary);
+    //_cpu->LoadState(ifs);
+    //ifs.close();
 
-    printf("State Loaded!\n");
+    //printf("State Loaded!\n");
 }
 
-std::unique_ptr<fs::path> Nes::GetSavePath()
-{
-    fs::path savePath(_rom->Path());
-    return std::make_unique<fs::path>(savePath.replace_extension("ns"));
-}
+//std::unique_ptr<fs::path> Nes::GetSavePath()
+//{
+//    fs::path savePath(_rom->Path());
+//    return std::make_unique<fs::path>(savePath.replace_extension("ns"));
+//}

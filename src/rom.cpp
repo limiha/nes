@@ -3,8 +3,9 @@
 
 #include <fstream>
 
-Rom::Rom()
-    : PrgRom(0)
+Rom::Rom(IRomFile* romFile)
+    : _romFile(romFile)
+    , PrgRom(0)
     , ChrRom(0)
 {
 }
@@ -19,26 +20,27 @@ Rom::~Rom()
     }
 }
 
-bool Rom::Load(std::string romPath)
+bool Rom::Create(IRomFile* romFile, Rom** rom)
 {
-    _path = romPath;
-
-    if (_path.is_relative())
+    NPtr<Rom> newRom(new Rom(romFile));
+    if (newRom->Load())
     {
-        _path = fs::current_path().append(_path);
+        *rom = newRom.Detach();
+        return true;
     }
-
-    if (!fs::exists(romPath))
+    else
     {
-        printf("File does not exist\n");
+        *rom = nullptr;
         return false;
     }
+}
 
-    std::ifstream stream(romPath, std::ios::in | std::ios::binary);
-    if (stream.is_open())
+bool Rom::Load()
+{
+    NPtr<IReadStream> stream;
+    if (_romFile->GetRomFileStream(&stream))
     {
-        // read the header
-        stream.read((char*)&Header, sizeof(Header));
+        stream->ReadBytes((u8*)&Header, sizeof(Header));
 
         if (!Header.ValidateHeader())
         {
@@ -70,29 +72,21 @@ bool Rom::Load(std::string romPath)
         if (Header.PrgRomSize > 0)
         {
             PrgRom.resize(Header.PrgRomSize * PRG_ROM_BANK_SIZE);
-            stream.read((char*)&PrgRom[0], PRG_ROM_BANK_SIZE * Header.PrgRomSize);
+            stream->ReadBytes((u8*)&PrgRom[0], PRG_ROM_BANK_SIZE * Header.PrgRomSize);
         }
 
         if (Header.ChrRomSize > 0)
         {
             ChrRom.resize(Header.ChrRomSize * CHR_ROM_BANK_SIZE);
-            stream.read((char*)&ChrRom[0], CHR_ROM_BANK_SIZE * Header.ChrRomSize);
+            stream->ReadBytes((u8*)&ChrRom[0], CHR_ROM_BANK_SIZE * Header.ChrRomSize);
         }
-
-        stream.close();
-
         return true;
     }
-    else 
+    else
     {
         printf("Unable to open file\n");
         return false;
     }
-}
-
-const fs::path& Rom::Path()
-{
-    return _path;
 }
 
 void Rom::SaveState(std::ofstream& ofs)
@@ -107,26 +101,18 @@ void Rom::LoadState(std::ifstream& ifs)
 
 void Rom::SaveGame()
 {
-    std::ofstream ofs(GetSaveGamePath()->c_str(), std::ofstream::binary | std::ofstream::trunc);
-    ofs.write((char*)&PrgRam[0], PrgRam.size());
-    ofs.close();
+    NPtr<IWriteStream> stream;
+    if (_romFile->GetSaveGameStream(&stream))
+    {
+        stream->WriteBytes(&PrgRam[0], PrgRam.size());
+    }
 }
 
 void Rom::LoadGame()
 {
-    auto savePath = GetSaveGamePath();
-    if (!fs::exists(*savePath))
+    NPtr<IReadStream> stream;
+    if (_romFile->GetLoadGameStream(&stream))
     {
-        return;
+        stream->ReadBytes(&PrgRam[0], PrgRam.size());
     }
-
-    std::ifstream ifs(savePath->c_str(), std::ifstream::binary);
-    ifs.read((char*)&PrgRam[0], PrgRam.size());
-    ifs.close();
-}
-
-std::unique_ptr<fs::path> Rom::GetSaveGamePath()
-{
-    fs::path savePath(_path);
-    return std::make_unique<fs::path>(savePath.replace_extension("sav"));
 }

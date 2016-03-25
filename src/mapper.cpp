@@ -579,6 +579,7 @@ bool TxRom::Scanline()
 }
 
 // AxRom, Mapper #7
+
 AxRom::AxRom(Rom* rom)
     : NRom(rom)
     , _prgReg(0)

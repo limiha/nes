@@ -18,6 +18,36 @@
 struct INes;
 struct IStandardController;
 
+struct IReadStream;
+struct IWriteStream;
+struct IRomFile;
+
+struct IReadStream : public IBaseInterface
+{
+    // Read bytes from the stream
+    // buf: the buffer that bytes will be read into
+    // count: the maximum number of bytes to read
+    // returns: the total number of bytes read
+    virtual int ReadBytes(unsigned char* buf, int count) = 0;
+};
+
+struct IWriteStream : public IBaseInterface
+{
+
+    // Write bytes to the stream
+    // buf: the buffer containing bytse to be written
+    // count: the maximum number of bytes to write
+    // returns: the total number of bytes written
+    virtual int WriteBytes(unsigned char* buf, int count) = 0;
+};
+
+struct IRomFile : public IBaseInterface
+{
+    virtual bool GetRomFileStream(IReadStream** stream) = 0;
+    virtual bool GetSaveGameStream(IWriteStream** stream) = 0;
+    virtual bool GetLoadGameStream(IReadStream** stream) = 0;
+};
+
 struct INes : public IBaseInterface
 {
     virtual void DoFrame(unsigned char screen[]) = 0;
