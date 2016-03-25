@@ -25,7 +25,6 @@
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 
-#include "../include/baseinterface.h"
 #include "../include/nptr.h"
 #include "../include/object.h"
 #include "types.h"

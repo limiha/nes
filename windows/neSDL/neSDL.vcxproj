@@ -5,9 +5,17 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -23,7 +31,20 @@
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
@@ -38,17 +59,44 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -82,24 +130,43 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\neSDL.cpp" />
-    <ClCompile Include="..\sdlAudio.cpp" />
-    <ClCompile Include="..\sdlGfx.cpp" />
-    <ClCompile Include="..\sdlInput.cpp" />
-    <ClCompile Include="..\stdafx.cpp">
-	  <PrecompiledHeader>Create</PrecompiledHeader>
-	</ClCompile>
+    <ClInclude Include="..\..\neSDL\sdlAudio.h" />
+    <ClInclude Include="..\..\neSDL\sdlGfx.h" />
+    <ClInclude Include="..\..\neSDL\sdlInput.h" />
+    <ClInclude Include="..\..\neSDL\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\sdlAudio.h" />
-    <ClInclude Include="..\sdlGfx.h" />
-    <ClInclude Include="..\sdlInput.h" />
-    <ClInclude Include="..\stdafx.h" />
+    <ClCompile Include="..\..\neSDL\neSDL.cpp" />
+    <ClCompile Include="..\..\neSDL\sdlAudio.cpp" />
+    <ClCompile Include="..\..\neSDL\sdlGfx.cpp" />
+    <ClCompile Include="..\..\neSDL\sdlInput.cpp" />
+    <ClCompile Include="..\..\neSDL\stdafx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\win32\nes.vcxproj">
-      <Project>{6daae93f-341d-420b-92b0-34e769a28f93}</Project>
+    <ProjectReference Include="..\dll\nesDLL.vcxproj">
+      <Project>{178a3114-e60d-4513-bec8-dd927cd93a35}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -107,14 +174,14 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets" Condition="Exists('..\..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets')" />
-    <Import Project="..\..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets" Condition="Exists('..\..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets')" />
+    <Import Project="..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets" Condition="Exists('..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets')" />
+    <Import Project="..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets" Condition="Exists('..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets'))" />
-    <Error Condition="!Exists('..\..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets'))" />
+    <Error Condition="!Exists('..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.v140.redist.2.0.4\build\native\sdl2.v140.redist.targets'))" />
+    <Error Condition="!Exists('..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.v140.2.0.4\build\native\sdl2.v140.targets'))" />
   </Target>
 </Project>

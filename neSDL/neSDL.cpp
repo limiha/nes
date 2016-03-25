@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 
     SdlGfx gfx(3);
 
-    unsigned char screen[256 * 240 * 3];
+    unsigned char screen[256 * 240 * 4];
     for (;;)
     {
         memset(screen, 0, sizeof(screen));

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "..\include\nes_api.h"
 #include "mem.h"
 
 // Controller Port Device Interface
