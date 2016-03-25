@@ -111,7 +111,7 @@ private:
 
 private:
     // Audio device info
-    IAudioProvider* _audioProvider;
+    NPtr<IAudioProvider> _audioProvider;
     bool _audioStarted;
     int _sampleRate;
     u8 _silenceValue;

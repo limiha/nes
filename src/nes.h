@@ -10,7 +10,7 @@ class Input;
 #include "interfaces.h"
 #include "..\include\nes_api.h"
 
-class Nes : public INes, public IBaseInterface, public NesObject
+class Nes : public INes, public NesObject
 {
 public:
     Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider);

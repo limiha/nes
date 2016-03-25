@@ -27,8 +27,6 @@
     <ClInclude Include="..\mapper.h" />
     <ClInclude Include="..\mem.h" />
     <ClInclude Include="..\nes.h" />
-    <ClInclude Include="..\nptr.h" />
-    <ClInclude Include="..\object.h" />
     <ClInclude Include="..\ppu.h" />
     <ClInclude Include="..\rom.h" />
     <ClInclude Include="..\stdafx.h" />

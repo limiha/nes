@@ -1,5 +1,9 @@
 #pragma once
 
+#include "baseinterface.h"
+#include "nptr.h"
+#include "object.h"
+
 #if defined(_WIN32)
   #if defined(NES_EXPORTS)
     #define NES_API __declspec(dllexport)
@@ -14,7 +18,7 @@
 struct INes;
 struct IStandardController;
 
-struct INes
+struct INes : public IBaseInterface
 {
     virtual void DoFrame(unsigned char screen[]) = 0;
     virtual IStandardController* GetStandardController(unsigned int port) = 0;
@@ -24,7 +28,7 @@ struct INes
 
 // Audio interface (implemented by host)
 typedef void AudioCallback(void *userdata, unsigned char *stream, int len);
-struct IAudioProvider
+struct IAudioProvider : public IBaseInterface
 {
     // Called by nes with its callback when it's ready to begin audio rendering
     virtual void Initialize(AudioCallback* callback, void* callbackData) = 0;
@@ -38,7 +42,7 @@ struct IAudioProvider
 };
 
 // Standard Controller Interface
-struct IStandardController
+struct IStandardController : public IBaseInterface
 {
     virtual void A(bool state) = 0;
     virtual void B(bool state) = 0;
@@ -52,6 +56,5 @@ struct IStandardController
 
 extern "C"
 {
-    NES_API INes* Nes_Create(const char* romPath, IAudioProvider* audioProvider);
-    NES_API void Nes_Destroy(INes* nes);
+    NES_API bool Nes_Create(const char* romPath, IAudioProvider* audioProvider, INes** ines);
 }
