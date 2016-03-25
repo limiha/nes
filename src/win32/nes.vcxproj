@@ -50,6 +50,9 @@
     </ClCompile>
     <ClCompile Include="..\util.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\nes.natvis" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6DAAE93F-341D-420B-92B0-34E769A28F93}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

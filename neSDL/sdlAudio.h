@@ -1,10 +1,13 @@
 #pragma once
 
-class SdlAudioProvider : public IAudioProvider
+class SdlAudioProvider : public IAudioProvider, public NesObject
 {
 public:
     SdlAudioProvider(int sampleRate);
     virtual ~SdlAudioProvider();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     // IAudioProvider implementation
     virtual void Initialize(AudioCallback* callback, void* callbackData);

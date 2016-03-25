@@ -2,7 +2,7 @@
 #include "ppu.h"
 #include "rom.h"
 
-Ppu::Ppu(std::shared_ptr<IMapper> mapper)
+Ppu::Ppu(IMapper* mapper)
     : _mapper(mapper)
     , _vram(_mapper)
     , _cycle(0)
@@ -770,7 +770,7 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, Sp
 /// VRam
 ///
 
-VRam::VRam(std::shared_ptr<IMapper> mapper)
+VRam::VRam(IMapper* mapper)
     : _mapper(mapper)
 {
     memset(_nametables, 0, sizeof(_nametables));

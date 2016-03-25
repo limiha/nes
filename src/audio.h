@@ -1,6 +1,7 @@
 #pragma once
 
 #include "eventqueue.h"
+#include "interfaces.h"
 
 struct IAudioProvider;
 
@@ -65,11 +66,14 @@ struct WavetableChannel
     }
 };
 
-class AudioEngine
+class AudioEngine : public IBaseInterface, public NesObject
 {
 public:
     AudioEngine(IAudioProvider* audioProvider);
     virtual ~AudioEngine();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     void StartAudio(
         int preferredSampleRate,
@@ -107,7 +111,7 @@ private:
 
 private:
     // Audio device info
-    IAudioProvider* _audioProvider;
+    NPtr<IAudioProvider> _audioProvider;
     bool _audioStarted;
     int _sampleRate;
     u8 _silenceValue;

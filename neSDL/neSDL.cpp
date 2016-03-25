@@ -11,9 +11,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    SdlAudioProvider audioProvider(44100);
-    INes* nes = Nes_Create(argv[1], static_cast<IAudioProvider*>(&audioProvider));
-    if (nes == nullptr)
+    NPtr<SdlAudioProvider> audioProvider(new SdlAudioProvider(44100));
+    NPtr<INes> nes;
+    if (!Nes_Create(argv[1], audioProvider, &nes))
     {
         return 1;
     }
@@ -46,5 +46,4 @@ int main(int argc, char* argv[])
         nes->DoFrame(screen);
         gfx.Blit(screen);
     }
-    Nes_Destroy(nes);
 }

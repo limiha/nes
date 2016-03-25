@@ -7,7 +7,7 @@
 /*
     MemoryMap
 */
-MemoryMap::MemoryMap(std::shared_ptr<Ppu> ppu, std::shared_ptr<Apu> apu, std::shared_ptr<Input> input, std::shared_ptr<IMapper> mapper)
+MemoryMap::MemoryMap(Ppu* ppu, Apu* apu, Input* input, IMapper* mapper)
     : _ppu(ppu)
     , _apu(apu)
     , _input(input)

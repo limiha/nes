@@ -56,11 +56,14 @@ struct rgb
     }
 };
 
-class VRam : public IMem
+class VRam : public IMem, public NesObject
 {
 public:
-    VRam(std::shared_ptr<IMapper>);
-    ~VRam();
+    VRam(IMapper*);
+    virtual ~VRam();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     // IMem
     u8 loadb(u16 addr);
@@ -71,7 +74,7 @@ public:
     void LoadState(std::ifstream& ifs);
 
 private:
-    std::shared_ptr<IMapper> _mapper;
+    NPtr<IMapper> _mapper;
 
     // FIXME: This is enough VRAM for two name tables
     // FIXME: Which is not correct for all mapper scenarios
@@ -108,11 +111,14 @@ struct Sprite
 
 // Object Access Memory
 // This is Sprite Ram, which confused me forever
-class Oam : public IMem
+class Oam : public IMem, public NesObject
 {
 public:
     Oam();
-    ~Oam();
+    virtual ~Oam();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
@@ -172,11 +178,14 @@ struct PpuStatus
     }
 };
 
-class Ppu : public IMem
+class Ppu : public IMem, public NesObject
 {
 public:
-    Ppu(std::shared_ptr<IMapper> mapper);
-    ~Ppu();
+    Ppu(IMapper* mapper);
+    virtual ~Ppu();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
 public:
     // IMem
@@ -225,7 +234,7 @@ private:
     void ProcessSprites();
 
 private:
-    std::shared_ptr<IMapper> _mapper;
+    NPtr<IMapper> _mapper;
     VRam _vram;
 
     // Sprites

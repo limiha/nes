@@ -74,11 +74,14 @@ struct INesHeader
     }
 };
 
-class Rom : public ISaveState
+class Rom : public ISaveState, public NesObject
 {
 public:
     Rom();
-    ~Rom();
+    virtual ~Rom();
+
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
 
     bool Load(std::string romPath);
     const fs::path& Path();

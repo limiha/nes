@@ -43,14 +43,14 @@ private:
 class Disassembler
 {
 public:
-    Disassembler(u16 PC, std::shared_ptr<IMem> mem);
+    Disassembler(u16 PC, IMem* mem);
     ~Disassembler();
 
     void Disassemble(DisassembledInstruction** disassembledInstruction);
 
 private:
     u16 _PC;
-    std::shared_ptr<IMem> _mem;
+    NPtr<IMem> _mem;
 
     // Helpers
     u8 LoadBBumpPC()

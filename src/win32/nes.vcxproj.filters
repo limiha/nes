@@ -107,4 +107,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\nes.natvis" />
+  </ItemGroup>
 </Project>

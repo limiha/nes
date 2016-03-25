@@ -7,16 +7,20 @@ class Ppu;
 class Apu;
 class Input;
 
+#include "interfaces.h"
 #include "..\include\nes_api.h"
 
-class Nes : public INes
+class Nes : public INes, public NesObject
 {
 public:
-    Nes(std::shared_ptr<Rom> rom, std::shared_ptr<IMapper> mapper, IAudioProvider* audioProvider);
-    ~Nes();
+    Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider);
+    virtual ~Nes();
 
-    static std::unique_ptr<Nes> Create(const char* romPath, IAudioProvider* audioProvider);
-    static std::unique_ptr<Nes> Create(std::shared_ptr<Rom> rom, IAudioProvider* audioProvider);
+public:
+    DELEGATE_NESOBJECT_REFCOUNTING();
+
+    static bool Create(const char* romPath, IAudioProvider* audioProvider, Nes** nes);
+    static bool Create(Rom* rom, IAudioProvider* audioProvider, Nes** nes);
 
     // DoFrame runs all nes components until the ppu hits VBlank
     // This means that one call to DoFrame will render scanlines 241 - 261 then 0 - 240
@@ -37,11 +41,11 @@ private:
     std::unique_ptr<fs::path> GetSavePath();
 
 private:
-    std::shared_ptr<Rom> _rom;
-    std::shared_ptr<IMapper> _mapper;
-    std::shared_ptr<Apu> _apu;
-    std::shared_ptr<Ppu> _ppu;
-    std::shared_ptr<Input> _input;
-    std::shared_ptr<MemoryMap> _mem;
-    std::unique_ptr<Cpu> _cpu;
+    NPtr<Rom> _rom;
+    NPtr<IMapper> _mapper;
+    NPtr<Apu> _apu;
+    NPtr<Ppu> _ppu;
+    NPtr<Input> _input;
+    NPtr<MemoryMap> _mem;
+    NPtr<Cpu> _cpu;
 };
