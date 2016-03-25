@@ -94,7 +94,7 @@ private:
 
     // APU state information:
     NPtr<MemoryMap> _cpuMemMap;
-    AudioEngine* _audioEngine;
+    NPtr<AudioEngine> _audioEngine;
     bool _frameCounterMode1;
     bool _frameInterrupt;
     bool _frameInterruptInhibit;
