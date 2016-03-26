@@ -6,7 +6,7 @@ class NRom : public IMapper, public NesObject
 {
 public:
     NRom(Rom* rom);
-    ~NRom();
+    virtual ~NRom();
     
 public:
     DELEGATE_NESOBJECT_REFCOUNTING();
