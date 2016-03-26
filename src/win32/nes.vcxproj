@@ -19,6 +19,7 @@
     <ClInclude Include="..\apu.h" />
     <ClInclude Include="..\audio.h" />
     <ClInclude Include="..\cpu.h" />
+    <ClInclude Include="..\debug.h" />
     <ClInclude Include="..\decode.h" />
     <ClInclude Include="..\diassembler.h" />
     <ClInclude Include="..\eventqueue.h" />
@@ -37,6 +38,7 @@
     <ClCompile Include="..\apu.cpp" />
     <ClCompile Include="..\audio.cpp" />
     <ClCompile Include="..\cpu.cpp" />
+    <ClCompile Include="..\debug.cpp" />
     <ClCompile Include="..\disassembler.cpp" />
     <ClCompile Include="..\input.cpp" />
     <ClCompile Include="..\mapper.cpp" />

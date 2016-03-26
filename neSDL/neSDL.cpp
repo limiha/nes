@@ -46,4 +46,6 @@ int main(int argc, char* argv[])
         nes->DoFrame(screen);
         gfx.Blit(screen);
     }
+
+    nes->Dispose();
 }

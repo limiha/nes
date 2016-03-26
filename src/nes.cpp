@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "nes.h"
 #include "cpu.h"
+#include "debug.h"
 #include "mem.h"
 #include "ppu.h"
 #include "input.h"
@@ -15,11 +16,12 @@ Nes::Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider)
     : _rom(rom)
     , _mapper(mapper)
 {
+    _debugger = new DebugService();
     _ppu = new Ppu(_mapper);
     _apu = new Apu(false, audioProvider);
     _input = new Input();
     _mem = new MemoryMap(_ppu, _apu, _input, _mapper);
-    _cpu = new Cpu(_mem);
+    _cpu = new Cpu(_mem, _debugger);
 
     // TODO: Move these to an init method
     _cpu->Reset();
@@ -28,7 +30,6 @@ Nes::Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider)
 
 Nes::~Nes()
 {
-    _apu->StopAudio();
 }
 
 bool Nes::Create(const char* romPath, IAudioProvider* audioProvider, Nes** nes)
@@ -50,6 +51,19 @@ bool Nes::Create(IRomFile* romFile, IAudioProvider* audioProvider, Nes** nes)
         }
     }
     return false;
+}
+
+void Nes::Dispose()
+{
+    _apu->StopAudio();
+
+    // Release smart pointers to avoid problems with circular references.
+    _debugger.Release();
+    _ppu.Release();
+    _apu.Release();
+    _input.Release();
+    _mem.Release();
+    _cpu.Release();
 }
 
 void Nes::DoFrame(u8 screen[])
