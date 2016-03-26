@@ -2,6 +2,7 @@
 
 class Rom;
 class Cpu;
+class DebugService;
 class MemoryMap;
 class Ppu;
 class Apu;
@@ -21,6 +22,8 @@ public:
 
     static bool Create(const char* romPath, IAudioProvider* audioProvider, Nes** nes);
     static bool Create(Rom* rom, IAudioProvider* audioProvider, Nes** nes);
+
+    virtual void Dispose();
 
     // DoFrame runs all nes components until the ppu hits VBlank
     // This means that one call to DoFrame will render scanlines 241 - 261 then 0 - 240
@@ -48,4 +51,5 @@ private:
     NPtr<Input> _input;
     NPtr<MemoryMap> _mem;
     NPtr<Cpu> _cpu;
+    NPtr<DebugService> _debugger;
 };

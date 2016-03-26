@@ -2,6 +2,8 @@
 
 #include "interfaces.h"
 
+class DebugService;
+
 // Base Cycle Counts 
 static u8 CYCLE_TABLE[0x100] = {
     /*0x00*/ 7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6,
@@ -85,7 +87,7 @@ struct CpuRegs
 class Cpu : public IMem, public NesObject
 {
 public:
-    Cpu(IMem*);
+    Cpu(IMem*, DebugService*);
     virtual ~Cpu();
 
 public:
@@ -115,6 +117,7 @@ public:
 private:
     CpuRegs _regs;
     NPtr<IMem> _mem;
+    NPtr<DebugService> _debugger;
 
     u8 _op;
     u32 _dmaBytesRemaining;

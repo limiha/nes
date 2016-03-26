@@ -1,14 +1,17 @@
 #include "stdafx.h"
 #include "cpu.h"
+#include "debug.h"
 #include "decode.h"
 #include "diassembler.h"
 
 using namespace std;
 
 Cpu::Cpu(
-    IMem* mem
+    IMem* mem,
+    DebugService* debugger
     )
     : _mem(mem)
+    , _debugger(debugger)
     , Cycles(0)
     , _dmaBytesRemaining(0)
 {
@@ -80,13 +83,6 @@ void Cpu::Step()
     Trace();
 #endif
 
-//#if defined(DEBUG)
-//    if (_regs.PC == 0xb4d1)
-//    {
-//        __debugbreak();
-//    }
-//#endif
-
     if (_dmaBytesRemaining > 0)
     {
         // DMA is in progress.
@@ -98,6 +94,7 @@ void Cpu::Step()
         return;
     }
 
+    _debugger->OnBeforeExecuteInstruction(_regs.PC);
     _op = LoadBBumpPC();
 
     IAddressingMode* am = nullptr;

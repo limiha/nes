@@ -20,6 +20,8 @@ struct IStandardController;
 
 struct INes : public IBaseInterface
 {
+    virtual void Dispose() = 0;
+
     virtual void DoFrame(unsigned char screen[]) = 0;
     virtual IStandardController* GetStandardController(unsigned int port) = 0;
     virtual void SaveState() = 0;
