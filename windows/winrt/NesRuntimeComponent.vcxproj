@@ -161,7 +161,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>..\ARM\Debug\nes.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\ARM\Debug\nes\nes.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -209,7 +209,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>..\ARM\Release\nes.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\ARM\Release\nes\nes.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
