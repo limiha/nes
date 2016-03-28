@@ -524,9 +524,10 @@ void Ppu::DrawScanline(u8 x, u8 screen[])
         pixel.SetColor(backgroundPaletteIndex);
     }
 
-    screen[(_scanline * SCREEN_WIDTH + x) * 3 + 0] = pixel.r;
-    screen[(_scanline * SCREEN_WIDTH + x) * 3 + 1] = pixel.g;
-    screen[(_scanline * SCREEN_WIDTH + x) * 3 + 2] = pixel.b;
+    screen[(_scanline * SCREEN_WIDTH + x) * 4 + 0] = pixel.r;
+    screen[(_scanline * SCREEN_WIDTH + x) * 4 + 1] = pixel.g;
+    screen[(_scanline * SCREEN_WIDTH + x) * 4 + 2] = pixel.b;
+    screen[(_scanline * SCREEN_WIDTH + x) * 4 + 3] = 0xff; //alpha channel, ignore
 }
 
 void Ppu::ProcessSprites()

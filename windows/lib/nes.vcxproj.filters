@@ -10,110 +10,113 @@
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="API Headers">
-      <UniqueIdentifier>{cf1c6db8-790a-4547-ad33-f807cd5d834b}</UniqueIdentifier>
+      <UniqueIdentifier>{1cabb403-a0cb-46ab-aa46-ca8757c06949}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\stdafx.h">
+    <ClInclude Include="..\..\src\apu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\apu.h">
+    <ClInclude Include="..\..\src\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\audio.h">
+    <ClInclude Include="..\..\src\cpu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\cpu.h">
+    <ClInclude Include="..\..\src\debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\decode.h">
+    <ClInclude Include="..\..\src\decode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\diassembler.h">
+    <ClInclude Include="..\..\src\diassembler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\eventqueue.h">
+    <ClInclude Include="..\..\src\eventqueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\input.h">
+    <ClInclude Include="..\..\src\input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\interfaces.h">
+    <ClInclude Include="..\..\src\interfaces.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mapper.h">
+    <ClInclude Include="..\..\src\mapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\mem.h">
+    <ClInclude Include="..\..\src\mem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\nes.h">
+    <ClInclude Include="..\..\src\nes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\rom.h">
+    <ClInclude Include="..\..\src\ppu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\types.h">
+    <ClInclude Include="..\..\src\rom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\util.h">
+    <ClInclude Include="..\..\src\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\nes_api.h">
+    <ClInclude Include="..\..\src\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\nptr.h">
       <Filter>API Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\ppu.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\object.h">
+      <Filter>API Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\debug.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\include\nes_interfaces.h">
+      <Filter>API Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\stdafx.cpp">
+    <ClCompile Include="..\..\src\apu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\apu.cpp">
+    <ClCompile Include="..\..\src\audio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\audio.cpp">
+    <ClCompile Include="..\..\src\cpu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cpu.cpp">
+    <ClCompile Include="..\..\src\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\disassembler.cpp">
+    <ClCompile Include="..\..\src\disassembler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\input.cpp">
+    <ClCompile Include="..\..\src\input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mapper.cpp">
+    <ClCompile Include="..\..\src\mapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\mem.cpp">
+    <ClCompile Include="..\..\src\mem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\nes.cpp">
+    <ClCompile Include="..\..\src\nes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\rom.cpp">
+    <ClCompile Include="..\..\src\ppu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\util.cpp">
+    <ClCompile Include="..\..\src\rom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\nes_api.cpp">
+    <ClCompile Include="..\..\src\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ppu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\debug.cpp">
+    <ClCompile Include="..\..\src\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\nes.natvis" />
+    <Natvis Include="nes.natvis" />
   </ItemGroup>
 </Project>

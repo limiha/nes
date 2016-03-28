@@ -9,7 +9,6 @@ class Apu;
 class Input;
 
 #include "interfaces.h"
-#include "..\include\nes_api.h"
 
 class Nes : public INes, public NesObject
 {

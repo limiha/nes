@@ -105,7 +105,7 @@ SdlGfx::SdlGfx(unsigned int scale)
 
     _texture = SDL_CreateTexture(
         _renderer,
-        SDL_PIXELFORMAT_RGB24,
+        SDL_PIXELFORMAT_ABGR8888,
         SDL_TEXTUREACCESS_STREAMING,
         SCREEN_WIDTH,
         SCREEN_HEIGHT
@@ -174,7 +174,7 @@ void SdlGfx::Blit(unsigned char screen[])
     } while (duration < 16666667); // 60 fps
     _lastDrawTime = now;
 
-    SDL_UpdateTexture(_texture, NULL, (void*)screen_to_render, SCREEN_WIDTH * 3);
+    SDL_UpdateTexture(_texture, NULL, (void*)screen_to_render, SCREEN_WIDTH * 4);
     SDL_RenderClear(_renderer);
     SDL_RenderCopy(_renderer, _texture, NULL, NULL);
     SDL_RenderPresent(_renderer);

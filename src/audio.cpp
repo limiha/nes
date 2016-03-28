@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "..\include\nes_api.h"
 #include "audio.h"
 
 //#define SOUND_EVENT_TRACE
@@ -62,9 +61,12 @@ void AudioEngine::StartAudio(
     int triangleMinFreq,
     int triangleMaxFreq)
 {
-    _audioProvider->Initialize(AudioGenerateCallback, this);
-    _sampleRate = _audioProvider->GetSampleRate();
-    _silenceValue = _audioProvider->GetSilenceValue();
+    if (_audioProvider != nullptr)
+    {
+        _audioProvider->Initialize(AudioGenerateCallback, this);
+        _sampleRate = _audioProvider->GetSampleRate();
+        _silenceValue = _audioProvider->GetSilenceValue();
+    }
 
     _cpuFreq = cpuFreq;
     _nyquistFreq = _sampleRate / 2;
@@ -101,12 +103,18 @@ void AudioEngine::StopAudio()
 
 void AudioEngine::PauseAudio()
 {
-	_audioProvider->PauseAudio();
+    if (_audioProvider != nullptr)
+    {
+        _audioProvider->PauseAudio();
+    }
 }
 
 void AudioEngine::UnpauseAudio()
 {
-	_audioProvider->UnpauseAudio();
+    if (_audioProvider != nullptr)
+    {
+        _audioProvider->UnpauseAudio();
+    }
 }
 
 void AudioEngine::QueueAudioEvent(int cycleCount, int setting, u32 newValue)
@@ -118,9 +126,12 @@ void AudioEngine::QueueAudioEvent(int cycleCount, int setting, u32 newValue)
 
     // TODO: Currently we drop events if the queue is full.
     // We need to figure out a better way to handle this.
-    bool queued = _eventQueue.EnqueueEvent(event);
-    if (!queued)
-        __debugbreak();
+    if (_audioProvider != nullptr)
+    {
+        bool queued = _eventQueue.EnqueueEvent(event);
+        if (!queued)
+            __debugbreak();
+    }
 
     if (event.audioSetting == NESAUDIO_FRAME_RESET)
         _pendingFrameResetCount++;

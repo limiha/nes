@@ -1,5 +1,7 @@
 #pragma once
 
+#include "..\include\nes_interfaces.h"
+
 struct ISaveState : public IBaseInterface
 {
     virtual void SaveState(std::ofstream& ofs) = 0;
