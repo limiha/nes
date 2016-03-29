@@ -2,9 +2,12 @@
 
 #define BP_MAP_SIZE (0x10000 / 8) // $FFFF address space divided by 8 bits per index
 
-extern int g_dbgEvent;
-extern int g_dbgParam;
-extern int g_dbgEnableLoadEvent;
+class Nes;
+
+extern "C"
+{
+	extern __declspec(dllexport) int g_dbgEnableLoadEvent;
+}
 
 typedef enum
 {
@@ -16,6 +19,7 @@ typedef enum
 // Debug events
 enum
 {
+	DEBUG_EVENT_NONE = 0,
     DEBUG_EVENT_BP_READ = 1,
     DEBUG_EVENT_BP_WRITE = 2,
     DEBUG_EVENT_BP_EXECUTE = 3,
@@ -24,10 +28,21 @@ enum
     DEBUG_EVENT_ILLEGAL_INSTRUCTION = 5
 };
 
+struct DebugEventInfo
+{
+	u64 _instance;
+	int _eventId;
+	int _eventParam;
+};
+
 class DebugService : public IBaseInterface, public NesObject
 {
 public:
-    DebugService();
+#ifdef DAC_BUILD
+	DebugService();
+#else
+    DebugService(Nes* nes);
+#endif
 
 public:
     DELEGATE_NESOBJECT_REFCOUNTING();
@@ -38,7 +53,13 @@ public:
 
     void OnBeforeExecuteInstruction(u16 pc);
 
+	// Debug API
+public:
+	bool FilterException(u64 param0, u64 param1, u64 param2, u64 param3, DebugEventInfo* eventInfo);
+	u32 GetMapperNumber();
+
 private:
+	DPtr<Nes> _nes;
     u8 _bpMapRead[BP_MAP_SIZE];
     u8 _bpMapWrite[BP_MAP_SIZE];
     u8 _bpMapExecute[BP_MAP_SIZE];
@@ -53,6 +74,8 @@ private:
     {
         return 1 << (address & 7);
     }
+
+	void DebuggerNotify(int dbgEvent, int param);
 };
 
 #undef BP_MAP_SIZE

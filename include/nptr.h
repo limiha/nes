@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef DAC_BUILD
+
 template <class T>
 class NPtr
 {
@@ -105,3 +107,5 @@ private:
         return _p;
     }
 };
+
+#endif

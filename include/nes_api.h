@@ -1,7 +1,7 @@
 #pragma once
 
-#include "baseinterface.h"
 #include "nptr.h"
+#include "baseinterface.h"
 #include "object.h"
 
 #if defined(_WIN32)
@@ -86,7 +86,11 @@ struct IStandardController : public IBaseInterface
     virtual void Right(bool state) = 0;
 };
 
+#ifndef DAC_BUILD
+
 extern "C"
 {
     NES_API bool Nes_Create(const char* romPath, IAudioProvider* audioProvider, INes** ines);
 }
+
+#endif

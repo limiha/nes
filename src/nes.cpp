@@ -16,7 +16,8 @@ Nes::Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider)
     : _rom(rom)
     , _mapper(mapper)
 {
-    _debugger = new DebugService();
+#ifndef DAC_BUILD
+    _debugger = new DebugService(this);
     _ppu = new Ppu(_mapper);
     _apu = new Apu(false, audioProvider);
     _input = new Input();
@@ -26,6 +27,7 @@ Nes::Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider)
     // TODO: Move these to an init method
     _cpu->Reset();
     _apu->StartAudio(_mem, 44100); 
+#endif
 }
 
 Nes::~Nes()
@@ -128,3 +130,8 @@ void Nes::LoadState()
 //    fs::path savePath(_rom->Path());
 //    return std::make_unique<fs::path>(savePath.replace_extension("ns"));
 //}
+
+u32 Nes::GetMapperNumber()
+{
+	return _rom->Header.MapperNumber();
+}

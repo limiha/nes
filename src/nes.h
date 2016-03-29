@@ -40,11 +40,14 @@ public:
     void SaveState();
     void LoadState();
 
+public:
+	u32 GetMapperNumber();
+
 private:
     //std::unique_ptr<fs::path> GetSavePath();
 
 private:
-    NPtr<Rom> _rom;
+    DPtr<Rom> _rom;
     NPtr<IMapper> _mapper;
     NPtr<Apu> _apu;
     NPtr<Ppu> _ppu;

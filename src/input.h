@@ -54,6 +54,8 @@ private:
     std::unique_ptr<IControllerPortDevice> _port1;
 };
 
+#ifndef DAC_BUILD
+
 class StandardController : public IControllerPortDevice, public IStandardController, public NesObject
 {
 public:
@@ -111,3 +113,5 @@ private:
     std::atomic<bool> _strobe;
     u8 _nextReadIndex;
 };
+
+#endif

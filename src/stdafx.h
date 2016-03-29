@@ -8,6 +8,7 @@
 // C includes
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <windows.h>
 
 // std C++ includes
 #include <iostream>
@@ -19,7 +20,9 @@
 #include <vector>
 #include <chrono>
 #include <atomic>
+#ifndef DAC_BUILD
 #include <mutex>
+#endif
 
 // for Rom and save state paths
 #include <experimental/filesystem>
@@ -28,6 +31,7 @@ namespace fs = std::experimental::filesystem;
 #include "../include/baseinterface.h"
 #include "../include/nptr.h"
 #include "../include/object.h"
+#include "dac.h"
 #include "types.h"
 #include "util.h"
 

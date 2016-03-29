@@ -44,6 +44,9 @@ void Input::storeb(u16 addr, u8 val)
 
 IStandardController* Input::GetStandardController(unsigned int port)
 {
+#ifdef DAC_BUILD
+	return nullptr;
+#else
     if (port >= 2)
     {
         return nullptr;
@@ -61,7 +64,10 @@ IStandardController* Input::GetStandardController(unsigned int port)
     }
 
     return ptr;
+#endif
 }
+
+#ifndef DAC_BUILD
 
 // Standard Controller Implementation
 
@@ -206,3 +212,5 @@ void StandardController::Right(bool state)
     }
     _Right_actual = state;
 }
+
+#endif
