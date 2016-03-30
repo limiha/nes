@@ -30,7 +30,7 @@ public:
     DELEGATE_NESOBJECT_REFCOUNTING();
 
     // Audio control
-    void StartAudio(MemoryMap* cpuMemMap, int preferredSampleRate);
+    void StartAudio(MemoryMap* cpuMemMap);
     void StopAudio();
     void PauseAudio();
     void UnpauseAudio();
