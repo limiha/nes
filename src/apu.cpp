@@ -298,7 +298,7 @@ Apu::~Apu()
     _noiseState = nullptr;
 }
 
-void Apu::StartAudio(MemoryMap* cpuMemMap, int preferredSampleRate)
+void Apu::StartAudio(MemoryMap* cpuMemMap)
 {
     int pulseMinFreq = WavelengthToFrequency(false, 0x07FF);
     int pulseMaxFreq = WavelengthToFrequency(false, 0x0008);
@@ -306,7 +306,6 @@ void Apu::StartAudio(MemoryMap* cpuMemMap, int preferredSampleRate)
     int triangleMaxFreq = WavelengthToFrequency(true, 0x0010);
 
     _audioEngine->StartAudio(
-        preferredSampleRate,
         _isPal ? CPU_FREQ_PAL : CPU_FREQ_NTSC,
         pulseMinFreq,
         pulseMaxFreq,

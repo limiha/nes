@@ -44,7 +44,6 @@ private:
 
 private:
     NPtr<Rom> _rom;
-    NPtr<IMapper> _mapper;
     NPtr<Apu> _apu;
     NPtr<Ppu> _ppu;
     NPtr<Input> _input;

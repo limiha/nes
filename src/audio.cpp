@@ -54,7 +54,6 @@ AudioEngine::~AudioEngine()
 }
 
 void AudioEngine::StartAudio(
-    int preferredSampleRate,
     int cpuFreq,
     int pulseMinFreq,
     int pulseMaxFreq,

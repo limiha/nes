@@ -76,7 +76,6 @@ public:
     DELEGATE_NESOBJECT_REFCOUNTING();
 
     void StartAudio(
-        int preferredSampleRate,
         int cpuFreq,
         int pulseMinFreq,
         int pulseMaxFreq,

@@ -14,18 +14,17 @@
 
 Nes::Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider)
     : _rom(rom)
-    , _mapper(mapper)
 {
     _debugger = new DebugService();
-    _ppu = new Ppu(_mapper);
+    _ppu = new Ppu(mapper);
     _apu = new Apu(false, audioProvider);
     _input = new Input();
-    _mem = new MemoryMap(_ppu, _apu, _input, _mapper);
+    _mem = new MemoryMap(_ppu, _apu, _input, mapper);
     _cpu = new Cpu(_mem, _debugger);
 
     // TODO: Move these to an init method
     _cpu->Reset();
-    _apu->StartAudio(_mem, 44100); 
+    _apu->StartAudio(_mem); 
 }
 
 Nes::~Nes()
