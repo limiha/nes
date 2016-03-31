@@ -4,10 +4,12 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="NesRuntimeComponent.cpp" />
     <ClCompile Include="StoargeFileRom.cpp" />
+    <ClCompile Include="XA2AudioProvider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="NesRuntimeComponent.h" />
     <ClInclude Include="StorageFileRom.h" />
+    <ClInclude Include="XA2AudioProvider.h" />
   </ItemGroup>
 </Project>

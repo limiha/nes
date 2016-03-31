@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "NesRuntimeComponent.h"
 #include "StorageFileRom.h"
+#include "XA2AudioProvider.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -101,8 +102,9 @@ namespace NesRuntimeComponent
     {
         return create_async([=]() {
             NPtr<StorageFileRom> rom(new StorageFileRom(romFile));
+            NPtr<XA2AudioProvider> audioProvider(new XA2AudioProvider(44100));
             NPtr<::Nes> nes;
-            ::Nes::Create(static_cast<IRomFile*>(rom), nullptr, &nes);
+            ::Nes::Create(static_cast<IRomFile*>(rom), static_cast<IAudioProvider*>(audioProvider), &nes);
             return ref new Nes(nes);
         });
     }
