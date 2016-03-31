@@ -216,6 +216,7 @@
     <ClInclude Include="NesRuntimeComponent.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="StorageFileRom.h" />
+    <ClInclude Include="XA2AudioProvider.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="NesRuntimeComponent.cpp" />
@@ -228,6 +229,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="StoargeFileRom.cpp" />
+    <ClCompile Include="XA2AudioProvider.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
