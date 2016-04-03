@@ -827,7 +827,7 @@ void VRam::storeb(u16 addr, u8 val)
     }
 }
 
-inline u16 VRam::NameTableAddress(u16 addr)
+u16 VRam::NameTableAddress(u16 addr)
 {
     switch (_mapper->Mirroring)
     {

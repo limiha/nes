@@ -3,10 +3,6 @@
 #include "interfaces.h"
 
 class DebugService;
-class IAddressingMode;
-class AccumulatorAddressingMode;
-class ImmediateAddressingMode;
-class MemoryAddressingMode;
 
 // Base Cycle Counts 
 static u8 CYCLE_TABLE[0x100] = {
