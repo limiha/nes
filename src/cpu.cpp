@@ -14,6 +14,9 @@ Cpu::Cpu(
     , _debugger(debugger)
     , Cycles(0)
     , _dmaBytesRemaining(0)
+    , _accumulatorAM(*this)
+    , _immediateAM(*this)
+    , _memoryAM(*this, 0)
 {
 }
 
@@ -97,15 +100,9 @@ void Cpu::Step()
     _debugger->OnBeforeExecuteInstruction(_regs.PC);
     _op = LoadBBumpPC();
 
-    IAddressingMode* am = nullptr;
     DECODE(_op)
 
     Cycles += CYCLE_TABLE[_op];
-
-    if (am != nullptr)
-    {
-        delete am;
-    }
 }
 
 void Cpu::Nmi()
@@ -130,6 +127,7 @@ void Cpu::Irq()
     Cycles += 7;
 }
 
+#if defined(TRACE)
 void Cpu::Trace()
 {
     Disassembler disassembler(_regs.PC, _mem);
@@ -154,3 +152,4 @@ void Cpu::Trace()
         delete instruction;
     }
 }
+#endif
