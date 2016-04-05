@@ -86,6 +86,43 @@ struct CpuRegs
 
 class Cpu : public IMem, public NesObject
 {
+private:
+    // Adressing Modes
+    class IAddressingMode
+    {
+    public:
+        IAddressingMode(Cpu& cpu) : _cpu(cpu) { }
+        virtual u8 Load() = 0;
+        virtual void Store(u8 val) = 0;
+    protected:
+        Cpu& _cpu;
+    };
+
+    class AccumulatorAddressingMode : public IAddressingMode
+    {
+    public:
+        AccumulatorAddressingMode(Cpu& cpu) : IAddressingMode(cpu) { }
+        u8 Load() { return _cpu._regs.A; }
+        void Store(u8 val) { _cpu._regs.A = val; }
+    };
+
+    class ImmediateAddressingMode : public IAddressingMode
+    {
+    public:
+        ImmediateAddressingMode(Cpu& cpu) : IAddressingMode(cpu) { }
+        u8 Load() { return _cpu.LoadBBumpPC(); }
+        void Store(u8 val) { /* Can't store to immediate */ }
+    };
+
+    class MemoryAddressingMode : public IAddressingMode
+    {
+    public:
+        MemoryAddressingMode(Cpu& cpu, u16 addr) : IAddressingMode(cpu), Addr(addr) { }
+        u8 Load() { return _cpu.loadb(Addr); }
+        void Store(u8 val) { _cpu.storeb(Addr, val); }
+        u16 Addr;
+    };
+
 public:
     Cpu(IMem*, DebugService*);
     virtual ~Cpu();
@@ -123,55 +160,43 @@ private:
     u32 _dmaBytesRemaining;
     u32 _dmaReadAddress;
 
+    IAddressingMode* _am;
+    AccumulatorAddressingMode _accumulatorAM;
+    ImmediateAddressingMode _immediateAM;
+    MemoryAddressingMode _memoryAM;
+
 private:
     void Dma(u8 val);
     void Trace();
 
-    // Adressing Modes
-    class IAddressingMode 
-    {
-    public:
-        IAddressingMode(Cpu& cpu) : _cpu(cpu) { }
-        virtual u8 Load() = 0;
-        virtual void Store(u8 val) = 0;
-    protected:
-        Cpu& _cpu;
-    };
+    void Immediate() { _am = static_cast<IAddressingMode*>(&_immediateAM); }
+    void Accumulator() { _am = static_cast<IAddressingMode*>(&_accumulatorAM); }
 
-    class AccumulatorAddressingMode : public IAddressingMode 
+    void ZeroPage()
     {
-    public:
-        AccumulatorAddressingMode(Cpu& cpu) : IAddressingMode(cpu) { }
-        u8 Load() { return _cpu._regs.A; }
-        void Store(u8 val) { _cpu._regs.A = val; }
-    };
+        _memoryAM.Addr = (u16)LoadBBumpPC();
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
+    }
 
-    class ImmediateAddressingMode : public IAddressingMode 
+    void ZeroPageX()
     {
-    public:
-        ImmediateAddressingMode(Cpu& cpu) : IAddressingMode(cpu) { }
-        u8 Load() { return _cpu.LoadBBumpPC(); }
-        void Store(u8 val) { /* Can't store to immediate */ }
-    };
+        _memoryAM.Addr = (u16)(u8)(LoadBBumpPC() + _regs.X);
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
+    }
 
-    class MemoryAddressingMode : public IAddressingMode 
+    void ZeroPageY()
     {
-    public:
-        MemoryAddressingMode(Cpu& cpu, u16 addr) : IAddressingMode(cpu), _addr(addr) { }
-        u8 Load() { return _cpu.loadb(_addr); }
-        void Store(u8 val) { _cpu.storeb(_addr, val); }
-    private:
-        u16 _addr;
-    };
+        _memoryAM.Addr = (u16)(u8)(LoadBBumpPC() + _regs.Y);
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
+    }
 
-    void Immediate(IAddressingMode* &am) { am = new ImmediateAddressingMode(*this); }
-    void Accumulator(IAddressingMode* &am) { am = new AccumulatorAddressingMode(*this); }
-    void ZeroPage(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)LoadBBumpPC()); }
-    void ZeroPageX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)(u8)(LoadBBumpPC() + _regs.X)); }
-    void ZeroPageY(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, (u16)(u8)(LoadBBumpPC() + _regs.Y)); }
-    void Absolute(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, LoadWBumpPC()); }
+    void Absolute()
+    {
+        _memoryAM.Addr = LoadWBumpPC();
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
+    }
     
-    void AbsoluteX(IAddressingMode* &am)
+    void AbsoluteX()
     {
         u16 addr = LoadWBumpPC();
         u16 indexedAddr = addr + (u16)_regs.X;
@@ -187,9 +212,11 @@ private:
             checkPageCross(addr, indexedAddr);
         }
 
-        am = new MemoryAddressingMode(*this, indexedAddr);
+        _memoryAM.Addr = indexedAddr;
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
     }
-    void AbsoluteY(IAddressingMode* &am)
+
+    void AbsoluteY()
     {
         u16 addr = LoadWBumpPC();
         u16 indexedAddr = addr + (u16)_regs.Y;
@@ -198,17 +225,24 @@ private:
         {
             checkPageCross(addr, indexedAddr);
         }
-        am = new MemoryAddressingMode(*this, indexedAddr);
+
+        _memoryAM.Addr = indexedAddr;
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
     }
     
-    void IndexedIndirectX(IAddressingMode* &am) { am = new MemoryAddressingMode(*this, loadw_zp(LoadBBumpPC() + _regs.X)); }
+    void IndexedIndirectX()
+    {
+        _memoryAM.Addr = loadw_zp(LoadBBumpPC() + _regs.X);
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
+    }
 
-    void IndirectIndexedY(IAddressingMode* &am)
+    void IndirectIndexedY()
     {
         u16 addr = loadw_zp(LoadBBumpPC());
         u16 indexedAddr = addr + (u16)_regs.Y;
         checkPageCross(addr, indexedAddr);
-        am = new MemoryAddressingMode(*this, indexedAddr);
+        _memoryAM.Addr = indexedAddr;
+        _am = static_cast<IAddressingMode*>(&_memoryAM);
     }
 
     // Memory Acess Helpers
@@ -259,19 +293,19 @@ private:
     // Instructions
 
     // Loads
-    void lda(IAddressingMode* am) { _regs.A = _regs.SetZN(am->Load()); }
-    void ldx(IAddressingMode* am) { _regs.X = _regs.SetZN(am->Load()); }
-    void ldy(IAddressingMode* am) { _regs.Y = _regs.SetZN(am->Load()); }
+    void lda() { _regs.A = _regs.SetZN(_am->Load()); }
+    void ldx() { _regs.X = _regs.SetZN(_am->Load()); }
+    void ldy() { _regs.Y = _regs.SetZN(_am->Load()); }
 
     // Stores
-    void sta(IAddressingMode* am) { am->Store(_regs.A); }
-    void stx(IAddressingMode* am) { am->Store(_regs.X); }
-    void sty(IAddressingMode* am) { am->Store(_regs.Y); }
+    void sta() { _am->Store(_regs.A); }
+    void stx() { _am->Store(_regs.X); }
+    void sty() { _am->Store(_regs.Y); }
 
     // Arithemtic
-    void adc(IAddressingMode* am) 
+    void adc()
     {
-        u8 val = am->Load();
+        u8 val = _am->Load();
         u32 result = (u32)_regs.A + (u32)val;
         if (_regs.GetFlag(Flag::Carry)) result += 1;
         _regs.SetFlag(Flag::Carry, (result & 0x100) != 0);
@@ -281,9 +315,10 @@ private:
         _regs.SetFlag(Flag::Overflow, (((a ^ val) & 0x80) == 0) && (((a ^ resultByte) & 0x80) == 0x80));
         _regs.A = _regs.SetZN(resultByte);
     }
-    void sbc(IAddressingMode* am)
+
+    void sbc()
     {
-        u8 val = am->Load();
+        u8 val = _am->Load();
         u32 result = (u32)_regs.A - (u32)val;
         if (!_regs.GetFlag(Flag::Carry)) result -= 1;
         _regs.SetFlag(Flag::Carry, (result & 0x100) == 0);
@@ -295,84 +330,84 @@ private:
     }
 
     // Comparisons
-    void cmp_base(IAddressingMode* am, u8 val)
+    void cmp_base(u8 val)
     {
-        u32 result = (u32)val - (u32)am->Load();
+        u32 result = (u32)val - (u32)_am->Load();
         _regs.SetFlag(Flag::Carry, (result & 0x100) == 0);
         _regs.SetZN((u8)result);
     }
-    void cmp(IAddressingMode* am) { cmp_base(am, _regs.A); }
-    void cpx(IAddressingMode* am) { cmp_base(am, _regs.X); }
-    void cpy(IAddressingMode* am) { cmp_base(am, _regs.Y); }
+    void cmp() { cmp_base(_regs.A); }
+    void cpx() { cmp_base(_regs.X); }
+    void cpy() { cmp_base(_regs.Y); }
 
     // Bitwise Operations
-    void and(IAddressingMode* am) { _regs.A = _regs.SetZN(_regs.A & am->Load()); }
-    void ora(IAddressingMode* am) { _regs.A = _regs.SetZN(_regs.A | am->Load()); }
-    void eor(IAddressingMode* am) { _regs.A = _regs.SetZN(_regs.A ^ am->Load()); }
-    void bit(IAddressingMode* am) 
+    void and() { _regs.A = _regs.SetZN(_regs.A & _am->Load()); }
+    void ora() { _regs.A = _regs.SetZN(_regs.A | _am->Load()); }
+    void eor() { _regs.A = _regs.SetZN(_regs.A ^ _am->Load()); }
+    void bit() 
     {
-        u8 val = am->Load();
+        u8 val = _am->Load();
         _regs.SetFlag(Flag::Zero, (val &_regs.A) == 0);
         _regs.SetFlag(Flag::Negative, (val & (1 << 7)) != 0);
         _regs.SetFlag(Flag::Overflow, (val & (1 << 6)) != 0);
     }
 
     // Shifts and Rotates
-    void shl_base(bool lsb, IAddressingMode* am)
+    void shl_base(bool lsb)
     {
-        u8 val = am->Load();
+        u8 val = _am->Load();
         bool newCarry = (val & 0x80) != 0;
         u8 result = (val << 1) | (lsb ? 1 : 0);
         _regs.SetFlag(Flag::Carry, newCarry);
-        am->Store(_regs.SetZN(result));
+        _am->Store(_regs.SetZN(result));
     }
-    void shr_base(bool msb, IAddressingMode* am)
+    void shr_base(bool msb)
     {
-        u8 val = am->Load();
+        u8 val = _am->Load();
         bool newCarry = (val & 0x01) != 0;
         u8 result = (val >> 1) | (msb ? 0x80 : 0);
         _regs.SetFlag(Flag::Carry, newCarry);
-        am->Store(_regs.SetZN(result));
+        _am->Store(_regs.SetZN(result));
     }
-    void rol(IAddressingMode* am)
+    void rol()
     {
         bool oldCarry = _regs.GetFlag(Flag::Carry);
-        shl_base(oldCarry, am);
+        shl_base(oldCarry);
     }
-    void ror(IAddressingMode* am)
+    void ror()
     {
         bool oldCarry = _regs.GetFlag(Flag::Carry);
-        shr_base(oldCarry, am);
+        shr_base(oldCarry);
     }
-    void asl(IAddressingMode* am) { shl_base(false, am); }
-    void lsr(IAddressingMode* am) { shr_base(false, am); }
+    void asl() { shl_base(false); }
+    void lsr() { shr_base(false); }
 
     // Increments and Decrements
-    void inc(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() + 1)); }
-    void dec(IAddressingMode* am) { am->Store(_regs.SetZN(am->Load() - 1)); }
-    void inx(IAddressingMode* am) { _regs.SetZN(++_regs.X); }
-    void dex(IAddressingMode* am) { _regs.SetZN(--_regs.X); }
-    void iny(IAddressingMode* am) { _regs.SetZN(++_regs.Y); }
-    void dey(IAddressingMode* am) { _regs.SetZN(--_regs.Y); }
+    void inc() { _am->Store(_regs.SetZN(_am->Load() + 1)); }
+    void dec() { _am->Store(_regs.SetZN(_am->Load() - 1)); }
+    void inx() { _regs.SetZN(++_regs.X); }
+    void dex() { _regs.SetZN(--_regs.X); }
+    void iny() { _regs.SetZN(++_regs.Y); }
+    void dey() { _regs.SetZN(--_regs.Y); }
 
     // Register Moves
-    void tax(IAddressingMode*) { _regs.X = _regs.SetZN(_regs.A); }
-    void tay(IAddressingMode*) { _regs.Y = _regs.SetZN(_regs.A); }
-    void txa(IAddressingMode*) { _regs.A = _regs.SetZN(_regs.X); }
-    void tya(IAddressingMode*) { _regs.A = _regs.SetZN(_regs.Y); }
-    void txs(IAddressingMode*) { _regs.S = _regs.X; }
-    void tsx(IAddressingMode*) { _regs.X = _regs.SetZN(_regs.S); }
+    void tax() { _regs.X = _regs.SetZN(_regs.A); }
+    void tay() { _regs.Y = _regs.SetZN(_regs.A); }
+    void txa() { _regs.A = _regs.SetZN(_regs.X); }
+    void tya() { _regs.A = _regs.SetZN(_regs.Y); }
+    void txs() { _regs.S = _regs.X; }
+    void tsx() { _regs.X = _regs.SetZN(_regs.S); }
 
     // Flag Operations
     // FIXME: The way the decode macro is written and shared between this and the disassembler
     // FIXME: means that all these functions must take an IAdressingMode even though they don't use it.
-    void clc(IAddressingMode* am) { _regs.SetFlag(Flag::Carry, false); }
-    void sec(IAddressingMode* am) { _regs.SetFlag(Flag::Carry, true); }
-    void cli(IAddressingMode* am) { _regs.SetFlag(Flag::IRQ, false); }
-    void sei(IAddressingMode* am) { _regs.SetFlag(Flag::IRQ, true); }
-    void clv(IAddressingMode* am) { _regs.SetFlag(Flag::Overflow, false); }
-    void cld(IAddressingMode* am) { _regs.SetFlag(Flag::Decimal, false); }
-    void sed(IAddressingMode* am) { _regs.SetFlag(Flag::Decimal, true); }
+    void clc() { _regs.SetFlag(Flag::Carry, false); }
+    void sec() { _regs.SetFlag(Flag::Carry, true); }
+    void cli() { _regs.SetFlag(Flag::IRQ, false); }
+    void sei() { _regs.SetFlag(Flag::IRQ, true); }
+    void clv() { _regs.SetFlag(Flag::Overflow, false); }
+    void cld() { _regs.SetFlag(Flag::Decimal, false); }
+    void sed() { _regs.SetFlag(Flag::Decimal, true); }
 
     // Branches
     void branch_base(bool cond)
@@ -387,21 +422,21 @@ private:
             _regs.PC = newPC;
         }
     }
-    void bpl(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Negative)); }
-    void bmi(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Negative)); }
-    void bvc(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Overflow)); }
-    void bvs(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Overflow)); }
-    void bcc(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Carry)); }
-    void bcs(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Carry)); }
-    void bne(IAddressingMode* am) { branch_base(!_regs.GetFlag(Flag::Zero)); }
-    void beq(IAddressingMode* am) { branch_base(_regs.GetFlag(Flag::Zero)); }
+    void bpl() { branch_base(!_regs.GetFlag(Flag::Negative)); }
+    void bmi() { branch_base(_regs.GetFlag(Flag::Negative)); }
+    void bvc() { branch_base(!_regs.GetFlag(Flag::Overflow)); }
+    void bvs() { branch_base(_regs.GetFlag(Flag::Overflow)); }
+    void bcc() { branch_base(!_regs.GetFlag(Flag::Carry)); }
+    void bcs() { branch_base(_regs.GetFlag(Flag::Carry)); }
+    void bne() { branch_base(!_regs.GetFlag(Flag::Zero)); }
+    void beq() { branch_base(_regs.GetFlag(Flag::Zero)); }
 
     // Jumps
-    void jmp(IAddressingMode* am)
+    void jmp()
     {
         _regs.PC = LoadWBumpPC();
     }
-    void jmpi(IAddressingMode* am)
+    void jmpi()
     {
         u16 addr = LoadWBumpPC();
 
@@ -413,7 +448,7 @@ private:
     }
 
     // Procedure Calls
-    void jsr(IAddressingMode* am) 
+    void jsr() 
     {
         // jsr pushes the address of the NEXT instruction MINUS ONE
         // weird, I know.
@@ -421,11 +456,11 @@ private:
         PushW(_regs.PC - 1);
         _regs.PC = target;
     }
-    void rts(IAddressingMode* am)
+    void rts()
     {
         _regs.PC = PopW() + 1;
     }
-    void brk(IAddressingMode* am)
+    void brk()
     {
         PushW(_regs.PC + 1);
         PushB(_regs.P | (u8)Flag::Break | (u8)Flag::Unused);
@@ -433,18 +468,18 @@ private:
         _regs.SetFlag(Flag::Unused, true);
         _regs.PC = loadw(IRQ_VECTOR);
     }
-    void rti(IAddressingMode* am)
+    void rti()
     {
         _regs.P = PopB() & ~((u8)Flag::Break);
         _regs.PC = PopW();
     }
 
     // Stack Operations
-    void pha(IAddressingMode* am) { PushB(_regs.A); }
-    void pla(IAddressingMode* am) { _regs.A = _regs.SetZN(PopB()); }
-    void php(IAddressingMode* am) { PushB(_regs.P | (u8)Flag::Break | (u8)Flag::Unused); } // FIXME: is b_flag right here?
-    void plp(IAddressingMode* am) { _regs.P = PopB(); }
+    void pha() { PushB(_regs.A); }
+    void pla() { _regs.A = _regs.SetZN(PopB()); }
+    void php() { PushB(_regs.P | (u8)Flag::Break | (u8)Flag::Unused); } // FIXME: is b_flag right here?
+    void plp() { _regs.P = PopB(); }
 
     // No Operation
-    void nop(IAddressingMode* am) { }
+    void nop() { }
 };

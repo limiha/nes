@@ -3,6 +3,7 @@ using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using NesRuntimeComponent;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage.Pickers;
@@ -47,23 +48,26 @@ namespace nesUWP
 
         private void canvas_Draw(ICanvasAnimatedControl sender, CanvasAnimatedDrawEventArgs args)
         {
-            var bitmap = CanvasBitmap.CreateFromBytes(
-                sender.Device,
-                _bitmapBytes,
-                256,
-                240,
-                Windows.Graphics.DirectX.DirectXPixelFormat.R8G8B8A8UIntNormalized,
-                sender.Dpi,
-                CanvasAlphaMode.Ignore
-                );
+            _frameCount++;
+            if (_timer.Elapsed.TotalSeconds >= 1)
+            {
+                _fps = _frameCount;
+                _frameCount = 0;
+                _timer.Restart();
+            }
+
+            _bitmap.SetPixelBytes(_bitmapBytes);
 
             args.DrawingSession.DrawImage(
-                bitmap,
+                _bitmap,
                 new Rect(0, 0, sender.Size.Width, sender.Size.Height),
-                bitmap.Bounds,
+                _bitmap.Bounds,
                 1,
                 CanvasImageInterpolation.NearestNeighbor
                 );
+
+            args.DrawingSession.DrawText(_fps.ToString(), new System.Numerics.Vector2(1, 1), Windows.UI.Colors.Black);
+            args.DrawingSession.DrawText(_fps.ToString(), new System.Numerics.Vector2(0, 0), Windows.UI.Colors.White);
         }
 
         private void canvas_Update(ICanvasAnimatedControl sender, CanvasAnimatedUpdateEventArgs args)
@@ -79,6 +83,15 @@ namespace nesUWP
         private async Task CreateResourcesAsync(CanvasAnimatedControl sender)
         {
             _bitmapBytes = new byte[256 * 240 * 4];
+            _bitmap = CanvasBitmap.CreateFromBytes(
+                sender.Device,
+                _bitmapBytes,
+                256,
+                240,
+                Windows.Graphics.DirectX.DirectXPixelFormat.R8G8B8A8UIntNormalized,
+                sender.Dpi,
+                CanvasAlphaMode.Ignore
+                );
 
             var file = _romFile;
             if (file == null)
@@ -93,6 +106,8 @@ namespace nesUWP
             Window.Current.CoreWindow.KeyUp += HandleKey;
             sender.Width = 256 * 3;
             sender.Height = 240 * 3;
+
+            _timer.Start();
         }
 
         private void HandleKey(CoreWindow sender, KeyEventArgs args)
@@ -132,7 +147,12 @@ namespace nesUWP
 
         private Nes _nes;
         private StandardController _controller0;
+        private CanvasBitmap _bitmap;
         private byte[] _bitmapBytes;
         private Windows.Storage.StorageFile _romFile;
+
+        private int _fps = 0;
+        private int _frameCount = 0;
+        private Stopwatch _timer = new Stopwatch();
     }
 }

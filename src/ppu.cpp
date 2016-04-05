@@ -792,29 +792,7 @@ u8 VRam::loadb(u16 addr)
     }
     else if (addr < 0x3f00)
     {
-        if (_mapper->Mirroring == NameTableMirroring::SingleScreenLower)
-        {
-            return _nametables[addr & 0x3ff];
-        }
-        else if (_mapper->Mirroring == NameTableMirroring::SingleScreenUpper)
-        {
-            return _nametables[(addr & 0x3ff) + 0x400];
-        }
-        else if (_mapper->Mirroring == NameTableMirroring::Horizontal)
-        {
-            if (addr < 0x2800)
-            {
-                return _nametables[addr & 0x3ff];
-            }
-            else
-            {
-                return _nametables[(addr & 0x3ff) + 0x400];
-            }
-        }
-        else
-        {
-            return _nametables[addr & 0x7ff];
-        }
+        return _nametables[NameTableAddress(addr)];
     }
     else if (addr < 0x4000)
     {
@@ -836,29 +814,7 @@ void VRam::storeb(u16 addr, u8 val)
     }
     else if (addr < 0x3f00)
     {
-        if (_mapper->Mirroring == NameTableMirroring::SingleScreenLower)
-        {
-            _nametables[addr & 0x3ff] = val;
-        }
-        else if (_mapper->Mirroring == NameTableMirroring::SingleScreenUpper)
-        {
-            _nametables[(addr & 0x3ff) + 0x400] = val;
-        }
-        else if (_mapper->Mirroring == NameTableMirroring::Horizontal)
-        {
-            if (addr < 0x2800)
-            {
-                _nametables[addr & 0x3ff] = val;
-            }
-            else
-            {
-                _nametables[(addr & 0x3ff) + 0x400] = val;
-            }
-        }
-        else
-        {
-            _nametables[addr & 0x7ff] = val;
-        }
+        _nametables[NameTableAddress(addr)] = val;
     }
     else if (addr < 0x4000)
     {
@@ -868,6 +824,28 @@ void VRam::storeb(u16 addr, u8 val)
             addr = 0x00;
         }
         _palette[addr] = val;
+    }
+}
+
+u16 VRam::NameTableAddress(u16 addr)
+{
+    switch (_mapper->Mirroring)
+    {
+    case NameTableMirroring::Horizontal:
+        if (addr < 0x2800)
+        {
+            return addr & 0x3ff;
+        }
+        else
+        {
+            return (addr & 0x3ff) | 0x400;
+        }
+    case NameTableMirroring::Vertical:
+        return addr & 0x7ff;
+    case NameTableMirroring::SingleScreenLower:
+        return addr & 0x3ff;
+    case NameTableMirroring::SingleScreenUpper:
+        return (addr & 0x3ff) | 0x400;
     }
 }
 

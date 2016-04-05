@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(TRACE)
+
 #include "mem.h"
 
 #include <vector>
@@ -284,3 +286,5 @@ void codeName(DisassembledInstruction* instr) \
     // No Operation
     IMPLIED(nop, "NOP")
 };
+
+#endif

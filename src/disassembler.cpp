@@ -2,6 +2,8 @@
 #include "diassembler.h"
 #include "decode.h"
 
+#if defined(TRACE)
+
 Disassembler::Disassembler(u16 PC, IMem* mem)
     : _PC(PC)
     , _mem(mem)
@@ -23,3 +25,5 @@ void Disassembler::Disassemble(DisassembledInstruction** ppDisassembledInstructi
 
     *ppDisassembledInstruction = am;
 }
+
+#endif

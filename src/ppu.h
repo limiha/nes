@@ -74,6 +74,9 @@ public:
     void LoadState(std::ifstream& ifs);
 
 private:
+    u16 NameTableAddress(u16 addr);
+
+private:
     NPtr<IMapper> _mapper;
 
     // FIXME: This is enough VRAM for two name tables

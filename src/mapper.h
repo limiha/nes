@@ -124,7 +124,7 @@ public:
     bool Scanline();
 
 private:
-    u32 ChrBufAddress(u16 addr);
+    void SetSegmentAddresses();
 
 private:
     bool _chrMode;
@@ -132,6 +132,9 @@ private:
     u8 _addr8001; // "address" to use when writing $80001
     u8 _chrReg[6];
     u8 _prgReg[2];
+
+    u32 _prgSegmentAddr[4];
+    u32 _chrSegmentAddr[8];
 
     u32 _lastBankIndex;
     u32 _secondLastBankIndex;
