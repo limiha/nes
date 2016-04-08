@@ -29,6 +29,104 @@ static double TriangleFourierFunction(int phase, int harmonic)
     return pow(-1.0, (harmonic - 1) / 2) * (1.0 / (harmonic * harmonic)) * sin(harmonic * M_PI * 2.0 * ((double)phase / WAVETABLE_SAMPLES));
 }
 
+//
+// DSP filter logic to simulate the NES output circuitry
+//
+
+// Base class for IIR-style filter stages
+class FilterBlock
+{
+public:
+    FilterBlock(float smoothingFactor)
+        : _smoothingFactor(smoothingFactor)
+        , _lastInput(0.0f)
+        , _lastOutput(0.0f)
+    {
+    }
+
+    float NextSample(float input)
+    {
+        float sample = ApplyFilter(input, _lastInput, _lastOutput);
+        _lastInput = input;
+        _lastOutput = sample;
+
+        return sample;
+    }
+
+protected:
+    virtual float ApplyFilter(float input, float lastInput, float lastOutput) = 0;
+
+    float _smoothingFactor;
+
+private:
+    float _lastInput;
+    float _lastOutput;
+};
+
+// Low pass filter
+class LpFilter : public FilterBlock
+{
+public:
+    LpFilter(float smoothingFactor)
+        : FilterBlock(smoothingFactor)
+    {
+    }
+
+protected:
+    virtual float ApplyFilter(float input, float lastInput, float lastOutput)
+    {
+        return lastOutput + (input - lastOutput) * _smoothingFactor;
+    }
+};
+
+// High pass filter
+class HpFilter : public FilterBlock
+{
+public:
+    HpFilter(float smoothingFactor)
+        : FilterBlock(smoothingFactor)
+    {
+    }
+
+protected:
+    virtual float ApplyFilter(float input, float lastInput, float lastOutput)
+    {
+        return _smoothingFactor * (lastOutput + input - lastInput);
+    }
+};
+
+class FilterChain
+{
+public:
+    FilterChain()
+    {
+        // A special thanks to Blargg on the nesdev forums for providing these smoothing factors.
+        // They approximate the filtering characteristics of the analog output circuit in the NES.
+        // 
+        // For reference see http://forums.nesdev.com/viewtopic.php?p=44255#p44255
+        // and http://wiki.nesdev.com/w/index.php/APU_Mixer
+        _chain.push_back(std::make_shared<LpFilter>(0.815686f));
+        _chain.push_back(std::make_shared<HpFilter>(0.996039f));
+        _chain.push_back(std::make_shared<HpFilter>(0.999835f));
+    }
+
+    float NextSample(float unfilteredSample)
+    {
+        float sample = unfilteredSample;
+        for (auto block : _chain)
+        {
+            sample = block->NextSample(sample);
+        }
+
+        return sample;
+    }
+
+private:
+    std::vector<std::shared_ptr<FilterBlock>> _chain;
+};
+
+// Audio engine implementation
+
 AudioEngine::AudioEngine(IAudioProvider* audioProvider)
     : _audioProvider(audioProvider)
     , _audioStarted(false)
@@ -76,7 +174,7 @@ void AudioEngine::StartAudio(
     _triangleMaxFreq = triangleMaxFreq;
     _triangleFreqStep = (int)((_triangleMaxFreq - _triangleMinFreq) / WAVETABLE_FREQUENCY_STEPS);
     _phaseDivider = _sampleRate / WAVETABLE_SAMPLES;
-    _cyclesPerSample = (double)_cpuFreq / _sampleRate;
+    _cyclesPerSample = (int)roundf((float)_cpuFreq / _sampleRate);
 
     // We can't synthesize any frequency above the Nyquist frequency.
     // Clip the max frequencies at the Nyquist frequency.
@@ -130,10 +228,10 @@ void AudioEngine::QueueAudioEvent(int cycleCount, int setting, u32 newValue)
         bool queued = _eventQueue.EnqueueEvent(event);
         if (!queued)
             __debugbreak();
-    }
 
-    if (event.audioSetting == NESAUDIO_FRAME_RESET)
-        _pendingFrameResetCount++;
+        if (event.audioSetting == NESAUDIO_FRAME_RESET)
+            _pendingFrameResetCount++;
+    }
 }
 
 #define INIT_WAVETABLE_PTR(WT) _wavetables[WT] = _wavetableMemory + WAVETABLE_SIZE * (WT)
@@ -182,13 +280,15 @@ void AudioEngine::InitializeChannels()
     _triangleChannel.freqStep = _triangleFreqStep;
     _triangleChannel.volume = 0x0F;
 
+    _outputFilter = std::make_shared<FilterChain>();
+
     _dmcAmplitude = 0;
 
     _noiseShiftRegister = 1;
     _noiseVolume = 0;
     _noiseMode1 = false;
-    _noisePeriodSamples = 0.0;
-    _noiseCounter = 0.0;
+    _noisePeriodSamples = 0;
+    _noiseCounter = 0;
 }
 
 void AudioEngine::GenerateTable(int minFreq, int maxFreq, double (fourierSeriesFunction)(int phase, int harmonic), u8* wavetable)
@@ -363,19 +463,21 @@ void AudioEngine::GenerateSamples(u8* stream, int count)
 {
     for (int i = 0; i < count; i++)
     {
-        i32 pulseSample;
-        i32 triangleSample;
-        i32 noiseSample;
+        i32 pulseSample = SampleWavetableChannel(_pulseChannel1) + SampleWavetableChannel(_pulseChannel2);
+        i32 triangleSample = SampleWavetableChannel(_triangleChannel);
+        i32 noiseSample = SampleNoise();
+        i32 dmcSample = _dmcAmplitude;
 
-        pulseSample = SampleWavetableChannel(_pulseChannel1) + SampleWavetableChannel(_pulseChannel2);
-        triangleSample = SampleWavetableChannel(_triangleChannel);
-        noiseSample = SampleNoise();
+        // These mixing values are derived from values that others have figured out and
+        // kindly put on this page: http://wiki.nesdev.com/w/index.php/APU_Mixer
+        float noiseDmcSample =
+            0.00494f * noiseSample +
+            0.00335f * dmcSample;
 
-        double output =
-            2.95e-5 * pulseSample +
-            3.34e-5 * triangleSample +
-            0.00247 * noiseSample +
-            0.00335 * _dmcAmplitude;
+        float output =
+            2.95e-5f * pulseSample +
+            3.34e-5f * triangleSample +
+            _outputFilter->NextSample(noiseDmcSample);
 
         *stream++ = (u8)(output * _silenceValue + _silenceValue);
     }
@@ -390,7 +492,6 @@ void AudioEngine::ProcessAudioEvents()
     {
         // There's already an event pending.
         ProcessAudioEvent(_nextEvent);
-        _eventPending = false;
     }
 
     // Drain event queue of any past events and grab the next future event if there is one
@@ -406,7 +507,7 @@ DrainNextEvent:
         else
         {
             // Determine how long we need to wait (in samples) before processing the next event.
-            _samplesRemaining = CycleCountToSampleCount(_nextEvent.cpuCycleCount - _cycleCounter);
+            _samplesRemaining = (_nextEvent.cpuCycleCount - _cycleCounter) / _cyclesPerSample;
             if (_samplesRemaining == 0)
             {
                 ProcessAudioEvent(_nextEvent);
@@ -463,9 +564,9 @@ void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
         break;
     case NESAUDIO_NOISE_PERIOD:
         if (setting == 0)
-            _noisePeriodSamples = 0.0;
+            _noisePeriodSamples = 0;
         else
-            _noisePeriodSamples = (double)_sampleRate / ((double)_cpuFreq / 2.0 / setting);
+            _noisePeriodSamples = (u32)_sampleRate * setting / _cpuFreq;
         break;
     case NESAUDIO_NOISE_MODE:
         _noiseMode1 = setting != 0;
@@ -524,16 +625,16 @@ i32 AudioEngine::SampleWavetableChannel(WavetableChannel& channel)
 i32 AudioEngine::SampleNoise()
 {
     u32 sample = _silenceValue;
-    if (_noisePeriodSamples != 0.0)
+    if (_noisePeriodSamples != 0)
     {
-        if (_noiseCounter <= 0.0)
+        if (_noiseCounter == 0)
         {
             StepNoiseRegister();
-            _noiseCounter += _noisePeriodSamples;
+            _noiseCounter = _noisePeriodSamples;
         }
         else
         {
-            _noiseCounter -= 1.0;
+            _noiseCounter--;
         }
 
         return _noiseOn ? _noiseVolume : 0;
@@ -554,11 +655,6 @@ void AudioEngine::StepNoiseRegister()
     _noiseShiftRegister >>= 1;
     _noiseShiftRegister |= feedback << 15;
     _noiseOn = (_noiseShiftRegister & 1) != 0;
-}
-
-int AudioEngine::CycleCountToSampleCount(double cycleCount)
-{
-    return (int)(cycleCount / _cyclesPerSample);
 }
 
 void AudioEngine::BoundFrequency(u32& frequency, u32 minFreq, u32 maxFreq)

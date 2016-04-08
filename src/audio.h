@@ -4,6 +4,7 @@
 #include "interfaces.h"
 
 struct IAudioProvider;
+class FilterChain;
 
 enum WavetableIndex
 {
@@ -105,7 +106,6 @@ private:
     i32 SampleNoise();
 
     void StepNoiseRegister();
-    int CycleCountToSampleCount(double cycleCount);
     static void BoundFrequency(u32& frequency, u32 minFreq, u32 maxFreq);
 
 private:
@@ -125,7 +125,7 @@ private:
     u32 _triangleMaxFreq;
     u32 _triangleFreqStep;
     u32 _phaseDivider;
-    double _cyclesPerSample;
+    int _cyclesPerSample;
 
     // Wavetables
     u8* _wavetableMemory;
@@ -136,20 +136,21 @@ private:
     std::atomic<u32> _pendingFrameResetCount;
     AudioEvent _nextEvent;
     int _samplesRemaining;
+    int _cycleCounter;
     bool _eventPending;
-    double _cycleCounter;
 
     // Channels (except for initialization, these should only be read/modified on the callback thread)
     WavetableChannel _pulseChannel1;
     WavetableChannel _pulseChannel2;
     WavetableChannel _triangleChannel;
+    std::shared_ptr<FilterChain> _outputFilter;
     i32 _dmcAmplitude;
     u16 _noiseShiftRegister;
     u32 _noiseVolume;
     bool _noiseMode1;
     bool _noiseOn;
-    double _noisePeriodSamples;
-    double _noiseCounter;
+    int _noisePeriodSamples;
+    int _noiseCounter;
 
     friend void AudioGenerateCallback(void *userdata, u8 *stream, int len);
 };
