@@ -118,6 +118,7 @@ namespace nesUWP
                 switch (args.VirtualKey)
                 {
                     case VirtualKey.S:
+                    case VirtualKey.O:
                         _controller0.A(state);
                         break;
                     case VirtualKey.A:
