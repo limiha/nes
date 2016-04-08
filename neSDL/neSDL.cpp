@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    NPtr<SdlAudioProvider> audioProvider(new SdlAudioProvider(44100));
+    NPtr<SdlAudioProvider> audioProvider(new SdlAudioProvider(32000));
     NPtr<INes> nes;
     if (!Nes_Create(argv[1], audioProvider, &nes))
     {

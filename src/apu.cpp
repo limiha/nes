@@ -27,8 +27,7 @@ const int LengthCounterSetValues[32] =
 
 const int NoisePeriodValues[16] =
 {
-    0x01AC, 0x017C, 0x0154, 0x0140, 0x011E, 0x00FE, 0x00E2, 0x00D6,
-    0x00BE, 0x00A0, 0x008E, 0x0080, 0x006A, 0x0054, 0x0048, 0x0036
+    4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
 };
 
 const int DmcRateNTSC[16] =
