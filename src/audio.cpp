@@ -471,7 +471,7 @@ void AudioEngine::GenerateSamples(u8* stream, int count)
         // These mixing values are derived from values that others have figured out and
         // kindly put on this page: http://wiki.nesdev.com/w/index.php/APU_Mixer
         float noiseDmcSample =
-            0.00494f * noiseSample +
+            0.00247f * noiseSample +
             0.00335f * dmcSample;
 
         float output =
@@ -566,7 +566,7 @@ void AudioEngine::ProcessAudioEvent(const AudioEvent& event)
         if (setting == 0)
             _noisePeriodSamples = 0;
         else
-            _noisePeriodSamples = (u32)_sampleRate * setting / _cpuFreq;
+            _noisePeriodSamples = (float)_sampleRate * setting / _cpuFreq;
         break;
     case NESAUDIO_NOISE_MODE:
         _noiseMode1 = setting != 0;
@@ -627,14 +627,14 @@ i32 AudioEngine::SampleNoise()
     u32 sample = _silenceValue;
     if (_noisePeriodSamples != 0)
     {
-        if (_noiseCounter == 0)
+        if (_noiseCounter <= 0)
         {
             StepNoiseRegister();
-            _noiseCounter = _noisePeriodSamples;
+            _noiseCounter += _noisePeriodSamples;
         }
         else
         {
-            _noiseCounter--;
+            _noiseCounter -= 1.0;
         }
 
         return _noiseOn ? _noiseVolume : 0;
