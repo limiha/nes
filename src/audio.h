@@ -149,8 +149,8 @@ private:
     u32 _noiseVolume;
     bool _noiseMode1;
     bool _noiseOn;
-    int _noisePeriodSamples;
-    int _noiseCounter;
+    float _noisePeriodSamples;
+    float _noiseCounter;
 
     friend void AudioGenerateCallback(void *userdata, u8 *stream, int len);
 };
