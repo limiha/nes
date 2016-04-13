@@ -53,13 +53,25 @@ struct CpuRegs
     u16 PC; // Program Counter
 
     CpuRegs()
-        : A(0)
-        , X(0)
-        , Y(0)
-        , P((u8)Flag::Unused | (u8)Flag::IRQ) // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
-        , S(0xfd) // Startup value according to http://wiki.nesdev.com/w/index.php/CPU_power_up_state
-        , PC(0x8000)
     {
+        Reset(true);
+    }
+
+    void Reset(bool hard)
+    {
+        if (hard)
+        {
+            A = 0;
+            X = 0;
+            Y = 0;
+            P = ((u8)Flag::Unused | (u8)Flag::IRQ); // DECIMAL_FLAG is always set on nes and bit 5 is unused, always set
+            S = 0xfd; // Startup value according to http://wiki.nesdev.com/w/index.php/CPU_power_up_state
+            PC = 0x8000;
+        }
+        else
+        {
+            // TODO
+        }
     }
 
     bool GetFlag(Flag flag)
@@ -138,7 +150,7 @@ public:
     void SaveState(std::ofstream& ofs);
     void LoadState(std::ifstream& ifs);
 
-    void Reset();
+    void Reset(bool hard);
     void Step();
     void Nmi();
     void Irq();

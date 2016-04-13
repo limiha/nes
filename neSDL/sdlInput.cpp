@@ -26,6 +26,7 @@ InputResult SdlInput::CheckInput()
                 {
                 case SDLK_F1: return InputResult::SaveState;
                 case SDLK_F2: return InputResult::LoadState;
+                case SDLK_F5: return InputResult::ResetHard;
                 case SDLK_ESCAPE: return InputResult::Quit;
                 default:
                     HandleKey(event.key.keysym.sym, true);

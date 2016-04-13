@@ -65,6 +65,8 @@ public:
 public:
     DELEGATE_NESOBJECT_REFCOUNTING();
 
+    void Reset(bool hard);
+
     // IMem
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
@@ -122,6 +124,8 @@ public:
 
 public:
     DELEGATE_NESOBJECT_REFCOUNTING();
+
+    void Reset(bool hard);
 
     u8 loadb(u16 addr);
     void storeb(u16 addr, u8 val);
@@ -202,6 +206,7 @@ public:
 public:
     void Step(PpuStepResult& result, u8 screen[]);
     void Step(u8 cycles, u8 screen[], PpuStepResult& result);
+    void Reset(bool hard);
 
 #if defined(RENDER_NAMETABLE)
     void RenderNameTable(u8 screen[], int i);

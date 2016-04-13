@@ -5,32 +5,46 @@
 Ppu::Ppu(IMapper* mapper)
     : _mapper(mapper)
     , _vram(_mapper)
-    , _cycle(0)
-    , _scanline(241)
-    , _frameOdd(false)
-    , _v(0)
-    , _t(0)
-    , _x(0)
-    , _w(false)
-    , _ppuDataBuffer(0)
-    , _vramAddrIncrement(1)
-    , _spriteBaseAddress(0)
-    , _backgroundBaseAddress(0)
-    , _spriteSize(SpriteSize::Spr8x8)
-    , _doVBlankNmi(false)
-    , _clipBackground(false)
-    , _clipSprites(false)
-    , _showBackground(false)
-    , _showSprites(false)
-    , _oamAddr(0)
-    , _lineSprites(0)
-    , _spriteZeroOnLine(false)
 {
+    Reset(true);
 }
 
 Ppu::~Ppu()
 {
 
+}
+
+void Ppu::Reset(bool hard)
+{
+    if (hard)
+    {
+        _cycle = 0;
+        _scanline = 241;
+        _frameOdd = false;
+        _v = 0;
+        _t = 0;
+        _x = 0;
+        _w = false;
+        _ppuDataBuffer = 0;
+        _vramAddrIncrement = 1;
+        _spriteBaseAddress = 0;
+        _backgroundBaseAddress = 0;
+        _spriteSize = SpriteSize::Spr8x8;
+        _doVBlankNmi = false;
+        _clipBackground = false;
+        _clipSprites = false;
+        _showBackground = false;
+        _showSprites = false;
+        _oamAddr = 0;
+        _lineSprites.resize(0);
+        _spriteZeroOnLine = false;
+        _vram.Reset(hard);
+        _oam.Reset(hard);
+    }
+    else
+    {
+        // TOOD
+    }
 }
 
 // IMem
@@ -774,12 +788,24 @@ bool Ppu::GetSpriteColor(u8 x, u8 y, bool backgroundOpaque, u8& paletteIndex, Sp
 VRam::VRam(IMapper* mapper)
     : _mapper(mapper)
 {
-    memset(_nametables, 0, sizeof(_nametables));
-    memset(_palette, 0, sizeof(_palette));
+    Reset(true);
 }
 
 VRam::~VRam()
 {
+}
+
+void VRam::Reset(bool hard)
+{
+    if (hard)
+    {
+        memset(_nametables, 0, sizeof(_nametables));
+        memset(_palette, 0, sizeof(_palette));
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 u8 VRam::loadb(u16 addr)
@@ -846,6 +872,8 @@ u16 VRam::NameTableAddress(u16 addr)
         return addr & 0x3ff;
     case NameTableMirroring::SingleScreenUpper:
         return (addr & 0x3ff) | 0x400;
+    default:
+        return 0;
     }
 }
 
@@ -864,11 +892,23 @@ void VRam::LoadState(std::ifstream& ifs)
 
 Oam::Oam()
 {
-    memset(_ram, 0, sizeof(_ram));
+    Reset(true);
 }
 
 Oam::~Oam()
 {
+}
+
+void Oam::Reset(bool hard)
+{
+    if (hard)
+    {
+        memset(_ram, 0, sizeof(_ram));
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 u8 Oam::loadb(u16 addr)

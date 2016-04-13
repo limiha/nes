@@ -12,16 +12,30 @@ Cpu::Cpu(
     )
     : _mem(mem)
     , _debugger(debugger)
-    , Cycles(0)
-    , _dmaBytesRemaining(0)
     , _accumulatorAM(*this)
     , _immediateAM(*this)
     , _memoryAM(*this, 0)
 {
+    Reset(true);
 }
 
 Cpu::~Cpu() 
 {
+}
+
+void Cpu::Reset(bool hard)
+{
+    if (hard)
+    {
+        Cycles = 0;
+        _dmaBytesRemaining = 0;
+        _regs.Reset(hard);
+        _regs.PC = loadw(RESET_VECTOR);
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 // IMem
@@ -70,15 +84,6 @@ void Cpu::Dma(u8 val)
     _dmaReadAddress = ((u16)val) << 8;
     _dmaBytesRemaining = 0x0100;
 }
-
-void Cpu::Reset()
-{
-    _regs.PC = loadw(RESET_VECTOR);
-
-}
-
-#include <vector>
-std::vector<u16> breakAddress;
 
 void Cpu::Step()
 {

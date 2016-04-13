@@ -39,6 +39,8 @@ public:
     void SaveState();
     void LoadState();
 
+    void Reset(bool hard);
+
 private:
     //std::unique_ptr<fs::path> GetSavePath();
 

@@ -9,6 +9,7 @@ enum class InputResult
     Continue,
     SaveState,
     LoadState,
+    ResetHard,
     Quit
 };
 

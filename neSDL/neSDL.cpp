@@ -30,16 +30,21 @@ int main(int argc, char* argv[])
 
         InputResult result = input.CheckInput();
 
-        if (result == InputResult::SaveState)
+        if (result == InputResult::Quit)
         {
+            break;
+        }
+
+        switch (result)
+        {
+        case InputResult::SaveState:
             nes->SaveState();
-        }
-        else if (result == InputResult::LoadState)
-        {
+            break;
+        case InputResult::LoadState:
             nes->LoadState();
-        }
-        else if (result == InputResult::Quit)
-        {
+            break;
+        case InputResult::ResetHard:
+            nes->Reset(true);
             break;
         }
 
