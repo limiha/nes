@@ -13,12 +13,27 @@ MemoryMap::MemoryMap(Ppu* ppu, Apu* apu, Input* input, IMapper* mapper)
     , _input(input)
     , _mapper(mapper)
 {
-    memset(_ram, 0, sizeof(_ram));
+    Reset(true);
 }
 
 MemoryMap::~MemoryMap()
 {
 
+}
+
+void MemoryMap::Reset(bool hard)
+{
+    if (hard)
+    {
+        memset(_ram, 0, sizeof(_ram));
+    }
+    else
+    {
+        // TODO
+    }
+    _ppu->Reset(hard);
+    _apu->Reset(hard);
+    _mapper->Reset(hard);
 }
 
 // IMem

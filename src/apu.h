@@ -29,6 +29,8 @@ public:
 public:
     DELEGATE_NESOBJECT_REFCOUNTING();
 
+    void Reset(bool hard) { /* TODO */ }
+
     // Audio control
     void StartAudio(MemoryMap* cpuMemMap);
     void StopAudio();

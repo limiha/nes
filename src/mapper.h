@@ -36,6 +36,8 @@ public:
 public:
     DELEGATE_NESOBJECT_REFCOUNTING();
 
+    virtual void Reset(bool hard);
+
 public:
     u8 prg_loadb(u16 addr);
     void prg_storeb(u16 addr, u8 val);
@@ -81,6 +83,8 @@ class UxRom : public NRom
 public:
     UxRom(Rom* rom);
 
+    void Reset(bool hard);
+
     void prg_storeb(u16 addr, u8 val);
     u8 prg_loadb(u16 addr);
 
@@ -97,6 +101,8 @@ class CNRom : public NRom
 public:
     CNRom(Rom* rom);
 
+    void Reset(bool hard);
+
     void prg_storeb(u16 addr, u8 val);
     u8 chr_loadb(u16 addr);
 
@@ -112,6 +118,8 @@ class TxRom : public IMapper, public NesObject
 {
 public:
     TxRom(Rom* rom);
+
+    void Reset(bool hard);
 
 public:
     DELEGATE_NESOBJECT_REFCOUNTING();
@@ -150,6 +158,8 @@ class AxRom : public NRom
 {
 public:
     AxRom(Rom* rom);
+
+    void Reset(bool hard);
 
     u8 prg_loadb(u16 addr);
     void prg_storeb(u16 addr, u8 val);

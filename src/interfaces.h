@@ -56,6 +56,7 @@ protected:
 
 public:
     static bool CreateMapper(Rom* rom, IMapper** mapper);
+    virtual void Reset(bool hard);
 
 public:
     virtual u8 prg_loadb(u16 addr) = 0;

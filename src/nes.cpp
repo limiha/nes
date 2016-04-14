@@ -23,7 +23,7 @@ Nes::Nes(Rom* rom, IMapper* mapper, IAudioProvider* audioProvider)
     _cpu = new Cpu(_mem, _debugger);
 
     // TODO: Move these to an init method
-    _cpu->Reset();
+    _cpu->Reset(true);
     _apu->StartAudio(_mem); 
 }
 
@@ -127,3 +127,9 @@ void Nes::LoadState()
 //    fs::path savePath(_rom->Path());
 //    return std::make_unique<fs::path>(savePath.replace_extension("ns"));
 //}
+
+void Nes::Reset(bool hard)
+{
+    _cpu->Reset(hard);
+    _mem->Reset(hard);
+}

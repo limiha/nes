@@ -5,7 +5,7 @@
 IMapper::IMapper(Rom* rom)
     : _rom(rom)
 {
-    Mirroring = _rom->Header.Mirroring();
+    Reset(true);
 }
 
 bool IMapper::CreateMapper(Rom* rom, IMapper** mapper)
@@ -33,6 +33,22 @@ bool IMapper::CreateMapper(Rom* rom, IMapper** mapper)
     default:
         printf("Unsupported mapper: %d\n", rom->Header.MapperNumber());
         return false;
+    }
+}
+
+void IMapper::Reset(bool hard)
+{
+    if (hard)
+    {
+        Mirroring = _rom->Header.Mirroring();
+        if (!_rom->Header.HasSaveRam())
+        {
+            memset((void*)&_rom->PrgRam[0], 0, _rom->PrgRam.size());
+        }
+    }
+    else
+    {
+        // TODO
     }
 }
 
@@ -125,15 +141,8 @@ void NRom::LoadState(std::ifstream& ifs)
 
 SxRom::SxRom(Rom* rom)
     : IMapper(rom)
-    , _prgSize(PrgSize::Size16k)
-    , _chrMode(ChrMode::Mode8k)
-    , _slotSelect(true)
-    , _chrBank0(0)
-    , _chrBank1(0)
-    , _prgBank(0)
-    , _accumulator(0)
-    , _writeCount(0)
 {
+    Reset(true);
     if (rom->Header.ChrRomSize > 0)
     {
         _chrBuf = &rom->ChrRom[0];
@@ -147,6 +156,26 @@ SxRom::SxRom(Rom* rom)
 
 SxRom::~SxRom()
 {
+}
+
+void SxRom::Reset(bool hard)
+{
+    IMapper::Reset(hard);
+    if (hard)
+    {
+        _prgSize = PrgSize::Size16k;
+        _chrMode = ChrMode::Mode8k;
+        _slotSelect = true;
+        _chrBank0 = 0;
+        _chrBank1 = 0;
+        _prgBank = 0;
+        _accumulator = 0;
+        _writeCount = 0;
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 u8 SxRom::prg_loadb(u16 addr)
@@ -308,9 +337,22 @@ void SxRom::LoadState(std::ifstream& ifs)
 
 UxRom::UxRom(Rom* rom)
     : NRom(rom)
-    , _prgBank(0)
 {
+    Reset(true);
     _lastBankOffset = (_rom->Header.PrgRomSize - 1) * PRG_ROM_BANK_SIZE;
+}
+
+void UxRom::Reset(bool hard)
+{
+    IMapper::Reset(hard);
+    if (hard)
+    {
+        _prgBank = 0;
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 void UxRom::SaveState(std::ofstream& ofs)
@@ -350,8 +392,21 @@ u8 UxRom::prg_loadb(u16 addr)
 
 CNRom::CNRom(Rom* rom)
     : NRom(rom)
-    , _chrBank(0)
 {
+    Reset(true);
+}
+
+void CNRom::Reset(bool hard)
+{
+    IMapper::Reset(hard);
+    if (hard)
+    {
+        _chrBank = 0;
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 void CNRom::prg_storeb(u16 addr, u8 val)
@@ -381,17 +436,45 @@ void CNRom::LoadState(std::ifstream& ifs)
 
 TxRom::TxRom(Rom* rom)
     : IMapper(rom)
-    , _prgMode(false)
-    , _chrMode(false)
-    , _prgReg{0, 0}
-    , _chrReg{0, 0, 0, 0, 0, 0}
-    , _prgSegmentAddr{0, 0, 0, 0}
-    , _chrSegmentAddr{0, 0, 0, 0, 0, 0, 0, 0}
 {
     _lastBankIndex = (_rom->Header.PrgRomSize * 2) - 1; // PrgRomSize is in 0x4000 units, TxRom has 0x2000 size banks
     _secondLastBankIndex = (_rom->Header.PrgRomSize * 2) - 2; // PrgRomSize is in 0x4000 units, TxRom has 0x2000 size banks
+    Reset(true);
+}
 
-    SetSegmentAddresses();
+void TxRom::Reset(bool hard)
+{
+    IMapper::Reset(hard);
+    if (hard)
+    {
+        _irqCounter = 0;
+        _irqReload = 0;
+        _irqPending = false;
+        _irqEnable = false;
+        _prgMode = false;
+        _chrMode = false;
+        for (int i = 0; i < 2; i++)
+        {
+            _prgReg[i] = 0;
+        }
+        for (int i = 0; i < 6; i++)
+        {
+            _chrReg[i] = 0;
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            _prgSegmentAddr[i] = 0;
+        }
+        for (int i = 0; i < 8; i++)
+        {
+            _chrSegmentAddr[i] = 0;
+        }
+        SetSegmentAddresses();
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 u8 TxRom::prg_loadb(u16 addr)
@@ -566,8 +649,21 @@ bool TxRom::Scanline()
 
 AxRom::AxRom(Rom* rom)
     : NRom(rom)
-    , _prgReg(0)
 {
+    Reset(true);
+}
+
+void AxRom::Reset(bool hard)
+{
+    IMapper::Reset(hard);
+    if (hard)
+    {
+        _prgReg = 0;
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 u8 AxRom::prg_loadb(u16 addr)

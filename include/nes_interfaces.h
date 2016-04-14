@@ -43,6 +43,7 @@ struct IRomFile : public IBaseInterface
 
 struct INes : public IBaseInterface
 {
+    virtual void Reset(bool hard) = 0;
     virtual void Dispose() = 0;
 
     virtual void DoFrame(unsigned char screen[]) = 0;
